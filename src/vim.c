@@ -1,8 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <conio.h>
+#include <string.h>
 
 #include <mega65/txtio.h>
+#include <conio.h>
 
 #define MODE_DEFAULT 0
 #define MODE_INSERT  1
@@ -10,10 +12,12 @@
 
 #define CTRL(kar) ((kar)-'a')
 
-
 int exitVim = 0;
-int mode = MODE_DEFAULT;
+unsigned char maxX; 
+unsigned char maxY; 
+char zFilename[80+1];   
 
+int mode = MODE_DEFAULT;
 typedef int (*tpfnCmd)(void);
 
 typedef struct {
@@ -22,66 +26,11 @@ typedef struct {
     tpfnCmd cmd;
 } tsCmds;
 
-int cmdBottomOfFile(void);
-
-int cmdCursorLeft();
-
-int cmdCursorUp();
-
-int cmdCursorDown();
-
-int cmdCursorRight();
-
-int cmdCursorScreenTop();
-
-int cmdCursorScreenBottom();
-
-int cmdLineJoin();
-
-int cmdCursorNextWord();
-
-int cmdCursorLineEnd();
-
-int cmdCursorLineStart();
-
-int cmdModeInsert();
-
-int cmdPageForward();
-
-int cmdPageBack();
-
-int cmdModeDefault();
-
-tsCmds cmds[] = {
-    {MODE_DEFAULT, 'G', cmdBottomOfFile},
-    {MODE_DEFAULT, 'h', cmdCursorLeft},
-    {MODE_DEFAULT, 'i', cmdCursorUp},
-    {MODE_DEFAULT, 'k', cmdCursorDown},
-    {MODE_DEFAULT, 'l', cmdCursorRight},
-    {MODE_DEFAULT, 'H', cmdCursorScreenTop},
-    {MODE_DEFAULT, 'L', cmdCursorScreenBottom},
-    {MODE_DEFAULT, 'J', cmdLineJoin},
-    {MODE_DEFAULT, 'w', cmdCursorNextWord},
-    {MODE_DEFAULT, '$', cmdCursorLineEnd},
-    {MODE_DEFAULT, '0', cmdCursorLineStart},
-    {MODE_DEFAULT, 'i', cmdModeInsert},
-    {MODE_DEFAULT, CTRL('f'), cmdPageForward},
-    {MODE_DEFAULT, CTRL('b'), cmdPageBack},
-    {MODE_INSERT, 27, cmdModeDefault},
-
-    {MODE_INSERT, 255, NULL}
-};
-
 int cmdBottomOfFile(void) {
     return 0;
 };
 
 int cmdCursorLeft() {
-    // // Move cursor left by one character
-    // int pos = getCursorPosition();
-    // if (pos > 0) {
-    //     moveCursor(pos - 1);
-    // }
     exitVim = 1; // @@TODO:TEST.
     return 0;
 }
@@ -95,21 +44,10 @@ int cmdCursorDown() {
 }
 
 int cmdCursorRight() {
-    // // Move cursor right by one character
-    // int pos = getCursorPosition();
-    // if (pos < getMaxCursorPosition()) {
-    //     moveCursor(pos + 1);
-    //
     return 0;
 }
 
 int cmdCursorScreenTop() {
-    //     int pos = getCursorPosition();
-    //     if (pos > 0) {
-    //         moveCursor(pos - 1);
-    //     }
-    //     return pos;
-    //
     return 0;
 }
 
@@ -149,6 +87,25 @@ int cmdModeDefault() {
     return 0;
 }
 
+tsCmds cmds[] = {
+    {MODE_DEFAULT, 'G', cmdBottomOfFile},
+    {MODE_DEFAULT, 'h', cmdCursorLeft},
+    {MODE_DEFAULT, 'i', cmdCursorUp},
+    {MODE_DEFAULT, 'k', cmdCursorDown},
+    {MODE_DEFAULT, 'l', cmdCursorRight},
+    {MODE_DEFAULT, 'H', cmdCursorScreenTop},
+    {MODE_DEFAULT, 'L', cmdCursorScreenBottom},
+    {MODE_DEFAULT, 'J', cmdLineJoin},
+    {MODE_DEFAULT, 'w', cmdCursorNextWord},
+    {MODE_DEFAULT, '$', cmdCursorLineEnd},
+    {MODE_DEFAULT, '0', cmdCursorLineStart},
+    {MODE_DEFAULT, 'i', cmdModeInsert},
+    {MODE_DEFAULT, CTRL('f'), cmdPageForward},
+    {MODE_DEFAULT, CTRL('b'), cmdPageBack},
+    {MODE_INSERT, 27, cmdModeDefault},
+
+    {MODE_INSERT, 255, NULL}
+};
 
 tpfnCmd getcmd(int kar) {
     for (tsCmds *cmd = &cmds[0]; cmd->cmd != NULL; cmd++) {
@@ -159,17 +116,28 @@ tpfnCmd getcmd(int kar) {
     return NULL;
 }
 
+void draw_screen() {
+    putch(147); 
+    gotoxy(0,maxY-2); 
+    for(unsigned char x=0;x<maxX;x++) {
+        putch('-');
+    }
+    gotoxy(0,maxY-1);
+    txtEraseEOS();
+    puts(zFilename); 
+}
+
 void edit() {
+    strcpy(zFilename, "filename.txt"); 
+
     // Screen/Border color = black.
     *((char *)53280) = (char) 0;
     *((char *)53281) = (char) 0;
 
     txtScreen80x50(); 
+    maxX=80; maxY=50; 
 
-
-
-
-
+    draw_screen(); 
 
     do {
         int kar = getch();
