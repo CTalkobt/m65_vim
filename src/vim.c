@@ -26,7 +26,9 @@ typedef struct {
     tpfnCmd cmd;
 } tsCmds;
 
-int cmdBottomOfFile(void) {
+int cmdGotoLine(void) {
+    // TODO: Numeric prefix : goto that line number. 
+    // No numeric prefix, goto end of file. 
     return 0;
 };
 
@@ -88,7 +90,7 @@ int cmdModeDefault() {
 }
 
 tsCmds cmds[] = {
-    {MODE_DEFAULT, 'G', cmdBottomOfFile},
+    {MODE_DEFAULT, 'G', cmdGotoLine},
     {MODE_DEFAULT, 'h', cmdCursorLeft},
     {MODE_DEFAULT, 'i', cmdCursorUp},
     {MODE_DEFAULT, 'k', cmdCursorDown},
