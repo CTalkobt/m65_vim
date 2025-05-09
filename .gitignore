@@ -1,6 +1,11 @@
 # Prerequisites
 *.d
 
+*.lbl
+*.map
+*.asm
+*.int
+
 # Object files
 *.o
 *.ko
