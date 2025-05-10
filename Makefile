@@ -7,14 +7,14 @@ CC=$(HOME)/m65/c/oscar64/bin/oscar64 -tm=mega65 -psci
 COPTS=
 
 ASM_SRCS =
-C_SRCS = src/vim.c
+C_SRCS = src/*.c
 
 # Object files
 OBJS = $(ASM_SRCS:%.s=obj/%.o) $(C_SRCS:%.c=obj/%.o)
 OBJS_DEBUG = $(ASM_SRCS:%.s=obj/%-debug.o) $(C_SRCS:%.c=obj/%-debug.o)
 
-vim.prg: $(C_SRCS)
-	$(CC) $(COPTS) -o=$@ $<
+vim.prg: src/*.c src/*.h
+	$(CC) $(COPTS) -o=$@ src/*.c
 
 clean:
 	-rm $(OBJS) $(OBJS:%.o=%.lst) $(OBJS_DEBUG) $(OBJS_DEBUG:%.o=%.lst)
