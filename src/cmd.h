@@ -2,17 +2,14 @@
 #define CMD_H
 
 #include <stddef.h>
-
-#define MODE_DEFAULT 0
-#define MODE_INSERT  1
-#define MODE_COMMAND 2
+#include "editMode.h"
 
 typedef int (*tpfnCmd)(void);
 
-tpfnCmd getcmd(unsigned char mode, unsigned char kar); 
+tpfnCmd getcmd(EditMode mode, unsigned char kar); 
 
 typedef struct {
-    int mode;
+    EditMode mode; 
     char kar;
     tpfnCmd cmd;
 } tsCmds;

@@ -26,7 +26,7 @@ unsigned char maxPosY;
 // Current filename. 
 char zFilename[80+1];   
 
-unsigned char mode = MODE_DEFAULT;
+EditMode mode = Default;
 
 void draw_screen() {
     putch(147); 
