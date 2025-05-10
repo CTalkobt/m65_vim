@@ -1,31 +1,35 @@
 #include "cmd.h"
-extern int exitVim; 
+#include "editMode.h"
 
 #ifndef CTRL
 #define CTRL(kar) ((kar)-'a')
 #endif
+extern int exitVim; 
+
+EditMode x = Default; 
 
 tsCmds cmds[] = {
-    {MODE_DEFAULT, 'G', cmdGotoLine},
-    {MODE_DEFAULT, 'h', cmdCursorLeft},
-    {MODE_DEFAULT, 'i', cmdCursorUp},
-    {MODE_DEFAULT, 'k', cmdCursorDown},
-    {MODE_DEFAULT, 'l', cmdCursorRight},
-    {MODE_DEFAULT, 'H', cmdCursorScreenTop},
-    {MODE_DEFAULT, 'L', cmdCursorScreenBottom},
-    {MODE_DEFAULT, 'J', cmdLineJoin},
-    {MODE_DEFAULT, 'w', cmdCursorNextWord},
-    {MODE_DEFAULT, '$', cmdCursorLineEnd},
-    {MODE_DEFAULT, '0', cmdCursorLineStart},
-    {MODE_DEFAULT, 'i', cmdModeInsert},
-    {MODE_DEFAULT, CTRL('f'), cmdPageForward},
-    {MODE_DEFAULT, CTRL('b'), cmdPageBack},
-    {MODE_INSERT, 27, cmdModeDefault},
+    {Default, 'G', cmdGotoLine},
+    {Default, 'h', cmdCursorLeft},
+    {Default, 'i', cmdCursorUp},
+    {Default, 'k', cmdCursorDown},
+    {Default, 'l', cmdCursorRight},
+    {Default, 'H', cmdCursorScreenTop},
+    {Default, 'L', cmdCursorScreenBottom},
+    {Default, 'J', cmdLineJoin},
+    {Default, 'w', cmdCursorNextWord},
+    {Default, '$', cmdCursorLineEnd},
+    {Default, '0', cmdCursorLineStart},
+    {Default, 'i', cmdModeInsert},
+    {Default, CTRL('f'), cmdPageForward},
+    {Default, CTRL('b'), cmdPageBack},
 
-    {MODE_INSERT, 255, NULL}
+    {Insert, 27, cmdModeDefault},
+
+    {Insert, 255, NULL} // End of list. 
 };
 
-tpfnCmd getcmd(unsigned char mode, unsigned char kar) {
+tpfnCmd getcmd(EditMode mode, unsigned char kar) {
     for (tsCmds *cmd = &cmds[0]; cmd->cmd != NULL; cmd++) {
         if (cmd->kar == kar && cmd->mode == mode) {
             return cmd->cmd;
