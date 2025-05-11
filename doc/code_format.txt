@@ -1,0 +1,21 @@
+
+Coding conventions: 
+===================
+
+Prefixes: 
+--------------------
+t  - typedef
+s  - struct
+p  - pointer
+p2 - Double pointer
+z  - Null terminated string (typically auto allocated)
+pz - Null terminated string, 
+i  - Integer
+c  - Character
+u  - Unsigned. 
+
+Notes: 
+------
+Prefixes may be skipped if the name of the variable clearly indicates it's type. 
+
+Naming conventions in code my differ from above as it's been a bit of time, since I've coded in C. This type convention is "old memory" and I'll make changes to correct in time - I may not be consistant as I add / alter code. 
