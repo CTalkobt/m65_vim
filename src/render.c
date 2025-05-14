@@ -9,6 +9,7 @@ char zTemp[32+1];
 
 void cursor_on() {
   *((unsigned char *)0x1120) = 0; 
+  *((unsigned char *)0x1121) = 1; 
 }
 
 void cursor_off() {
