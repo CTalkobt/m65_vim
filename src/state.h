@@ -2,8 +2,7 @@
 #define STATE_H
 
 #include <stdint.h>
-
-#include "cmd.h"
+#include "editMode.h"
 
 //
 // Edit state. 

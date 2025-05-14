@@ -3,8 +3,9 @@
 
 #include <stddef.h>
 #include "editMode.h"
+#include "state.h"
 
-typedef int (*tpfnCmd)(void);
+typedef int (*tpfnCmd)(tsState *psState);
 
 tpfnCmd getcmd(EditMode mode, unsigned char kar); 
 
@@ -14,20 +15,20 @@ typedef struct {
     tpfnCmd cmd;
 } tsCmds;
 
-int cmdGotoLine(); 
-int cmdCursorLeft(); 
-int cmdCursorUp(); 
-int cmdCursorDown(); 
-int cmdCursorRight(); 
-int cmdCursorScreenTop(); 
-int cmdCursorScreenBottom(); 
-int cmdLineJoin(); 
-int cmdCursorNextWord(); 
-int cmdCursorLineEnd(); 
-int cmdCursorLineStart(); 
-int cmdModeInsert(); 
-int cmdPageForward(); 
-int cmdPageBack(); 
-int cmdModeDefault(); 
+int cmdGotoLine(tsState *psState); 
+int cmdCursorLeft(tsState *psState); 
+int cmdCursorUp(tsState *psState); 
+int cmdCursorDown(tsState *psState); 
+int cmdCursorRight(tsState *psState); 
+int cmdCursorScreenTop(tsState *psState); 
+int cmdCursorScreenBottom(tsState *psState); 
+int cmdLineJoin(tsState *psState); 
+int cmdCursorNextWord(tsState *psState); 
+int cmdCursorLineEnd(tsState *psState); 
+int cmdCursorLineStart(tsState *psState); 
+int cmdModeInsert(tsState *psState); 
+int cmdPageForward(tsState *psState); 
+int cmdPageBack(tsState *psState); 
+int cmdModeDefault(tsState *psState); 
 
 #endif

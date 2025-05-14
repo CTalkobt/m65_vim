@@ -11,8 +11,8 @@ EditMode x = Default;
 tsCmds cmds[] = {
     {Default, 'G', cmdGotoLine},
     {Default, 'h', cmdCursorLeft},
-    {Default, 'i', cmdCursorUp},
-    {Default, 'k', cmdCursorDown},
+    {Default, 'k', cmdCursorUp},
+    {Default, 'j', cmdCursorDown},
     {Default, 'l', cmdCursorRight},
     {Default, 'H', cmdCursorScreenTop},
     {Default, 'L', cmdCursorScreenBottom},
@@ -38,66 +38,76 @@ tpfnCmd getcmd(EditMode mode, unsigned char kar) {
     return NULL;
 }
 
-int cmdGotoLine(void) {
+int cmdGotoLine(tsState *psState) {
     // TODO: Numeric prefix : goto that line number. 
     // No numeric prefix, goto end of file. 
     return 0;
 };
 
-int cmdCursorLeft() {
+int cmdCursorLeft(tsState *psState) {
+    if (psState->xPos > 0) 
+        psState->xPos--; 
+    return 0;
+}
+
+int cmdCursorUp(tsState *psState) {
+    if (psState->lineY > 0)
+        psState->lineY--; 
+    return 0;
+}
+
+int cmdCursorDown(tsState *psState) {
+    // @@TODO: Add check for beyond EOF. 
+    psState->lineY++; 
+    return 0;
+}
+
+int cmdCursorRight(tsState *psState) {
+    if (psState->xPos < 79)
+        psState->xPos++; 
+    return 0;
+}
+
+int cmdCursorScreenTop(tsState *psState) {
+    if (psState->xPos < 79)
+        psState->xPos++; 
+    return 0;
+}
+
+int cmdCursorScreenBottom(tsState *psState) {
+    return 0;
+}
+
+int cmdLineJoin(tsState *psState) {
     exitVim = 1; // @@TODO:TEST.
     return 0;
 }
 
-int cmdCursorUp() {
+int cmdCursorNextWord(tsState *psState) {
     return 0;
 }
 
-int cmdCursorDown() {
+int cmdCursorLineEnd(tsState *psState) {
     return 0;
 }
 
-int cmdCursorRight() {
+int cmdCursorLineStart(tsState *psState) {
     return 0;
 }
 
-int cmdCursorScreenTop() {
+int cmdModeInsert(tsState *psState) {
     return 0;
 }
 
-int cmdCursorScreenBottom() {
+int cmdPageForward(tsState *psState) {
     return 0;
 }
 
-int cmdLineJoin() {
+int cmdPageBack(tsState *psState) {
     return 0;
 }
 
-int cmdCursorNextWord() {
-    return 0;
-}
-
-int cmdCursorLineEnd() {
-    return 0;
-}
-
-int cmdCursorLineStart() {
-    return 0;
-}
-
-int cmdModeInsert() {
-    return 0;
-}
-
-int cmdPageForward() {
-    return 0;
-}
-
-int cmdPageBack() {
-    return 0;
-}
-
-int cmdModeDefault() {
+int cmdModeDefault(tsState *psState) {
     return 0;
 }
 

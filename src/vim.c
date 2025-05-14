@@ -33,16 +33,23 @@ void edit(tsState *psState) {
 
     draw_screen(psState); 
 
+    cursor_on(); 
     do {
+        gotoxy(psState->xPos+ psState->screenStart.xPos, psState->lineY+psState->screenStart.yPos); 
         int kar = getch();
         tpfnCmd cmdFn = getcmd(mode, kar);
         if (NULL != cmdFn) {
-            cmdFn();
+            cursor_off(); 
+            cmdFn(psState);
+            cursor_on(); 
         } else {
             // @@TODO:Handle non command keypresses.
         }
     } while (!exitVim);
-};
+
+    // reset to default state. 
+    cursor_off(); 
+}
 
 
 int main(void) {
