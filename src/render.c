@@ -47,8 +47,11 @@ void drawStatus(tsState *psState) {
     itoa(psState->lineY,zTemp,10);
     puts(zTemp);     
 
-    gotoxy(screenX-4,screenY-1); 
+    gotoxy(screenX-5,screenY-1); 
     int percent = (psState->lines == 0) ? 0 : ((psState->lineY+0.0)/(psState->lines+0.0))*100; 
+    if (percent>100) {
+        percent=100; 
+    }
     itoa(percent,zTemp,10);
     puts(zTemp); putchar('%'); 
 }

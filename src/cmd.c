@@ -1,5 +1,6 @@
 #include "cmd.h"
 #include "editMode.h"
+#include "render.h"
 
 #ifndef CTRL
 #define CTRL(kar) ((kar)-'a')
@@ -55,26 +56,33 @@ int cmdGotoLine(tsState *psState) {
 };
 
 int cmdCursorLeft(tsState *psState) {
-    if (psState->xPos > 0) 
+    if (psState->xPos > 0) { 
         psState->xPos--; 
+        drawStatus(psState); 
+    }
     return 0;
 }
 
 int cmdCursorUp(tsState *psState) {
-    if (psState->lineY > 0)
+    if (psState->lineY > 0) {
         psState->lineY--; 
+        drawStatus(psState); 
+    }
     return 0;
 }
 
 int cmdCursorDown(tsState *psState) {
     // @@TODO: Add check for beyond EOF. 
     psState->lineY++; 
+    drawStatus(psState); 
     return 0;
 }
 
 int cmdCursorRight(tsState *psState) {
-    if (psState->xPos < 79)
+    if (psState->xPos < screenX) {
         psState->xPos++; 
+        drawStatus(psState); 
+    }
     return 0;
 }
 
