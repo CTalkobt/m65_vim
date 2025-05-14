@@ -56,6 +56,7 @@ int main(void) {
     txtScreen80x50(); 
 
     tsState *state = malloc(tsState); 
+
     state->lines=1;
     state->lineY=0; 
     state->xPos=0;

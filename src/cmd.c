@@ -9,13 +9,23 @@ extern int exitVim;
 EditMode x = Default; 
 
 tsCmds cmds[] = {
-    {Default, 'G', cmdGotoLine},
+    // Single increment navigation. 
+    {Default, 157, cmdCursorLeft},      // Left Arrow
     {Default, 'h', cmdCursorLeft},
+    {Default, 145, cmdCursorUp},        // Up Arrow
     {Default, 'k', cmdCursorUp},
+    {Default, 17, cmdCursorDown},       // Down Arrow. 
     {Default, 'j', cmdCursorDown},
+    {Default, 29, cmdCursorRight},      // Right arrow. 
     {Default, 'l', cmdCursorRight},
+
+    // Top/Bottom of Screen jumps. 
+    {Default, 19, cmdCursorScreenTop},     // Home key. 
     {Default, 'H', cmdCursorScreenTop},
+    {Default, 147, cmdCursorScreenBottom}, // Shift-Home/Clr Key. 
     {Default, 'L', cmdCursorScreenBottom},
+
+    {Default, 'G', cmdGotoLine},
     {Default, 'J', cmdLineJoin},
     {Default, 'w', cmdCursorNextWord},
     {Default, '$', cmdCursorLineEnd},
