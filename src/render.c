@@ -8,12 +8,14 @@
 char zTemp[32+1];
 
 void cursor_on() {
-  *((unsigned char *)0x1120) = 0; 
-  *((unsigned char *)0x1121) = 1; 
+    __asm { clc; jsr $edaf }
+/*   *((unsigned char *)0x1120) = 0;  
+  *((unsigned char *)0x1121) = 1;  */
 }
 
 void cursor_off() {
-  *((unsigned char *)0x1120) = 16; 
+    __asm { sec; jsr $edaf; }
+  // *((unsigned char *)0x1120) = 16; 
 }
 
 void draw_screen(tsState *psState) {
