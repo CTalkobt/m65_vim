@@ -5,6 +5,10 @@
 #include "state.h"
 #include "render.h"
 
+// Screen size. (assume 80x50) 
+uint8_t screenX = 80; 
+uint8_t screenY = 50; 
+
 char zTemp[32+1];
 
 void cursor_on() {
@@ -24,30 +28,26 @@ void draw_screen(tsState *psState) {
 }
 
 void drawStatus(tsState *psState) {
-    uint8_t maxX=psState->screenEnd.xPos- psState->screenStart.xPos; 
-    uint8_t maxY=psState->screenEnd.yPos- psState->screenStart.yPos; 
-
-
     // Status line: 
     // "filename" <count>L, <count>B          x,ypos  n%
     // "text.txt" 20L, 400B                     5,6 10%
     // 
-    gotoxy(psState->screenStart.xPos, psState->screenEnd.yPos-2); 
-    for(unsigned char x=0;x<maxX;x++) {
+    gotoxy(0, screenY-2);
+    for(unsigned char x=0;x<screenX;x++) {
         putch('-');
     }
 
-    gotoxy(0,psState->screenEnd.yPos-1);
+    gotoxy(0, screenY-1);
     txtEraseEOS(); // @@TODO: Need to correct for screenEnd/ screenStart
     putchar('\"');puts(psState->zFilename);putchar('\"'); 
 
-    gotoxy(psState->screenEnd.xPos-16,psState->screenEnd.yPos-1);
+    gotoxy(screenX-16,screenY-1);
     itoa(psState->xPos,zTemp,10);
     puts(zTemp); putchar(',');
     itoa(psState->lineY,zTemp,10);
     puts(zTemp);     
 
-    gotoxy(maxX-4,maxY-1); 
+    gotoxy(screenX-4,screenY-1); 
     int percent = (psState->lines == 0) ? 0 : ((psState->lineY+0.0)/(psState->lines+0.0))*100; 
     itoa(percent,zTemp,10);
     puts(zTemp); putchar('%'); 
