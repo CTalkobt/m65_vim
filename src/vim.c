@@ -21,9 +21,6 @@ unsigned char maxY;
 unsigned char posX, posY; 
 unsigned char maxPosY; 
 
-// Current filename. 
-EditMode mode = Default;
-
 void edit(tsState *psState) {
     // Screen/Border color = black.
     *((char *)53280) = (char) 0;
@@ -37,13 +34,22 @@ void edit(tsState *psState) {
     do {
         gotoxy(psState->xPos+ psState->screenStart.xPos, psState->lineY+psState->screenStart.yPos); 
         int kar = getch();
-        tpfnCmd cmdFn = getcmd(mode, kar);
-        if (NULL != cmdFn) {
-            cursor_off(); 
-            cmdFn(psState);
-            cursor_on(); 
-        } else {
-            // @@TODO:Handle non command keypresses.
+        switch(psState->editMode) {
+            case Default:
+                tpfnCmd cmdFn = getcmd(psState->editMode, kar);
+                 if (NULL != cmdFn) {
+                    cursor_off(); 
+                    cmdFn(psState);
+                     cursor_on(); 
+                } else {
+                    // @@TODO:Handle non command keypresses.
+                 }
+                break;
+            case Command:
+                (*((unsigned char*)53280))++;
+                break;
+            default:
+                break;
         }
     } while (!exitVim);
 
