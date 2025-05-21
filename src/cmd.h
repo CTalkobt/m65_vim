@@ -30,5 +30,6 @@ int cmdModeInsert(tsState *psState);
 int cmdPageForward(tsState *psState); 
 int cmdPageBack(tsState *psState); 
 int cmdModeDefault(tsState *psState); 
+int cmdModeCommand(tsState *psState); 
 
 #endif

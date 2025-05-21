@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "cmd.h"
 #include "editMode.h"
 #include "render.h"
@@ -35,6 +37,7 @@ tsCmds cmds[] = {
     {Default, CTRL('f'), cmdPageForward},
     {Default, CTRL('b'), cmdPageBack},
 
+    {Default, ':', cmdModeCommand},
     {Insert, 27, cmdModeDefault},
 
     {Insert, 255, NULL} // End of list. 
@@ -127,6 +130,11 @@ int cmdPageBack(tsState *psState) {
 
 int cmdModeDefault(tsState *psState) {
     return 0;
+}
+
+int cmdModeCommand(tsState *psState) {
+    psState->editMode = Command; 
+    return 0; 
 }
 
 
