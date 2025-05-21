@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdbool.h>
 
 #include "cmd.h"
 #include "editMode.h"
@@ -7,7 +8,7 @@
 #ifndef CTRL
 #define CTRL(kar) ((kar)-'a')
 #endif
-extern int exitVim; 
+extern bool exitVim; 
 
 EditMode x = Default; 
 
@@ -100,7 +101,7 @@ int cmdCursorScreenBottom(tsState *psState) {
 }
 
 int cmdLineJoin(tsState *psState) {
-    exitVim = 1; // @@TODO:TEST.
+    exitVim = true; // @@TODO:TEST.
     return 0;
 }
 
