@@ -12,14 +12,11 @@ uint8_t screenY = 50;
 char zTemp[32+1];
 
 void cursor_on() {
-    __asm { clc; jsr $edaf }
-/*   *((unsigned char *)0x1120) = 0;  
-  *((unsigned char *)0x1121) = 1;  */
+    __asm { clc; jsr $ff35 }
 }
 
 void cursor_off() {
-    __asm { sec; jsr $edaf; }
-  // *((unsigned char *)0x1120) = 16; 
+    __asm { sec; jsr $ff35; }
 }
 
 void draw_screen(tsState *psState) {
