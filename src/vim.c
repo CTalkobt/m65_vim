@@ -11,9 +11,6 @@
 #include "render.h"
 
 
-// Vim is exiting. 
-bool exitVim = false;
-
 // Max x,y coordinates for screen. 
 unsigned char maxX; 
 unsigned char maxY; 
@@ -74,7 +71,7 @@ void editCommand(tsState *psState) {
     } while (kar != 27 && kar != '\n');     
 
     if (strcmp(zCmd, "q") == 0) {
-        exitVim=true; 
+        psState->doExit=true; 
     }        
 
     psState->editMode = Default; 
@@ -113,7 +110,7 @@ void edit(tsState *psState) {
             default:
                 break;
         }
-    } while (!exitVim);
+    } while (!psState->doExit);
 
     // reset to default state. 
     cursor_off(); 
@@ -128,8 +125,8 @@ int main(void) {
     state->lines=1;
     state->lineY=0; 
     state->xPos=0;
-    strcpy(state->zFilename, "test.txt");
-    state->doExit = 0; 
+    strcpy(state->zFilename, "test.txt,s");
+    state->doExit = false; 
     state->screenStart.xPos = 0;
     state->screenStart.yPos = 0;
     state->screenEnd.yPos=48;

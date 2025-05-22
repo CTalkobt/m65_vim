@@ -8,7 +8,6 @@
 #ifndef CTRL
 #define CTRL(kar) ((kar)-'a')
 #endif
-extern bool exitVim; 
 
 EditMode x = Default; 
 
@@ -101,7 +100,7 @@ int cmdCursorScreenBottom(tsState *psState) {
 }
 
 int cmdLineJoin(tsState *psState) {
-    exitVim = true; // @@TODO:TEST.
+    psState->doExit = true; // @@TODO:TEST.
     return 0;
 }
 
