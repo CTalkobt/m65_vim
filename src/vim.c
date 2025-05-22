@@ -22,8 +22,11 @@ unsigned char maxPosY;
 extern uint8_t screenX;
 extern uint8_t screenY;
 
+#define MAX_CMD 79
+
+
 void editCommand(tsState *psState) {
-    static char zCmd[80+1];
+    static char zCmd[MAX_CMD+1];
     zCmd[0] = '\0';
 
     int kar; 
@@ -55,16 +58,18 @@ void editCommand(tsState *psState) {
                     break;
                 }
             default:
-                // @@TODO: Filter control codes unless prefixed by Ctrl-V. 
-                // 
-                if(escape) {
-                    zCmd[l]='^';
-                    l++; 
+                if (l<MAX_CMD) {
+                    // @@TODO: Filter control codes unless prefixed by Ctrl-V. 
+                    //
+                    if(escape) {
+                        zCmd[l]='^';
+                       l++;
+                    }
+                    zCmd[l] = kar; 
+                    zCmd[l+1] = '\0';
+                    putch(kar); 
+                    escape=false;
                 }
-                zCmd[l] = kar; 
-                zCmd[l+1] = '\0';
-                putch(kar); 
-                escape=false;
                 break;
         }
 
