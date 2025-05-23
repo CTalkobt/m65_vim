@@ -22,7 +22,7 @@ unsigned char maxPosY;
 extern uint8_t screenX;
 extern uint8_t screenY;
 
-#define MAX_CMD 79
+#define MAX_CMD 78
 
 
 void editCommand(tsState *psState) {
@@ -32,13 +32,14 @@ void editCommand(tsState *psState) {
     int kar; 
     gotoxy(0,screenY-1); 
     txtEraseEOS(); 
+    putchar(':'); 
     cursor_on(); 
     bool escape=false; 
     do {
         uint8_t l = strlen(zCmd); 
-        gotoxy(0, screenY-1); 
+        gotoxy(1, screenY-1); 
         puts(zCmd); 
-        gotoxy(l, screenY-1); 
+        gotoxy(l+1, screenY-1); 
         kar = getch();
         switch (kar) {
             case 20:    // ins/del
