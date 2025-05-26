@@ -3,7 +3,7 @@ all: clean vim.prg xfer
 VPATH = src
 
 # Common source files
-CC=$(HOME)/m65/c/oscar64/bin/oscar64 -tm=mega65 -psci -dNOFLOAT -strict
+CC=$(PWD)/oscar64/bin/oscar64 -tm=mega65 -psci -dNOFLOAT -strict
 COPTS=
 
 ASM_SRCS =
