@@ -12,5 +12,7 @@ Setup:
 -------
 Clone the project with --recurse-submodules
 
+Note:Currently the oscar65 build errors on one of the tests. This can be ignored and is a problem with the upstream oscar64. 
+
 
 
