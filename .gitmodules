@@ -1,0 +1,3 @@
+[submodule "oscar64"]
+	path = oscar64
+	url = git@github.com:CTalkobt/oscar64.git
