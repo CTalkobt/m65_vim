@@ -3,7 +3,7 @@ all: clean vim.prg xfer
 VPATH = src
 
 # Common source files
-CC=$(PWD)/oscar64/bin/oscar64 -tm=mega65 -psci -dNOFLOAT
+CC=oscar64/bin/oscar64 -tm=mega65 -psci -dNOFLOAT
 COPTS=
 
 ASM_SRCS =
@@ -20,8 +20,8 @@ vim.prg: oscar64/bin/oscar64 src/*.c src/*.h
 	$(CC) $(COPTS) -o=$@ src/*.c
 
 clean:
-	-rm $(OBJS) $(OBJS:%.o=%.lst) $(OBJS_DEBUG) $(OBJS_DEBUG:%.o=%.lst)
-	-rm *.elf *.prg *.lst *.lst
+	-rm $(OBJS) $(OBJS:%.o=%.lst) $(OBJS_DEBUG) $(OBJS_DEBUG:%.o=%.lst) 2>/dev/null
+	-rm *.elf *.prg *.lst *.lst 2>/dev/null
 
 xfer:
 	m65 -l /dev/ttyUSB0 -r vim.prg
