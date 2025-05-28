@@ -34,14 +34,16 @@ void cmdRead(tsState *psState, char *pzCmdReminder) {
 
 
     strcpy(zFilename, pzCmdReminder);
-    strcat(zFilename,p",s,r"); // ,r");
+    strcat(zFilename,",s,r"); // ,r");
 
+#ifdef __MEGA65__
     krnio_setbnk(0,0);
+#endif
     krnio_setnam(zFilename);
 
     char zBuffer[size+1];
 
-    if (krnio_open(1, 8, 1)) {
+    if (krnio_open(1, 8, 8)) {
 
         krnio_read(1, zBuffer, sizeof(char)*size);
         zBuffer[size] = 0;
@@ -161,7 +163,9 @@ void edit(tsState *psState) {
 
 
 int main(void) {
-    txtScreen80x50(); 
+#ifdef __MEGA65__
+    txtScreen80x50();
+#endif
 
     tsState *state = malloc(tsState); 
 
@@ -172,16 +176,23 @@ int main(void) {
     state->doExit = false; 
     state->screenStart.xPos = 0;
     state->screenStart.yPos = 0;
+#ifdef __MEGA65__
     state->screenEnd.yPos=48;
     state->screenEnd.xPos=80;
+#else /**assume c64 */
+    state->screenEnd.yPos=22;
+    state->screenEnd.xPos=40;
+#endif
     state->editMode = Default; 
 
     putch(147);
+#ifdef __MEGA65__
     puts("version: 0.000001 (this is very alpha)\n\n");
     puts("current functionality / limitations:\n\n");
     puts(" :r<filename>    will attempt to read in memory however odd bug with\n");
     puts("                 drive error.\n\n");
     puts(" :q              will exit.");
+#endif
 
     edit(state);
     return 0; 
