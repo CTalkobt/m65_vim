@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <c64/kernalio.h>
 
 #include <mega65/txtio.h>
 #include <conio.h>
@@ -24,6 +25,34 @@ extern uint8_t screenY;
 
 #define MAX_CMD 78
 
+#include <c64/kernalio.h>
+
+void cmdRead(tsState *psState, char *pzCmdReminder) {
+    static const int size=254;
+    char zFilename[size];
+*((unsigned char *)53280)=1;
+
+
+    strcpy(zFilename, pzCmdReminder);
+    strcat(zFilename,p",s,r"); // ,r");
+
+    krnio_setbnk(0,0);
+    krnio_setnam(zFilename);
+
+    char zBuffer[size+1];
+
+    if (krnio_open(1, 8, 1)) {
+
+        krnio_read(1, zBuffer, sizeof(char)*size);
+        zBuffer[size] = 0;
+        puts(zBuffer);
+
+        krnio_close(1);
+    }
+
+    krnio_clrchn();
+
+}
 
 void editCommand(tsState *psState) {
     static char zCmd[MAX_CMD+1];
@@ -60,7 +89,7 @@ void editCommand(tsState *psState) {
                 }
             default:
                 if (l<MAX_CMD) {
-                    // @@TODO: Filter control codes unless prefixed by Ctrl-V. 
+                    // @@TODO: Filter control codes unless prefixed by Ctrl-V.
                     //
                     if(escape) {
                         zCmd[l]='^';
@@ -76,11 +105,18 @@ void editCommand(tsState *psState) {
 
     } while (kar != 27 && kar != '\n');     
 
-    if (strcmp(zCmd, "q") == 0) {
-        psState->doExit=true; 
-    }        
+    switch(zCmd[0]){
+        case 'r': // Read
+            cmdRead(psState, zCmd+1);
+            break;
+        case 'q': // Quit
+            psState->doExit=true;
+            break;
+        default:
+            break;
+    }
 
-    psState->editMode = Default; 
+    psState->editMode = Default;
 }
 
 void edit(tsState *psState) {
@@ -105,11 +141,12 @@ void edit(tsState *psState) {
                     cursor_on(); 
                 } else {
                     // @@TODO:Handle non command keypresses.
+
                 }
                 if (psState->editMode == Default)
                     break;
             case Command:
-//                (*(unsigned char *)53280)++; 
+//                (*(unsigned char *)53280)++;
                 editCommand(psState); 
                 draw_screen(psState); 
                 break;
