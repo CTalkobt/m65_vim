@@ -58,3 +58,4 @@ dkms.conf
 
 # IDE files. 
 .idea
+/vim.prg

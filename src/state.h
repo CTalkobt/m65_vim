@@ -11,7 +11,7 @@
 typedef struct tsXYPos {
     uint8_t xPos; 
     uint8_t yPos; 
-}; 
+};
 
 
 typedef struct tsState {
