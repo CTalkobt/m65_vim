@@ -20,7 +20,6 @@ void cursor_off() {
 }
 
 void draw_screen(tsState *psState) {
-    putch(147); 
     drawStatus(psState); 
 }
 

@@ -176,6 +176,13 @@ int main(void) {
     state->screenEnd.xPos=80;
     state->editMode = Default; 
 
+    putch(147);
+    puts("version: 0.000001 (this is very alpha)\n\n");
+    puts("current functionality / limitations:\n\n");
+    puts(" :r<filename>    will attempt to read in memory however odd bug with\n");
+    puts("                 drive error.\n\n");
+    puts(" :q              will exit.");
+
     edit(state);
     return 0; 
 }
