@@ -3,8 +3,9 @@ all: clean vim.prg xfer
 VPATH = src
 
 # Common source files
-CC=oscar64/bin/oscar64 -tm=mega65 -psci -dNOFLOATMin
-COPTS=
+CC=oscar64/bin/oscar64
+COPTS=-tm=mega65 -psci -dNOFLOAT
+COPTS64=-tm=c64 -psci -dNOFLOAT
 
 ASM_SRCS =
 C_SRCS = src/*.c
@@ -15,6 +16,9 @@ OBJS_DEBUG = $(ASM_SRCS:%.s=obj/%-debug.o) $(C_SRCS:%.c=obj/%-debug.o)
 
 oscar64/bin/oscar64:
 	make -C oscar64/make compiler
+
+vim64.prg: oscar64/bin/oscar64 src/*.c src/*.h
+	$(CC) $(COPTS64) -o=$@ src/*.c
 
 vim.prg: oscar64/bin/oscar64 src/*.c src/*.h
 	$(CC) $(COPTS) -o=$@ src/*.c

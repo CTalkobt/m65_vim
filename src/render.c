@@ -5,9 +5,14 @@
 #include "state.h"
 #include "render.h"
 
-// Screen size. (assume 80x50) 
+// Screen size. (assume 80x50)
+#ifdef __MEGA65__
 uint8_t screenX = 80; 
-uint8_t screenY = 50; 
+uint8_t screenY = 50;
+#else /**Assume c64 */
+uint8_t screenX = 40;
+uint8_t screenY = 24;
+#endif
 
 char zTemp[32+1];
 
