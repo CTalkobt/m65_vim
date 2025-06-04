@@ -1,9 +1,11 @@
 #include <stdio.h>
-#include <conio.h>
-#include <mega65/txtio.h>
 
-#include "state.h"
+#include "lib/m65/txtio.h"
+
+
 #include "render.h"
+#include "state.h"
+#include "lib/itoa.h"
 
 // Screen size. (assume 80x50)
 #ifdef __MEGA65__
@@ -14,14 +16,19 @@ uint8_t screenX = 40;
 uint8_t screenY = 24;
 #endif
 
+
 char zTemp[32+1];
 
-void cursor_on() {
-    __asm { clc; jsr $ff35 }
+void inline cursor_on(void) {
+    __asm__ volatile (
+        "clc\n"
+        "jsr\t$ff35\n" : /* no output */ : /*no input*/ : /*clobbers */ "a","p");
 }
 
-void cursor_off() {
-    __asm { sec; jsr $ff35; }
+void inline cursor_off(void) {
+    __asm__ volatile (
+    "sec\n"
+    "jsr\t$ff35\n" : /*out*/ :/*in*/ :/*clobber */"a","p");
 }
 
 void draw_screen(tsState *psState) {
@@ -35,7 +42,7 @@ void drawStatus(tsState *psState) {
     // 
     gotoxy(0, screenY-2);
     for(unsigned char x=0;x<screenX;x++) {
-        putch('-');
+        putchar('-');
     }
 
     gotoxy(0, screenY-1);
