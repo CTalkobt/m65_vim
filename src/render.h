@@ -3,6 +3,8 @@
 
 #include <stddef.h>
 
+#include "state.h"
+
 // Screen Max X,Y. 
 extern uint8_t screenX; 
 extern uint8_t screenY; 

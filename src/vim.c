@@ -2,15 +2,16 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
-#include <c64/kernalio.h>
 
-#include <mega65/txtio.h>
-#include <conio.h>
+// #include <cbm_kernal.inc>
+
+// #include <mega65/txtio.h>
+#include <mega65/conio.h>
 
 #include "state.h"
 #include "cmd.h"
 #include "render.h"
-
+#include "lib/m65/txtio.h"
 
 // Max x,y coordinates for screen. 
 unsigned char maxX; 
@@ -25,34 +26,35 @@ extern uint8_t screenY;
 
 #define MAX_CMD 78
 
-#include <c64/kernalio.h>
+// #include <c64/kernalio.h>
 
 void cmdRead(tsState *psState, char *pzCmdReminder) {
     static const int size=254;
     char zFilename[size];
 *((unsigned char *)53280)=1;
-
-
-    strcpy(zFilename, pzCmdReminder);
-    strcat(zFilename,",s,r"); // ,r");
-
-#ifdef __MEGA65__
-    krnio_setbnk(0,0);
-#endif
-    krnio_setnam(zFilename);
-
-    char zBuffer[size+1];
-
-    if (krnio_open(1, 8, 8)) {
-
-        krnio_read(1, zBuffer, sizeof(char)*size);
-        zBuffer[size] = 0;
-        puts(zBuffer);
-
-        krnio_close(1);
-    }
-
-    krnio_clrchn();
+    // @@TODO
+//
+//
+//     strcpy(zFilename, pzCmdReminder);
+//     strcat(zFilename,",s,r"); // ,r");
+//
+// #ifdef __MEGA65__
+//     krnio_setbnk(0,0);
+// #endif
+//     krnio_setnam(zFilename);
+//
+//     char zBuffer[size+1];
+//
+//     if (krnio_open(1, 8, 8)) {
+//
+//         krnio_read(1, zBuffer, sizeof(char)*size);
+//         zBuffer[size] = 0;
+//         puts(zBuffer);
+//
+//         krnio_close(1);
+//     }
+//
+//     krnio_clrchn();
 
 }
 
@@ -71,7 +73,7 @@ void editCommand(tsState *psState) {
         gotoxy(1, screenY-1); 
         puts(zCmd); 
         gotoxy(l+1, screenY-1); 
-        kar = getch();
+        kar = getchar();
         switch (kar) {
             case 20:    // ins/del
                 if (l>0) {
@@ -99,7 +101,7 @@ void editCommand(tsState *psState) {
                     }
                     zCmd[l] = kar; 
                     zCmd[l+1] = '\0';
-                    putch(kar); 
+                    putchar(kar);
                     escape=false;
                 }
                 break;
@@ -133,11 +135,12 @@ void edit(tsState *psState) {
     cursor_on(); 
     do {
         gotoxy(psState->xPos+ psState->screenStart.xPos, psState->lineY+psState->screenStart.yPos); 
-        int kar = getch();
+        int kar = getchar();
+        tpfnCmd cmdFn;
         switch(psState->editMode) {
             case Default:
-                tpfnCmd cmdFn = getcmd(psState->editMode, kar);
-                 if (NULL != cmdFn) {
+                 cmdFn = getcmd(psState->editMode, kar);
+                if (NULL != cmdFn) {
                     cursor_off(); 
                     cmdFn(psState);
                     cursor_on(); 
@@ -167,7 +170,7 @@ int main(void) {
     txtScreen80x50();
 #endif
 
-    tsState *state = malloc(tsState); 
+    tsState *state = malloc(sizeof(tsState));
 
     state->lines=1;
     state->lineY=0; 
@@ -185,7 +188,7 @@ int main(void) {
 #endif
     state->editMode = Default; 
 
-    putch(147);
+    putchar(147);
 #ifdef __MEGA65__
     puts("version: 0.000001 (this is very alpha)\n\n");
     puts("current functionality / limitations:\n\n");
