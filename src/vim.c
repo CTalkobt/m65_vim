@@ -26,8 +26,6 @@ extern uint8_t screenY;
 
 #define MAX_CMD 78
 
-// #include <c64/kernalio.h>
-
 void cmdRead(tsState *psState, char *pzCmdReminder) {
     static const int size=254;
     char zFilename[size];
@@ -61,6 +59,9 @@ void cmdRead(tsState *psState, char *pzCmdReminder) {
 void editCommand(tsState *psState) {
     static char zCmd[MAX_CMD+1];
     zCmd[0] = '\0';
+
+    puts("Starting...");
+getchar();
 
     int kar; 
     gotoxy(0,screenY-1); 
@@ -179,14 +180,11 @@ int main(void) {
     state->doExit = false; 
     state->screenStart.xPos = 0;
     state->screenStart.yPos = 0;
-#ifdef __MEGA65__
+
     state->screenEnd.yPos=48;
     state->screenEnd.xPos=80;
-#else /**assume c64 */
-    state->screenEnd.yPos=22;
-    state->screenEnd.xPos=40;
-#endif
-    state->editMode = Default; 
+
+    state->editMode = Default;
 
     putchar(147);
 #ifdef __MEGA65__
