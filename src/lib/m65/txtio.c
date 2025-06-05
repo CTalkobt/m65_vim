@@ -1,4 +1,4 @@
-#include <mega65/conio.h>
+#include <stdio.h>
 #include "txtio.h"
 
 
@@ -27,7 +27,10 @@
 // escEmit(txtLinePushOn, 'n')
 // escEmit(txtLinePushOff, 'r')
 //
-inline void txtEraseEOS(void);
+inline void txtEraseEOS(void) {
+    putchar(27);
+    putchar('@');
+}
 // escEmit(txtEraseEOS, '@')
 // escEmit(txtLineDel, 'd')
 // escEmit(txtLineIns, 'i')
