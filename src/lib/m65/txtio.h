@@ -3,9 +3,9 @@
 #include <mega65/conio.h>
 #pragma compile("txtio.c")
 
-========================================
-General
-========================================
+// ========================================
+// General
+// ========================================
 // Toggle between 40x25 and 80x25
 inline void txtToggleWidth();    // ESC X
 // Switch to 40x25 text mode
