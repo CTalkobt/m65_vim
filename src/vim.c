@@ -167,9 +167,9 @@ void edit(tsState *psState) {
 
 
 int main(void) {
-#ifdef __MEGA65__
-    txtScreen80x50();
-#endif
+// #ifdef __MEGA65__
+//     txtScreen80x50();
+// #endif
 
     tsState *state = malloc(sizeof(tsState));
 
