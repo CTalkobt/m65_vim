@@ -19,6 +19,7 @@ add_executable(vim
         src/cmd.c
         src/render.c
         src/lib/itoa.c
-        src/lib/m65/txtio.c
+        src/lib/m65/screen.c
+        src/lib/m65/screen.h
 )
 target_link_libraries(vim mega65libc)

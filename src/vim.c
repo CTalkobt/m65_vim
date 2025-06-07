@@ -1,34 +1,18 @@
-#include <stdlib.h>
+//#include <stdlib.h>
 #include <stdio.h>
+#include <mega65.h>
+#include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
-
-// #include <cbm_kernal.inc>
-
-// #include <mega65/txtio.h>
 #include <mega65/conio.h>
 
 #include "state.h"
 #include "cmd.h"
 #include "render.h"
-#include "lib/m65/txtio.h"
-
-// Max x,y coordinates for screen. 
-unsigned char maxX; 
-unsigned char maxY; 
-
-// Current x,y coordinates into text. 
-unsigned char posX, posY; 
-unsigned char maxPosY; 
-
-extern uint8_t screenX;
-extern uint8_t screenY;
 
 #define MAX_CMD 78
 
 void cmdRead(tsState *psState, char *pzCmdReminder) {
     static const int size=254;
-    char zFilename[size];
 *((unsigned char *)53280)=1;
     // @@TODO
 //
@@ -60,27 +44,26 @@ void editCommand(tsState *psState) {
     static char zCmd[MAX_CMD+1];
     zCmd[0] = '\0';
 
-    puts("Starting...");
-getchar();
+    pcputs("Starting...");
 
-    int kar; 
+    unsigned int kar;
     gotoxy(0,screenY-1); 
-    txtEraseEOS(); 
+    // txtEraseEOS();
     putchar(':'); 
-    cursor_on(); 
+    // cursor_on();
     bool escape=false; 
     do {
         uint8_t l = strlen(zCmd); 
         gotoxy(1, screenY-1); 
         puts(zCmd); 
         gotoxy(l+1, screenY-1); 
-        kar = getchar();
+        kar = cgetc();
         switch (kar) {
             case 20:    // ins/del
                 if (l>0) {
                     l--;
                     zCmd[l]='\0';
-                    putchar(kar); 
+                    cputc(kar);
                 }
                 escape=false;
                 break;
@@ -102,7 +85,7 @@ getchar();
                     }
                     zCmd[l] = kar; 
                     zCmd[l+1] = '\0';
-                    putchar(kar);
+                    cputc(kar);
                     escape=false;
                 }
                 break;
@@ -125,26 +108,20 @@ getchar();
 }
 
 void edit(tsState *psState) {
-    // Screen/Border color = black.
-    *((char *)53280) = (char) 0;
-    *((char *)53281) = (char) 0;
+    draw_screen(psState);
 
-    maxX=80; maxY=50; 
-
-    draw_screen(psState); 
-
-    cursor_on(); 
+    // cursor_on();
     do {
-        gotoxy(psState->xPos+ psState->screenStart.xPos, psState->lineY+psState->screenStart.yPos); 
-        int kar = getchar();
+        gotoxy(psState->xPos+ psState->screenStart.xPos, psState->lineY+psState->screenStart.yPos);
+        const int kar = cgetc();
         tpfnCmd cmdFn;
         switch(psState->editMode) {
             case Default:
                  cmdFn = getcmd(psState->editMode, kar);
                 if (NULL != cmdFn) {
-                    cursor_off(); 
+                    // cursor_off();
                     cmdFn(psState);
-                    cursor_on(); 
+                    // cursor_on();
                 } else {
                     // @@TODO:Handle non command keypresses.
 
@@ -162,39 +139,62 @@ void edit(tsState *psState) {
     } while (!psState->doExit);
 
     // reset to default state. 
-    cursor_off(); 
+    // cursor_off();
 }
 
 
+void test_cgetc(void) {
+    while (true) {
+        unsigned char c = cgetc();
+
+        clrscr();
+        gohome();
+
+        cputdec( (unsigned long) c, 0, 0);
+    }
+}
+
 int main(void) {
-// #ifdef __MEGA65__
-//     txtScreen80x50();
-// #endif
+    // Setup screen.
+    conioinit();
+    flushkeybuf();
+    setextendedattrib(true);
+    clrscr();
+    bordercolor(COLOR_BLACK);
+    bgcolor(COLOR_BLACK);
+    textcolor(COLOR_WHITE);
+
+    // test_cgetc();
+
+    getscreensize(&screenX, &screenY);
 
     tsState *state = malloc(sizeof(tsState));
-
     state->lines=1;
     state->lineY=0; 
     state->xPos=0;
-    strcpy(state->zFilename, "test.txt,s");
+    strcpy(state->zFilename, "tespt.txt,s");
     state->doExit = false; 
     state->screenStart.xPos = 0;
     state->screenStart.yPos = 0;
-
-    state->screenEnd.yPos=48;
-    state->screenEnd.xPos=80;
-
+    state->screenEnd.yPos=screenY-3;
+    state->screenEnd.xPos=screenX;
     state->editMode = Default;
 
-    putchar(147);
 #ifdef __MEGA65__
-    puts("version: 0.000001 (this is very alpha)\n\n");
-    puts("current functionality / limitations:\n\n");
-    puts(" :r<filename>    will attempt to read in memory however odd bug with\n");
-    puts("                 drive error.\n\n");
-    puts(" :q              will exit.");
+    pcputsxy(1,1,"version: 0.000001 (this is very alpha)");
+    pcputsxy(1,4,"current functionality / limitations:");
+    pcputsxy(1,6," :r<filename>    will attempt to read in memory however odd bug with");
+    pcputsxy(1,7,"                 drive error.");
+    pcputsxy(1,8," :q              will exit.");
 #endif
 
     edit(state);
+    while (true) {
+        for (int i=0; i<16; i++) {
+            bgcolor(i);
+            bordercolor(15-i);
+        }
+    }
+
     return 0; 
 }
