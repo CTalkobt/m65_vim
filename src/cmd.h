@@ -1,7 +1,6 @@
 #ifndef CMD_H
 #define CMD_H
 
-#include <stddef.h>
 #include "editMode.h"
 #include "state.h"
 
@@ -11,7 +10,7 @@ tpfnCmd getcmd(EditMode mode, unsigned char kar);
 
 typedef struct {
     EditMode mode; 
-    char kar;
+    unsigned char kar;
     tpfnCmd cmd;
 } tsCmds;
 

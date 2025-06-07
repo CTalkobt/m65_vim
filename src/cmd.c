@@ -2,8 +2,10 @@
 #include <stdbool.h>
 
 #include "cmd.h"
+
 #include "editMode.h"
 #include "render.h"
+#include "mega65/conio.h"
 
 #ifndef CTRL
 #define CTRL(kar) ((kar)-'a')
@@ -43,8 +45,8 @@ tsCmds cmds[] = {
     {Insert, 255, NULL} // End of list. 
 };
 
-tpfnCmd getcmd(EditMode mode, unsigned char kar) {
-    for (tsCmds *cmd = &cmds[0]; cmd->cmd != NULL; cmd++) {
+tpfnCmd getcmd(const EditMode mode, unsigned char kar) {
+    for (const tsCmds *cmd = &cmds[0]; cmd->cmd != NULL; cmd++) {
         if (cmd->kar == kar && cmd->mode == mode) {
             return cmd->cmd;
         }
@@ -133,6 +135,7 @@ int cmdModeDefault(tsState *psState) {
 }
 
 int cmdModeCommand(tsState *psState) {
+    bordercolor(2);
     psState->editMode = Command; 
     return 0; 
 }
