@@ -3,18 +3,19 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+
 #include "editMode.h"
 
 //
 // Edit state. 
 //
-typedef struct tsXYPos {
+typedef struct {
     uint8_t xPos; 
     uint8_t yPos; 
-};
+} tsXYPos;
 
 
-typedef struct tsState {
+typedef struct {
     uint8_t lines;        // Number of lines within the files. 
     uint8_t lineY;        // Current .Y position within buffer. 
     uint8_t xPos;         // Current .X position within line. 
@@ -23,7 +24,7 @@ typedef struct tsState {
     bool doExit;       // 0 = don't exit, !0 = exiting. 
     tsXYPos screenStart;  // Start X,Y of render screen. 
     tsXYPos screenEnd;    // End X,Y of render screen.
-    EditMode editMode;    // Current edit mode. 
-}; 
+    EditMode editMode;    // Current edit mode.
+} tsState;
 
 #endif
