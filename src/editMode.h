@@ -1,10 +1,10 @@
 #ifndef EDITMODE_H
 #define EDITMODE_H
 
-enum EditMode {
+typedef enum {
     Default,
     Insert,
     Command
-} ; 
+} EditMode;
 
 #endif

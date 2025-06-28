@@ -1,7 +1,6 @@
 #ifndef CMD_H
 #define CMD_H
 
-#include <stddef.h>
 #include "editMode.h"
 #include "state.h"
 
@@ -11,10 +10,11 @@ tpfnCmd getcmd(EditMode mode, unsigned char kar);
 
 typedef struct {
     EditMode mode; 
-    char kar;
+    unsigned char kar;
     tpfnCmd cmd;
 } tsCmds;
 
+int cmdHelp(tsState *psState);
 int cmdGotoLine(tsState *psState); 
 int cmdCursorLeft(tsState *psState); 
 int cmdCursorUp(tsState *psState); 
@@ -31,5 +31,7 @@ int cmdPageForward(tsState *psState);
 int cmdPageBack(tsState *psState); 
 int cmdModeDefault(tsState *psState); 
 int cmdModeCommand(tsState *psState); 
+
+void cmdRepeat(tsState *psState);
 
 #endif
