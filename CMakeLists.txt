@@ -28,7 +28,6 @@ FetchContent_MakeAvailable(CPM)
 #CPMAddPackage(NAME mega65libc GITHUB_REPOSITORY mega65/mega65-libc GIT_TAG development)
 CPMAddPackage(NAME mega65libc GITHUB_REPOSITORY CTalkobt/mega65-libc GIT_TAG development)
 
-## @@TODO:Use add_compile_options instead.
 set(CMAKE_C_FLAGS "\
     ${CMAKE_C_FLAGS}\
     -fno-signed-char\
@@ -47,22 +46,15 @@ set(CMAKE_C_FLAGS "\
 #)
 
 
-# Let's set a rather loud warning level
-set(CLANG_WARNINGS
-        -Wall
-        -Wextra # reasonable and standard
-        -Wshadow # warn the user if a variable declaration shadows one from a parent context
-        -Wcast-align # warn for potential performance problem casts
-        -Wunused # warn on anything being unused
-        -Wconversion # warn on type conversions that may lose data
-#        -Wsign-conversion # warn on sign conversions
-        -Wnull-dereference # warn if a null dereference is detected
-        -Wformat=2 # warn on security issues around functions that format output (ie printf)
-        -Wimplicit-fallthrough # warn on statements that fallthrough without an explicit annotation
-        -Wpedantic # warn if non-standard C/C++ is used
-        -Wno-c23-extensions
-        -Wno-language-extension-token
-)
+
+#-Wall
+#-Wno-language-extension-token
+#-Wshadow # warn the user if a variable declaration shadows one from a parent context
+#-Wcast-align # warn for potential performance problem casts
+#-Wunused # warn on anything being unused
+#-Wnull-dereference # warn if a null dereference is detected
+#-Wformat=2 # warn on security issues around functions that format output (ie printf)
+#-Wimplicit-fallthrough # warn on statements that fallthrough without an explicit annotation
 
 
 add_executable(vim
@@ -91,4 +83,19 @@ add_executable(test
         src/lib/m65/kbd.h
 )
 target_link_libraries(test mega65libc)
+
+# Let's set a rather loud warning level
+target_compile_options(vim PRIVATE
+        -Wno-c23-extensions
+        -Wshadow # warn the user if a variable declaration shadows one from a parent context
+        -Wcast-align # warn for potential performance problem casts
+        -Wunused # warn on anything being unused
+        -Wnull-dereference # warn if a null dereference is detected
+        -Wformat=2 # warn on security issues around functions that format output (ie printf)
+        -Wimplicit-fallthrough # warn on statements that fallthrough without an explicit annotation
+
+        -Wno-sign-conversion
+        -Wno-int-conversion
+        -Wno-pointer-sign
+)
 
