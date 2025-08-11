@@ -27,10 +27,14 @@ int cmdCursorNextWord(tsState *psState);
 int cmdCursorLineEnd(tsState *psState); 
 int cmdCursorLineStart(tsState *psState); 
 int cmdModeInsert(tsState *psState); 
+int cmdModeAppend(tsState *psState); 
 int cmdPageForward(tsState *psState); 
 int cmdPageBack(tsState *psState); 
 int cmdModeDefault(tsState *psState); 
 int cmdModeCommand(tsState *psState); 
+int cmdRead(tsState *psState, char *pzCmdRemainder);
+int cmdWrite(tsState *psState, char *pzCmdRemainder, bool force);
+int cmdDirectoryListing(tsState *psState);
 
 void cmdRepeat(tsState *psState);
 

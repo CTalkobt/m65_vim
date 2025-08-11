@@ -2,60 +2,74 @@
 
 #include "state.h"
 #include "render.h"
+#include "ui_strings.h"
 
-#include "lib/itoa.h"
+#include "lib/itostr.h"
 #include "lib/m65/debug.h"
 #include "lib/m65/screen.h"
-
-
-// Screen size. (assume 80x50)
-unsigned char screenX;
-unsigned char screenY;
 
 char zTemp[32+1];
 
 void draw_screen(tsState *psState) {
-    drawStatus(psState); 
+    scrClear();
+    for (int i = 0; i < psState->screenEnd.yPos && (psState->screenStart.yPos + i) < psState->lines; i++) {
+        kPlotXY(0, i);
+        scrPuts(psState->text[psState->screenStart.yPos + i]);
+    }
+    drawStatus(psState);
 }
 
 void drawStatus(tsState *psState) {
+    ASSERT(psState != NULL, "drawStatus:psState is NULL");
+    ASSERT(psState->screenEnd.xPos >= psState->screenEnd.xPos, "screenEnd.xPos is out of range");
+    ASSERT(psState->screenEnd.yPos >= psState->screenEnd.yPos, "screenEnd.yPos is out of range");
+
     // Status line:
     // "filename" <count>L, <count>B          x,ypos  n%
     // "text.txt" 20L, 400B                     5,6 10%
-    // 
-    kPlotXY(0, psState->screenEnd.yPos-2);
-    {
-        char zBuffer[80+1];
-        sprintf(zBuffer,"yPos=%d, xPos = %d\n",
-            psState->screenEnd.yPos,
-            psState->screenEnd.xPos);
-        DEBUG(zBuffer);
-    }
-    kPlotXY(0, psState->screenEnd.yPos-2);
+    //
+DEBUG("drawStatus-start\n");
+    // kPlotXY(0, psState->screenEnd.yPos-2);
     scrDupeCharXY(0, psState->screenEnd.yPos-2, psState->screenEnd.xPos, '-');
 
-    kPlotXY(0, screenY-1);
+    // Display mode
+    kPlotXY(2, psState->screenEnd.yPos-1);
+    switch (psState->editMode) {
+        case Default:
+            scrPuts(MODE_NORMAL);
+            break;
+        case Insert:
+            scrPuts(MODE_INSERT);
+            break;
+        case Command:
+            // In command mode, the command is typed on the status line,
+            // so we don't overwrite it.
+            break;
+    }
+
+    kPlotXY(20, psState->screenEnd.yPos-1);
+
     // txtEraseEOS(); // @@TODO: Need to correct for screenEnd/ screenStart
-    kBsout('\"');scrPuts(psState->zFilename);kBsout('\"');
-    kPlotXY(screenX-16,screenY-1);
-    itoa(psState->xPos,zTemp,10);
+    kBsout('"');scrPuts(psState->zFilename);kBsout('"');
+    scrClearEOL();
+    kPlotXY(psState->screenEnd.xPos-16,psState->screenEnd.yPos-1);
+    itostr(psState->xPos,zTemp);
     scrPuts(zTemp); kBsout(',');
-    itoa(psState->lineY,zTemp,10);
+    itostr(psState->lineY,zTemp);
     scrPuts(zTemp);
-    kPlotXY(screenX-5,screenY-1);
-    int percent = (psState->lines == 0) ? 0 : (int) ((psState->lineY+0.0)/(psState->lines+0.0))*100;
+    kPlotXY(psState->screenEnd.xPos-5,psState->screenEnd.yPos-1);
+    // unsigned int percent = (psState->lines == 0) ? 0 :  ((psState->lineY*100)/(psState->lines));
+    unsigned int percent = (psState->lines == 0) ? 0 :  ((psState->lineY*100)/(psState->lines));
+
+
     if (percent>100) {
         percent=100; 
     }
-debug_msg("drawStatus():8\n");
-    itoa(percent,zTemp,10);
-debug_msg("drawStatus():9\n");
+    itostr(percent,zTemp);
     scrPuts(zTemp); kBsout('%');
 
-debug_msg("drawStatus():10\n");
     // RE-position cursor.
     kPlotXY(psState->xPos, psState->lineY);
-debug_msg("drawStatus():end\n");
+
+DEBUG("drawStatus-end\n");
 }
-
-

@@ -27,9 +27,9 @@ void scrCursorOn(void);
 
 void scrCursorOff(void);
 
-void scrColor(int screenColor, int brdrColor);
+void scrColor(unsigned char screenColor, unsigned char brdrColor);
 
-void inline scrPuts(char *s) {
+void inline scrPuts(const char *s) {
     while (*s != '\0') {
         kBsout(*s);
         s++;
@@ -50,3 +50,8 @@ void inline scrPutsXY(unsigned char x, unsigned char y, char *pzString) {
 }
 
 void scrPutDec(unsigned long n, unsigned char leadingZeros);
+
+void inline scrClearEOL(void) {
+    kBsout(27);
+    kBsout('Q');
+}

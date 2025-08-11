@@ -18,8 +18,7 @@ inline unsigned char kb_hit(void)
 
 
 /**
- * Returns petscii value from the keyboard. This is similar to cgetc however it will also
- * automatically invoke togglecase when Shift-Mega is pressed.
+ * Returns ascii value from the keyboard. 
  * @return
  */
 unsigned char kbdGetKey(void);

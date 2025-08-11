@@ -32,6 +32,7 @@ void scrScreenMode(enum ScreenMode mode) {
             _curScreenH = 50;
             cbm_k_bsout(27);
             cbm_k_bsout('5');
+            [[fallthrough]];
         default:
             break;
     }
@@ -55,31 +56,35 @@ void scrClearLine(unsigned int y) {
     lfill( screenRamBase + offset, ' ', cBytes);
 }
 
-void scrColor(int screenColor, int brdrColor) {
+void scrColor(unsigned char screenColor, unsigned char brdrColor) {
     *((unsigned char *)53281) = screenColor;
     *((unsigned char *)53280) = brdrColor;
+}
+
+void scrTextColor(char textColor) {
+    *((unsigned char *)0xf1) = textColor;
 }
 
 void inline scrCursorOn(void) {
     __asm__ volatile (
         "clc\n"
-        "jsr\t$ff35\n" : /* no output */ : /*no input*/ : /*clobbers */ "a","c");
+        "jsr $ff35\n" : /* no output */ : /*no input*/ : /*clobbers */ "a","p");
 }
 
 void inline scrCursorOff(void) {
     __asm__ volatile (
     "sec\n"
-    "jsr\t$ff35\n" : /*out*/ :/*in*/ :/*clobber */"a","c");
+    "jsr $ff35\n" : /*out*/ :/*in*/ :/*clobber */"a","p");
 }
 
 static const unsigned char hexDigits[] = { '0', '1', '2', '3', '4', '5', '6',
     '7', '8', '9', 0x41, 0x42, 0x43, 0x44, 0x45, 0x46 };
 
 void scrPutDec(unsigned long n, unsigned char leadingZeros) {
-    unsigned char buffer[11];
+    char buffer[11];
     unsigned char rem = 0;
     unsigned char digit = 9;
-
+DEBUG("scrPutDec-start\n");
     buffer[10] = '\0';
     do {
         rem = n % 10;
@@ -90,6 +95,6 @@ void scrPutDec(unsigned long n, unsigned char leadingZeros) {
     while (((int)digit >= 0) && (leadingZeros--)) {
         buffer[digit--] = hexDigits[0];
     }
-
+DEBUG("scrPutDec-end\n");
     scrPuts(&buffer[digit + 1]);
 }

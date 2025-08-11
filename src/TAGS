@@ -1,0 +1,149 @@
+
+cmd.c,1295
+#define CTRL(CTRL15,211
+EditMode x = Default; x18,249
+tsCmds cmds[] = {cmds20,273
+tpfnCmd getcmd(const EditMode mode, unsigned char kar) {getcmd54,1391
+int cmdGotoLine(tsState *psState) {cmdGotoLine72,1873
+int cmdCursorLeft(tsState *psState) {cmdCursorLeft79,2066
+int cmdCursorUp(tsState *psState) {cmdCursorUp90,2290
+int cmdCursorDown(tsState *psState) {cmdCursorDown101,2561
+int cmdCursorRight(tsState *psState) {cmdCursorRight108,2707
+int cmdCursorScreenTop(tsState *psState) {cmdCursorScreenTop133,3390
+int cmdCursorScreenBottom(tsState *psState) {cmdCursorScreenBottom139,3504
+int cmdLineJoin(tsState *psState) {cmdLineJoin144,3608
+int cmdCursorNextWord(tsState *psState) {cmdCursorNextWord149,3705
+int cmdCursorLineEnd(tsState *psState) {cmdCursorLineEnd154,3805
+int cmdCursorLineStart(tsState *psState) {cmdCursorLineStart159,3904
+int cmdModeInsert(tsState *psState) {cmdModeInsert164,4005
+int cmdPageForward(tsState *psState) {cmdPageForward169,4101
+int cmdPageBack(tsState *psState) {cmdPageBack174,4198
+int cmdModeDefault(tsState *psState) {cmdModeDefault179,4292
+int cmdModeCommand(tsState *psState) {cmdModeCommand184,4389
+int cmdHelp(tsState *psState) {cmdHelp189,4480
+int cmdRead(tsState *psState, char *pzCmdRemainder) {cmdRead195,4568
+
+lib/itostr.c,51
+void itostr(int value, char* buffer) {itostr8,86
+
+lib/itostr.h,0
+
+lib/m65/kbd.h,73
+#define KBD_HKBD_H6,52
+inline unsigned char kb_hit(void)kb_hit14,147
+
+lib/m65/debug.h,115
+#define DEBUG_ONDEBUG_ON5,60
+#define DEBUG(DEBUG8,94
+#define ASSERT(ASSERT10,125
+#define DEBUG(DEBUG12,187
+
+lib/m65/screen.h,532
+enum ScreenMode {ScreenMode4,34
+    _80x25,_80x255,52
+    _80x50,_80x506,64
+    _40x25_40x257,76
+void inline scrDupeCharXY(unsigned char x, unsigned char y, unsigned char n, unsigned char kar) {scrDupeCharXY14,189
+void inline scrPuts(char *s) {scrPuts32,576
+inline void scrClear(void) {scrClear39,674
+void inline scrPlotXY(unsigned char x, unsigned char y) {scrPlotXY43,723
+void inline scrPutsXY(unsigned char x, unsigned char y, char *pzString) {scrPutsXY47,802
+void inline scrClearEOL(void) {scrClearEOL54,982
+
+lib/m65/kernal.c,717
+unsigned char k_acptr(void) {k_acptr14,165
+bool kAddKey(unsigned char key) {kAddKey22,306
+void kReset(enum ResetType resetType) {kReset31,470
+unsigned char kBasin(void) {kBasin38,638
+unsigned char kGetin(void) {kGetin45,769
+void kPlotXY(unsigned char x, unsigned char y) {kPlotXY52,900
+void kSetnam(char * pzFilename) {kSetnam76,1331
+bool kOpen(unsigned char fileNum, unsigned char *pzFilename, unsigned char device, unsigned char secAddress) {kOpen85,1625
+bool kReadLine(unsigned char fileNum, char *buffer, unsigned length) {kReadLine106,2031
+void inline kChkin(unsigned char lfn) {kChkin137,2890
+void inline kClrchn(void) {kClrchn145,3029
+void kClose(unsigned char fileNum) {kClose149,3100
+
+lib/m65/kernal.h,356
+#define KERNAL_HKERNAL_H6,55
+enum ResetType {ResetType15,187
+    WarmBoot,WarmBoot17,233
+    HypervisorReset,HypervisorReset20,276
+    WarmBootBasicRun,WarmBootBasicRun23,363
+    C64ModeC64Mode26,414
+void inline kBsout(unsigned char kar) {kBsout45,658
+void inline kSetBank(unsigned char memBank, unsigned char filenameBank) {kSetBank56,873
+
+lib/m65/screen.c,776
+unsigned char _curScreenW; // NOLINT(*-reserved-identifier)_curScreenW12,147
+unsigned char _curScreenH; // NOLINT(*-reserved-identifier)_curScreenH13,207
+void scrScreenMode(enum ScreenMode mode) {scrScreenMode16,269
+void scrDupeChar(unsigned char n, unsigned char kar) {scrDupeChar41,864
+void scrClearLine(unsigned int y) {scrClearLine48,999
+void scrColor(unsigned char screenColor, unsigned char brdrColor) {scrColor59,1479
+void scrTextColor(char textColor) {scrTextColor64,1638
+void inline scrCursorOn(void) {scrCursorOn68,1719
+void inline scrCursorOff(void) {scrCursorOff74,1874
+static const unsigned char hexDigits[] = { '0', '1', '2', '3', '4', '5', '6',hexDigits80,2004
+void scrPutDec(unsigned long n, unsigned char leadingZeros) {scrPutDec83,2140
+
+lib/m65/kbd.c,138
+unsigned char kbdHit(void)kbdHit13,123
+void kbdBufferClear(void)kbdBufferClear21,244
+unsigned char kbdGetKey(void) {kbdGetKey28,335
+
+editMode.h,136
+#define EDITMODE_HEDITMODE_H2,19
+    Default,Default5,54
+    Insert,Insert6,67
+    CommandCommand7,79
+} EditMode;EditMode8,91
+
+render.c,227
+unsigned char screenX = 80;screenX12,172
+unsigned char screenY = 50;screenY13,200
+char zTemp[32+1];zTemp15,229
+void draw_screen(tsState *psState) {draw_screen17,248
+void drawStatus(tsState *psState) {drawStatus21,314
+
+state.h,735
+#define STATE_HSTATE_H2,16
+    uint8_t xPos; xPos13,137
+    uint8_t yPos; yPos14,156
+} tsXYPos;tsXYPos15,175
+    uint8_t lines;        // Number of lines within the files. lines19,205
+    uint8_t lineY;        // Current .Y position within buffer. lineY20,269
+    uint8_t xPos;         // Current .X position within line. xPos21,334
+    char zFilename[88+1]; // Filename of file being edited. zFilename23,398
+    bool doExit;       // 0 = don't exit, !0 = exiting. doExit24,459
+    tsXYPos screenStart;  // Start X,Y of render screen. screenStart25,516
+    tsXYPos screenEnd;    // End X,Y of render screen.screenEnd26,574
+    EditMode editMode;    // Current edit mode.editMode27,629
+} tsState;tsState28,677
+
+test.c,183
+char zBuffer[255+1];zBuffer16,274
+void read_line(char * str, int n) {read_line22,366
+void test_itostr(int i) {test_itostr58,1171
+int main(int argc, char *argv[]) {main72,1389
+
+render.h,31
+#define RENDER_HRENDER_H2,17
+
+cmd.h,198
+#define CMD_HCMD_H2,14
+typedef int (*tpfnCmd)(tsState *psState);tpfnCmd7,71
+    EditMode mode; mode12,183
+    unsigned char kar;kar13,203
+    tpfnCmd cmd;cmd14,226
+} tsCmds;tsCmds15,243
+
+vim.c,513
+#define MAX_CMD MAX_CMD15,245
+static void setupCommandPrompt(tsState *psState) {setupCommandPrompt17,265
+static void updateCommandDisplay(tsState *psState, char *zCmd) {updateCommandDisplay24,419
+static bool processKeyInput(char *zCmd, unsigned int kar, bool *escape) {processKeyInput35,659
+static void executeCommand(tsState *psState, char *zCmd) {executeCommand77,1723
+void editCommand(tsState *psState) {editCommand97,2141
+void edit(tsState *psState) {edit133,2886
+int main(void) {main178,4196
