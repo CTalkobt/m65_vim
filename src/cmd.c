@@ -53,7 +53,7 @@ tsCmds cmds[] = {
     {Default, CTRL('b'), cmdPageBack},
 
     {Default, ':', cmdModeCommand},
-    {Insert, 27, cmdModeDefault},
+    {Insert, 27, cmdModeDefault}, // Handle Esc key in Insert mode
 
     {Insert, 255, NULL} // End of list. 
 };
