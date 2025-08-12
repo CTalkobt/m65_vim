@@ -61,7 +61,6 @@ DEBUG("drawStatus-start\n");
     // unsigned int percent = (psState->lines == 0) ? 0 :  ((psState->lineY*100)/(psState->lines));
     unsigned int percent = (psState->lines == 0) ? 0 :  ((psState->lineY*100)/(psState->lines));
 
-
     if (percent>100) {
         percent=100; 
     }

@@ -17,20 +17,17 @@
 
 #define MEMORY_RESERVE 2048 // Reserve 2KB for stack and other needs
 
-// Probes available memory by finding the largest allocatable block.
 unsigned int getFreeMemory(void) {
     unsigned int size = 1024;
     unsigned int last_success = 0;
     void *p = NULL;
 
-    // Coarse-grained search
     while ((p = malloc(size))) {
         free(p);
         last_success = size;
         size += 1024;
     }
 
-    // Fine-grained search
     size = last_success + 128;
     while ((p = malloc(size))) {
         free(p);
@@ -54,8 +51,6 @@ void freeTextBuffer(tsState *state) {
 
 #define INITIAL_MAX_LINES 100
 
-// ... (getFreeMemory and freeTextBuffer remain the same)
-
 int initTextBuffer(tsState *state) {
     state->text = malloc(INITIAL_MAX_LINES * sizeof(char*));
     if (!state->text) {
@@ -68,7 +63,6 @@ int initTextBuffer(tsState *state) {
     
     return INITIAL_MAX_LINES;
 }
-
 
 int main(void) {
     asm volatile ("cli");
@@ -106,7 +100,6 @@ int main(void) {
     state->editMode = Default;
     state->zFilename[0] = '\0';
     
-    // Initialize with a simple startup message
     allocLine(state, 0, "vIM3 eDITOR - v0.1");
     state->lines = 1;
 

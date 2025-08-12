@@ -247,4 +247,3 @@ unsigned char kOpenFile(unsigned char *pzFilename, unsigned char fileNum, unsign
 
     return status;
 }
-

@@ -1,4 +1,3 @@
-
 #include "screen.h"
 
 #include <cbm.h>
