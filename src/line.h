@@ -6,6 +6,6 @@
 
 // Allocates or reallocates a line in the text buffer
 bool allocLine(tsState *psState, int lineIndex, const char* new_content);
-void insertLine(tsState *psState, int at, const char* content);
+bool insertLine(tsState *psState, int index, const char* content);
 
 #endif

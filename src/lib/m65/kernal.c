@@ -196,7 +196,7 @@ void kWriteLine(uint8_t channel, const char* buffer) {
 
 unsigned char kOpenFile(unsigned char *pzFilename, unsigned char fileNum, unsigned char device, FileMode mode) {
     unsigned char status;
-    unsigned char filename_len = strlen(pzFilename);
+    unsigned char filename_len = strlen( (const char *)pzFilename);
     unsigned char pz_low = (unsigned long)pzFilename & 0xff;
     unsigned char pz_high = ((unsigned long)pzFilename >> 8) & 0xff;
 
