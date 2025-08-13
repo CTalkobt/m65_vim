@@ -6,6 +6,11 @@
 #include "m65/debug.h"
 
 void itostr(int value, char* buffer) {
+    if (buffer == NULL) {
+        DEBUG("itostr: Buffer is NULL\n");
+        return;
+    }
+
     char temp_buffer[7]; // Max 5 digits, sign + null terminator for 16-bit int
     int i = 0;
     bool is_negative = false;
