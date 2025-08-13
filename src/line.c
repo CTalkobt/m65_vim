@@ -10,20 +10,30 @@
 #include "line.h"
 #include "state.h"
 
+/**
+ * Allocate and set line to given text. 
+ * 
+ * @param psState Current editor state
+ * @param lineIndex Line to adjust / modify.
+ * @param new_content New text line.
+ *
+ * @return false if unable to update line. 
+*/
 bool allocLine(tsState *psState, int lineIndex, const char* new_content) {
-DEBUG("allocLine: new_content = ");
-DEBUG(new_content);
     if (lineIndex >= psState->max_lines) {
+        DEBUG("allocLine: ERROR: lineIndex > max_lines");
         return false;
     }
 
     int len = strlen(new_content);
     if (len >= MAX_LINE_LENGTH) {
+        DEBUG("allocLine: ERROR: Attempting to update past MAX_LINE_LENGTH");
         return false;
     }
 
     char* new_line = realloc(psState->text[lineIndex], len + 1);
     if (!new_line) {
+        DEBUG("allocLine: ERROR: Memory allocation failed."); 
         kPlotXY(0, psState->screenEnd.yPos - 1);
         scrPuts("Memory allocation failed!");
         return false;
