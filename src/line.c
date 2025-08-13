@@ -51,6 +51,7 @@ void insertLine(tsState *psState, int at, const char* content) {
     for (int i = psState->lines; i > at; i--) {
         psState->text[i] = psState->text[i-1];
     }
+    psState->text[at] = NULL;
 
     allocLine(psState, at, content);
     psState->lines++;
