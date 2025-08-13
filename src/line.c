@@ -2,10 +2,17 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "lib/m65/kernal.h"
+#include "lib/m65/screen.h"
+#include "lib/m65/debug.h"
+
+
 #include "line.h"
 #include "state.h"
 
 bool allocLine(tsState *psState, int lineIndex, const char* new_content) {
+DEBUG("allocLine: new_content = ");
+DEBUG(new_content);
     if (lineIndex >= psState->max_lines) {
         return false;
     }
@@ -21,6 +28,7 @@ bool allocLine(tsState *psState, int lineIndex, const char* new_content) {
         scrPuts("Memory allocation failed!");
         return false;
     }
+    strcpy(new_line, new_content);
     psState->text[lineIndex] = new_line;
     return true;
 }

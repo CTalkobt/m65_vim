@@ -100,8 +100,11 @@ int main(void) {
     state->editMode = Default;
     state->zFilename[0] = '\0';
     
-    allocLine(state, 0, "vIM3 eDITOR - v0.1");
+    bool initialAlloc = allocLine(state, 0, "vIM3 eDITOR - v0.1");
+    ASSERT(initialAlloc, "iNITIAL ALLOCATION FAILED.");
     state->lines = 1;
+    DEBUG("Line 0:");
+    DEBUG(state->text[0]);
 
     loadLine(state, 0);
 

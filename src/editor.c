@@ -162,6 +162,11 @@ void edit(tsState *psState) {
                             draw_screen(psState);
                             break;
                         }
+                        case 27: // Escape. 
+                        case 3:  // Run/Stop
+                            loadLine(psState, psState->lineY);
+                            psState->editMode = Default;
+                            break;
                         default:
                             if (kar >= 32 && kar <= 126 && len < MAX_LINE_LENGTH - 1) {
                                 memmove(&line[psState->xPos + 1], &line[psState->xPos], len - psState->xPos + 1);

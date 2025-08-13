@@ -4,6 +4,7 @@
 
 #include "buffer.h"
 #include "state.h"
+#include "line.h"
 
 void commitLine(tsState *psState) {
     if (allocLine(psState, psState->lineY, psState->editBuffer)) {
