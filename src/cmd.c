@@ -10,11 +10,6 @@
 #include "editMode.h"
 #include "render.h"
 #include "lib/m65/debug.h"
-#include "lib/m65/kernal.h"
-#include "lib/m65/screen.h"
-#include "lib/m65/kbd.h"
-#include "state.h"
-#include "line.h"
 #include "buffer.h"
 #include "editor.h"
 
@@ -55,7 +50,7 @@ tsCmds cmds[] = {
     {Default, ':', cmdModeCommand},
     {Insert, 27, cmdModeDefault}, // Handle Esc key in Insert mode
 
-    {Insert, 255, NULL} // End of list. 
+    {Insert, 255, NULL} // End of the list.
 };
 
 tpfnCmd getcmd(const EditMode mode, unsigned char kar) {
@@ -132,13 +127,13 @@ int cmdLineJoin(tsState *psState) {
     if (psState->lineY < psState->lines - 1) {
         char *currentLine = psState->text[psState->lineY];
         char *nextLine = psState->text[psState->lineY + 1];
-        int currentLen = strlen(currentLine);
-        int nextLen = strlen(nextLine);
+        uint16_t currentLen = strlen(currentLine);
+        uint16_t nextLen = strlen(nextLine);
 
         if (currentLen + nextLen + 1 < MAX_LINE_LENGTH) {
             currentLine[currentLen] = ' ';
             strcpy(&currentLine[currentLen + 1], nextLine);
-            for (int i = psState->lineY + 1; i < psState->lines; i++) {
+            for (uint16_t i = psState->lineY + 1; i < psState->lines; i++) {
                 psState->text[i] = psState->text[i + 1];
             }
             psState->text[psState->lines -1] = NULL;

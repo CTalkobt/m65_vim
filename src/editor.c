@@ -144,7 +144,7 @@ void edit(tsState *psState) {
                     break;
                 case Insert: {
                     char *line = psState->editBuffer;
-                    int len = strlen(line);
+                    uint16_t len = strlen(line);
                     switch (kar) {
                         case 20: // Backspace
                             if (psState->xPos > 0) {
@@ -186,7 +186,7 @@ void edit(tsState *psState) {
                             }
                             break;
                     }
-                    // Redraw the modified line and update cursor
+                    // Redraw the modified line and update the cursor
                     kPlotXY(0, psState->lineY);
                     scrPuts(line);
                     scrClearEOL();

@@ -38,8 +38,7 @@ void scrScreenMode(enum ScreenMode mode) {
 }
 
 void scrDupeChar(unsigned char n, unsigned char kar) {
-    unsigned char i;
-    for (i = 0; i<n; i++) {
+    for (unsigned char i = 0; i<n; i++) {
         putchar(kar);
     }
 }

@@ -75,7 +75,6 @@ add_executable(vim
         src/lib/m65/kernal.h
         src/lib/m65/screen.c
         src/lib/m65/screen.h
-        test/testRunner.c
 )
 target_link_libraries(vim mega65libc)
 target_compile_definitions(vim PRIVATE DEBUG_ON)                                                                                                         

@@ -7,6 +7,6 @@
 void commitLine(tsState *psState);
 
 // Loads a line from the main text buffer into the edit buffer
-void loadLine(tsState *psState, int lineIndex);
+void loadLine(tsState *psState, uint16_t lineIndex);
 
 #endif

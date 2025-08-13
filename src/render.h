@@ -8,7 +8,7 @@
 /**
  * Draw screen. 
 */
-void draw_screen(tsState *psState); 
+void draw_screen(const tsState *psState); 
 
-void drawStatus(tsState *psState);
+void drawStatus(const tsState *psState);
 #endif

@@ -10,7 +10,7 @@
 
 char zTemp[32+1];
 
-void draw_screen(const tsState *psState) {
+void draw_screen(tsState *psState) {
     if (psState == NULL) return;
 
     scrClear();
@@ -27,7 +27,7 @@ void draw_screen(const tsState *psState) {
     drawStatus(psState);
 }
 
-void drawStatus(const tsState *psState) {
+void drawStatus(tsState *psState) {
     if (psState == NULL) return;
 
     ASSERT(psState != NULL, "drawStatus:psState is NULL");
@@ -60,7 +60,7 @@ void drawStatus(const tsState *psState) {
     kPlotXY(20, psState->screenEnd.yPos-1);
 
     kBsout('"');
-    scrPuts(psState->zFilename);
+    scrPuts(psState->zFilename ? psState->zFilename : "");
     kBsout('"');
     scrClearEOL();
 

@@ -44,7 +44,7 @@ void inline scrPlotXY(unsigned char x, unsigned char y) {
     kPlotXY(x,y);
 }
 
-void inline scrPutsXY(unsigned char x, unsigned char y, char *pzString) {
+void inline scrPutsXY(unsigned char x, unsigned char y, const char *pzString) {
     kPlotXY(x,y);
     scrPuts(pzString);
 }

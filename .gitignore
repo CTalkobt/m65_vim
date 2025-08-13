@@ -62,3 +62,22 @@ dkms.conf
 
 /build
 .aider*
+
+# CMake specifics
+CMakeFiles/
+CMakeCache.txt
+cmake_*
+compile_commands.json
+Makefile
+_deps
+cpm-package-lock.cmake
+
+# AI Tools
+.aider.*
+aider*.sh
+
+# Temp files
+**.swp
+
+# Binaries
+vim

@@ -10,17 +10,29 @@
 #include "state.h"
 
 /**
- * Allocate and set line to given text. 
- * 
+ * Allocate and set line to the given text.
+ *
  * @param psState Current editor state
  * @param lineIndex Line to adjust / modify.
  * @param new_content New text line.
  *
- * @return false if unable to update line. 
+ * @return false if unable to update the line.
 */
-bool allocLine(tsState *psState, int lineIndex, const char* new_content) {
+bool allocLine(const tsState *psState, uint16_t lineIndex, const char* new_content) {
+    if (psState == NULL) {
+        DEBUG("allocLine: ERROR: psState is NULL");
+        return false;
+    }
+
     if (lineIndex >= psState->max_lines) {
-        DEBUG("allocLine: ERROR: lineIndex > max_lines");
+        DEBUG("allocLine: ERROR: lineIndex out of range");
+        return false;
+    }
+    if (new_content == NULL) {
+        if (psState->text[lineIndex]) {
+            free(psState->text[lineIndex]);
+        }
+        psState->text[lineIndex] = NULL;
         return false;
     }
 
@@ -32,7 +44,7 @@ bool allocLine(tsState *psState, int lineIndex, const char* new_content) {
 
     char* new_line = realloc(psState->text[lineIndex], len + 1);
     if (!new_line) {
-        DEBUG("allocLine: ERROR: Memory allocation failed."); 
+        DEBUG("allocLine: ERROR: Memory allocation failed.");
         kPlotXY(0, psState->screenEnd.yPos - 1);
         scrPuts("Memory allocation failed!");
         return false;
@@ -51,8 +63,8 @@ bool allocLine(tsState *psState, int lineIndex, const char* new_content) {
  *
  * @return if able to successfully insert the line.
  */
-bool insertLine(tsState *psState, int index, const char* content) {
-    // Can't if we'd exceed max_lines.
+bool insertLine(tsState *psState, uint16_t index, const char* content) {
+    // Can't exceed max_lines.
     if (psState->lines >= psState->max_lines) {
         return false;
     }

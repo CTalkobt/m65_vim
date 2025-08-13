@@ -1,17 +1,15 @@
 #include <stdio.h>
 #include <mega65.h>
 #include <stdlib.h>
-#include <string.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #include "lib/m65/debug.h"
 #include "lib/m65/screen.h"
 #include "lib/m65/kbd.h"
-#include "mega65/memory.h"
 
-#include "state.h"
-#include "render.h"
 #include "editor.h"
+#include "state.h"
 #include "line.h"
 #include "buffer.h"
 
@@ -28,6 +26,7 @@ unsigned int getFreeMemory(void) {
         size += 1024;
     }
 
+
     size = last_success + 128;
     while ((p = malloc(size))) {
         free(p);
@@ -38,7 +37,7 @@ unsigned int getFreeMemory(void) {
     return last_success;
 }
 
-void freeTextBuffer(tsState *state) {
+void freeTextBuffer(const tsState *state) {
     if (state->text) {
         for (int i = 0; i < state->lines; i++) {
             if (state->text[i]) {

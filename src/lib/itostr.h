@@ -1,4 +1,5 @@
 #pragma once
+#include <stdint.h>
 
 /**
  * Converts an integer to a string.
@@ -8,5 +9,5 @@
  * @param value The integer to convert.
  * @param buffer A pointer to store the resulting string.
  */
-void itostr(int value, char* buffer);
+void itostr(uint16_t value, char* buffer);
 
