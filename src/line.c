@@ -6,7 +6,6 @@
 #include "lib/m65/screen.h"
 #include "lib/m65/debug.h"
 
-
 #include "line.h"
 #include "state.h"
 
