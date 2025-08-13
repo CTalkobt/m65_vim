@@ -19,8 +19,21 @@
  * @return false if unable to update line. 
 */
 bool allocLine(tsState *psState, int lineIndex, const char* new_content) {
+    // Basic NULL and bounds checks
+    if (psState == NULL) {
+        DEBUG("allocLine: ERROR: psState is NULL");
+        return false;
+    }
+    if (lineIndex < 0 || psState->max_lines == 0) {
+        DEBUG("allocLine: ERROR: lineIndex out of bounds");
+        return false;
+    }
     if (lineIndex >= psState->max_lines) {
         DEBUG("allocLine: ERROR: lineIndex > max_lines");
+        return false;
+    }
+    if (new_content == NULL) {
+        DEBUG("allocLine: ERROR: new_content is NULL");
         return false;
     }
 
@@ -52,6 +65,20 @@ bool allocLine(tsState *psState, int lineIndex, const char* new_content) {
  * @return if able to successfully insert the line.
  */
 bool insertLine(tsState *psState, int index, const char* content) {
+    // Basic NULL and bounds checks
+    if (psState == NULL) {
+        DEBUG("insertLine: ERROR: psState is NULL");
+        return false;
+    }
+    if (content == NULL) {
+        DEBUG("insertLine: ERROR: content is NULL");
+        return false;
+    }
+    if (index < 0 || index > psState->lines) {
+        DEBUG("insertLine: ERROR: index out of bounds");
+        return false;
+    }
+
     // Can't if we'd exceed max_lines.
     if (psState->lines >= psState->max_lines) {
         return false;

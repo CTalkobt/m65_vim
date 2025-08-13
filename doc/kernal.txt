@@ -1,0 +1,114 @@
+OPEN
+Address:
+JSR $FFC0
+Description:
+Open logical file
+Outputs:C flag Set on error
+A Error code, if error
+Remarks:Before calling OPEN, the program must call SETBNK, SETLFS, and SETNAM
+to set parameters for the file to open.
+The requested logical file number (LA) must be currently un-opened. Use
+LKUPLA to test for unused logical file numbers, if necessary. There can
+be up to ten logical files opened simultaneously.
+OPEN performs device-specific opening tasks for serial, RS-232, and
+keyboard and screen devices, including clearing the previous status and
+transmitting any given filename or command string supplied to SETNAM
+and SETBNK.
+OPEN sets the I/O status as appropriate. This can be read with READSS.
+An open file can be made the current input device with CHKIN, or the
+current output device with CKOUT. BASIN and GETIN read from the input
+device, and BSOUT writes to the output device.
+A program must close an open file when it is done using it. To close a
+specific file, use CLOSE. To close all files for a device, use CLOSE_ALL. To
+close all open files, use CLALL. When closing a disk command channel, set
+the Carry flag before calling CLOSE; see CLOSE for more information.
+The possible error codes returned by BASIN, BSOUT, CHKIN, CKOUT,
+CLOSE, LOAD, OPEN, SAVE, and SAVEFL are as follows:
+Error code Meaning
+1
+Too many files
+2
+File open
+3
+File not open
+4
+File not found
+5
+Device not present
+6
+Not input file
+7
+Not output file
+8
+Missing file name
+9
+Bad device number
+NOTE: Not all routines are capable of detecting all errors. In particular,
+OPEN does not detect a “File not found” error. This condition is not de-
+tected until the program tries to read from the file. Some error conditions
+are only reported by READSS after an operation. Disk drives may report
+other error conditions over the command channel.
+
+SETLFS
+Address:
+JSR $FFBA
+Description:
+Set file, device, secondary address
+Inputs:A The logical file number (LA)
+X The device number (FA)
+Y The secondary address, or $FF (SA)
+Remarks:SETLFS must be used for high-level file operations (OPEN, LOAD, SAVE),
+along with SETBNK and SETNAM.
+The logical file number must be unique among opened files. If used with
+OPEN, it must not yet be open.
+If the secondary address does not apply, set Y to $FF. For disk drives,
+secondary addresses 0 and 1 are reserved for LOAD and SAVE, and 15
+is the command channel.
+
+SETBNK
+Address:
+JSR $FF6B
+Description:
+Set megabyte and bank for I/O and filename memory address
+Inputs:
+For banks 0 – 5:
+A The memory bank
+X The filename bank
+For 28-bit addresses:
+A Bit 7 set, bits 0 – 3 = bits 24 – 27 of memory address
+Y Bits 16 – 23 of memory address
+X Bit 7 set, bits 0 – 3 = bits 24 – 27 of filename address
+Z Bits 16 – 23 of filename address
+Remarks:
+SETBNK must be used for any memory I/O operation, along with SETLFS
+and SETNAM for opening files. The lower two bytes of each address are
+arguments to other calls.
+For backwards compatibility with the C65 KERNAL, SETBNK has two sep-
+arate modes, one for banks 0 – 5 in the first megabyte of memory, and
+another for 28-bit addresses.
+If the first register’s bit 7 is clear, it represents an address in the first
+megabyte, and the value is the bank number. For example, if A = $04,
+then the memory address is in bank 4 of the first megabyte ($004.xxxx).
+If the first register’s bit 7 is set, it represents a 28-bit address, and the
+lower nibble of the first register is the top-most nibble of the address.
+The second register represents the next two nibbles of the address. For
+example, if A = $88 and Y = $03, then the memory address is a 28-bit
+address of the form $803.xxxx.
+The memory address is set with input registers A and Y. The filename ad-
+dress is set with input registers X and Z. The memory bank and filename
+bank can be different, and can use bank mode or 28-bit mode indepen-
+dently.
+
+SETNAM
+Address:
+JSR $FFBD
+Description:
+Set filename pointers
+Inputs:A The string length, or $00
+X The string address, low
+Y The string address, high
+Remarks:SETNAM must be used for high-level file operations (OPEN, LOAD, SAVE),
+along with SETBNK and SETLFS.
+If a filename is not appropriate for the I/O device, SETNAM must be
+called with A = $00 (and any values for X and Y).
+The bank for the address is set by SETBNK.

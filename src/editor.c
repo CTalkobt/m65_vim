@@ -158,8 +158,13 @@ void edit(tsState *psState) {
                             char temp_split[MAX_LINE_LENGTH];
                             strcpy(temp_split, &line[psState->xPos]);
                             line[psState->xPos] = '\0';
-                            commitLine(psState);
+
+                            // The order here is critical to avoid memory corruption.
+                            // 1. Insert a new line with the content that will be on the next line.
                             insertLine(psState, psState->lineY + 1, temp_split);
+                            // 2. Now, commit the changes to the current line.
+                            commitLine(psState);
+
                             psState->lineY++;
                             psState->xPos = 0;
                             psState->isDirty = true;

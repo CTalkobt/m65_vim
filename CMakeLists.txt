@@ -75,91 +75,38 @@ add_executable(vim
         src/lib/m65/kernal.h
         src/lib/m65/screen.c
         src/lib/m65/screen.h
+        test/testRunner.c
 )
 target_link_libraries(vim mega65libc)
 target_compile_definitions(vim PRIVATE DEBUG_ON)                                                                                                         
 
-
 add_executable(vim_test
-        test/test.c
-        test/suites/test_itostr.c
-        test/suites/test_cmd.c
-        test/suites/test_vim.c
-        test/suites/test_render.c
-        test/suites/test_insert_mode.c
+        test/LineTestSuite.h
+        test/testRunner.c
+        test/LineAllocationAndInsertionTests.c
+        test/itostr_extended_test_suite.c
+        test/itostr_test_suite.c
         src/cmd.c
         src/editor.c
+        src/render.c
         src/line.c
         src/buffer.c
         src/lib/itostr.c
-        src/lib/m65/kernal.c
-        src/lib/m65/screen.c
+        src/lib/itostr.h
+        src/lib/m65/debug.h
+        src/lib/m65/kbd.h
         src/lib/m65/kbd.c
+        src/lib/m65/kernal.c
+        src/lib/m65/kernal.h
+        src/lib/m65/screen.c
+        src/lib/m65/screen.h
+        test/LineTestSuite.h
+
 )
 target_link_libraries(vim_test mega65libc)
 target_include_directories(vim_test PRIVATE src)
+target_include_directories(vim_test PRIVATE test)
 target_compile_definitions(vim_test PRIVATE DEBUG_ON)
-
-add_executable(vim_test_cmd_read
-        test/suites/test_cmd_read.c
-        src/cmd.c
-        src/line.c
-        src/buffer.c
-        src/lib/itostr.c
-        # Note: We do NOT include kernal.c here, so the mocks are used.
-)
-target_link_libraries(vim_test_cmd_read mega65libc)
-target_include_directories(vim_test_cmd_read PRIVATE src)
-target_compile_definitions(vim_test_cmd_read PRIVATE DEBUG_ON)
-
-add_executable(vim_test_render
-        test/suites/test_render_mocked.c
-        src/render.c
-        # Note: We do NOT include screen.c or itostr.c here, so the mocks are used.
-)
-target_link_libraries(vim_test_render mega65libc)
-target_include_directories(vim_test_render PRIVATE src)
-target_compile_definitions(vim_test_render PRIVATE DEBUG_ON)
-
-add_executable(vim_test_cmd_write
-        test/suites/test_cmd_write.c
-        src/cmd.c
-        src/buffer.c
-        src/line.c
-        # Mocks are in the test file
-)
-target_link_libraries(vim_test_cmd_write mega65libc)
-target_include_directories(vim_test_cmd_write PRIVATE src)
-target_compile_definitions(vim_test_cmd_write PRIVATE DEBUG_ON)
-
-add_executable(vim_test_commands
-        test/suites/test_commands.c
-        src/editor.c
-        src/cmd.c
-        src/line.c
-        src/buffer.c
-)
-target_link_libraries(vim_test_commands mega65libc)
-target_include_directories(vim_test_commands PRIVATE src)
-
-add_executable(vim_test_directory_listing
-        test/suites/test_directory_listing.c
-        src/cmd.c
-)
-target_link_libraries(vim_test_directory_listing mega65libc)
-target_include_directories(vim_test_directory_listing PRIVATE src)
-
-add_executable(vim_test_scrolling
-        test/suites/test_scrolling.c
-        src/cmd.c
-        src/buffer.c
-        src/line.c
-)
-target_link_libraries(vim_test_scrolling mega65libc)
-target_include_directories(vim_test_scrolling PRIVATE src)
-
-
-target_compile_definitions(vim_test_commands PRIVATE DEBUG_ON)
 
 
 

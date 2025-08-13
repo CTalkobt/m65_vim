@@ -1,0 +1,42 @@
+Vim3 Command Reference
+=======================
+
+Normal Mode Commands
+--------------------
+h, Left Arrow   - Move cursor left
+j, Down Arrow   - Move cursor down
+k, Up Arrow     - Move cursor up
+l, Right Arrow  - Move cursor right
+
+H, Home         - Move cursor to the top of the screen
+L, Shift-Home   - Move cursor to the bottom of the screen
+
+0               - Move cursor to the beginning of the line
+$               - Move cursor to the end of the line
+w               - Move cursor to the beginning of the next word
+G               - Move to the last line of the file
+J               - Join the current line with the next one
+
+i               - Enter Insert Mode
+a               - Append text after the cursor
+:               - Enter Command Mode
+Ctrl+F          - Page down
+Ctrl+B          - Page up
+Ctrl+L          - Redraw screen
+
+Insert Mode Commands
+--------------------
+Esc, Run/Stop   - Exit Insert Mode and return to Normal Mode
+Backspace       - Delete character to the left of the cursor
+Ctrl+L          - Redraw screen
+
+Command Mode Commands
+---------------------
+:r <filename>   - Read a file into the buffer
+:w <filename>   - Write the buffer to a file
+:w              - Write the buffer to the current file
+:w!             - Write the buffer to a file, overriding read-only
+:q              - Quit the editor (fails if there are unsaved changes)
+:q!             - Quit the editor and discard any changes
+:wq             - Write the buffer and then quit
+:!$             - Show a directory listing

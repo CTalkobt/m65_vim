@@ -7,9 +7,7 @@
 #include "line.h"
 
 void commitLine(tsState *psState) {
-    if (allocLine(psState, psState->lineY, psState->editBuffer)) {
-        strcpy(psState->text[psState->lineY], psState->editBuffer);
-    }
+    allocLine(psState, psState->lineY, psState->editBuffer);
 }
 
 void loadLine(tsState *psState, int lineIndex) {

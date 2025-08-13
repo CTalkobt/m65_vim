@@ -1,0 +1,36 @@
+This file documents common Vim features that are likely missing from this simplified implementation.
+
+## Core Modes
+- Visual Mode (v, V, Ctrl-V) for selecting text.
+- Advanced Command-Line mode commands beyond basic quit/write.
+
+## Navigation
+- Word-wise movement (w, b, e, W, B, E).
+- Paragraph movement ({, }).
+- Go to start/end of file (gg, G).
+- Screen-based movement (H, M, L).
+- Paging and scrolling (Ctrl-F, Ctrl-B, Ctrl-D, Ctrl-U).
+- Jumping to matching brackets (%).
+- Marks for position saving (m{a-z}, '{a-z}).
+
+## Editing
+- Undo/Redo (u, Ctrl-R).
+- Yank/Put (copy/paste) functionality (y, p, P).
+- Change operator (c) combined with motions (e.g., cw to change word).
+- Delete operator (d) combined with motions (e.g., dw to delete word).
+- Join lines (J).
+- Repeat last command (.).
+- Indentation (>>, <<).
+- Case changing (~).
+
+## Search and Replace
+- Search commands (/, ?, n, N, *, #).
+- Complex substitute command (:%s/find/replace/g).
+
+## Advanced Features
+- Macros (recording and playing back actions with q and @).
+- Registers (named storage for yanked/deleted text).
+- Window splitting (:split, :vsplit) and navigation (Ctrl-W ...).
+- Tab management (:tabnew, etc.).
+- Running external shell commands (:!).
+- Configuration (:set option).
