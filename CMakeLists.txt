@@ -77,10 +77,7 @@ add_executable(vim
         src/lib/m65/screen.h
 )
 target_link_libraries(vim mega65libc)
-
-if(ENABLE_DEBUG)
-    target_compile_definitions(vim PRIVATE DEBUG_ON)
-endif()
+target_compile_definitions(vim PRIVATE DEBUG_ON)                                                                                                         
 
 
 add_executable(vim_test
