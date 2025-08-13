@@ -126,6 +126,11 @@ void edit(tsState *psState) {
 
         unsigned int kar = kbdGetKey();
 
+        if (kar == 12) { // Ctrl-L
+            draw_screen(psState);
+            continue;
+        }
+
         tpfnCmd cmdFn = getcmd(psState->editMode, kar);
         if (cmdFn) {
             scrCursorOff();
