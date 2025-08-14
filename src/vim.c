@@ -75,7 +75,7 @@ int main(void) {
     scrClear();
     scrColor(COLOR_BLACK, COLOR_BLACK);
 
-    tsState *state = malloc(sizeof(tsState));
+    tsState *state = calloc(1, sizeof(tsState));
     if (!state) {
         DEBUG("malloc for state failed!");
         return -2;
@@ -101,11 +101,18 @@ int main(void) {
     
     bool initialAlloc = allocLine(state, 0, "vIM3 eDITOR - v0.1");
     ASSERT(initialAlloc, "iNITIAL ALLOCATION FAILED.");
+    DEBUG("After allocLine:");
+    DEBUG(state->text[0]);
+    DEBUG(state->editBuffer);
+
     state->lines = 1;
     DEBUG("Line 0:");
     DEBUG(state->text[0]);
 
     loadLine(state, 0);
+    DEBUG("After loadLine:");
+    DEBUG(state->text[0]);
+    DEBUG(state->editBuffer);
 
     edit(state);
 

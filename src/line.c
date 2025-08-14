@@ -9,21 +9,22 @@
 #include "line.h"
 #include "state.h"
 
+static bool isIndexWithinMax(const tsState* s, uint16_t idx) {
+    return s && idx < s->max_lines;
+}
+static bool isIndexWithinCount(const tsState* s __attribute__((nonnull)), uint16_t idx) {
+    return idx < s->lines;
+}
+
 /**
  * Allocate and set line to the given text.
  *
- * @param psState Current editor state
- * @param lineIndex Line to adjust / modify.
- * @param new_content New text line.
- *
- * @return false if unable to update the line.
-*/
-bool allocLine(const tsState *psState, uint16_t lineIndex, const char* new_content) {
-    if (psState == NULL) {
-        DEBUG("allocLine: ERROR: psState is NULL");
-        return false;
-    }
-    if (lineIndex >= psState->max_lines) {
+ * - If new_content == NULL, frees the line and sets it to NULL (returns true).
+ * - Ensures content length < MAX_LINE_LENGTH.
+ * - Sets psState->isDirty on success.
+ */
+bool allocLine(tsState *psState __attribute__((nonnull)) , uint16_t lineIndex, const char* new_content) {
+    if (!isIndexWithinMax(psState, lineIndex)) {
         DEBUG("allocLine: ERROR: lineIndex out of range");
         return false;
     }
@@ -32,7 +33,8 @@ bool allocLine(const tsState *psState, uint16_t lineIndex, const char* new_conte
             free(psState->text[lineIndex]);
         }
         psState->text[lineIndex] = NULL;
-        return false;
+        psState->isDirty = true;
+        return true;
     }
 
     unsigned int len = strlen(new_content);
@@ -48,31 +50,145 @@ bool allocLine(const tsState *psState, uint16_t lineIndex, const char* new_conte
         scrPuts("Memory allocation failed!");
         return false;
     }
-    strcpy(new_line, new_content);
+
+    // Use memmove to be safe in case of any overlap with destination
+    memmove(new_line, new_content, len+1);
+    new_line[len] = '\0';
+
     psState->text[lineIndex] = new_line;
+    psState->isDirty = true;
     return true;
 }
 
-   bool insertLine(tsState *psState, uint16_t index, const char* content) {
-       if (!psState || !content) return false;
+bool insertLine(tsState *psState __attribute__((nonnull)), uint16_t index, const char* content __attribute__((nonnull)) ) {
+    // Valid insertion positions are [0, lines]
+    if (index > psState->lines) {
+        return false;
+    }
+    // Can't exceed max_lines.
+    if (psState->lines >= psState->max_lines) {
+        return false;
+    }
+    // If we have to overwrite the last line, then abort.
+    if (psState->text[psState->lines] != NULL) {
+        return false;
+    }
 
-       // Can't exceed max_lines.
-       if (psState->lines >= psState->max_lines) {
-           return false;
-       }
+    // Shift lines down
+    for (uint16_t i = psState->lines; i > index; i--) {
+        psState->text[i] = psState->text[i-1];
+    }
+    psState->text[index] = NULL;
 
-       // If we have to overwrite the last line, then abort.
-       if (psState->text[psState->lines] != NULL) {
-           return false;
-       }
+    if (!allocLine(psState, index, content)) {
+        // Rollback shift if allocation failed
+        for (uint16_t i = index; i < psState->lines; i++) {
+            psState->text[i] = psState->text[i+1];
+        }
+        psState->text[psState->lines] = NULL;
+        return false;
+    }
 
-       // Shift lines down
-       for (uint16_t i = psState->lines; i > index; i--) {
-           psState->text[i] = psState->text[i-1];
-       }
-       psState->text[index] = NULL;
+    psState->lines++;
+    psState->isDirty = true;
+    return true;
+}
 
-       allocLine(psState, index, content);
-       psState->lines++;
-       return true;
-   }
+bool deleteLine(tsState *psState, uint16_t index) {
+    if (!psState || !isIndexWithinCount(psState, index)) return false;
+
+    // Free the targeted line
+    if (psState->text[index]) {
+        free(psState->text[index]);
+    }
+
+    // Shift lines up to close the gap
+    for (uint16_t i = index; i + 1 < psState->lines; i++) {
+        psState->text[i] = psState->text[i+1];
+    }
+    // Clear the old last slot
+    psState->text[psState->lines - 1] = NULL;
+
+    // Update count
+    if (psState->lines > 0) {
+        psState->lines--;
+    }
+    psState->isDirty = true;
+    return true;
+}
+
+bool clearLine(tsState *psState __attribute__((nonnull)), uint16_t index) {
+    if (!isIndexWithinMax(psState, index)) return false;
+    // Do not change psState->lines; just clear the slot.
+    return allocLine(psState, index, NULL);
+}
+
+bool swapLines(tsState *psState __attribute__((nonnull)), uint16_t a, uint16_t b) {
+    if (!isIndexWithinCount(psState, a) || !isIndexWithinCount(psState, b)) return false;
+    if (a == b) return true;
+    char* tmp = psState->text[a];
+    psState->text[a] = psState->text[b];
+    psState->text[b] = tmp;
+    psState->isDirty = true;
+    return true;
+}
+
+bool moveLine(tsState *psState __attribute__((nonnull)), uint16_t from, uint16_t to) {
+    if (!isIndexWithinCount(psState, from)) return false;
+    if (to >= psState->lines) return false;
+    if (from == to) return true;
+
+    char* moving = psState->text[from];
+    if (from < to) {
+        for (uint16_t i = from; i < to; i++) {
+            psState->text[i] = psState->text[i+1];
+        }
+        psState->text[to] = moving;
+    } else {
+        for (uint16_t i = from; i > to; i--) {
+            psState->text[i] = psState->text[i-1];
+        }
+        psState->text[to] = moving;
+    }
+    psState->isDirty = true;
+    return true;
+}
+
+bool compactLines(tsState *psState __attribute__((nonnull)) ) {
+    // Remove trailing NULLs to keep lines consistent
+    uint16_t old = psState->lines;
+    while (psState->lines > 0 && psState->text[psState->lines - 1] == NULL) {
+        psState->lines--;
+    }
+    if (psState->lines != old) {
+        psState->isDirty = true;
+    }
+    return true;
+}
+
+void freeAllLines(tsState *psState __attribute__((nonnull))) {
+    for (uint16_t i = 0; i < psState->max_lines; i++) {
+        if (psState->text[i]) {
+            free(psState->text[i]);
+            psState->text[i] = NULL;
+        }
+    }
+    psState->lines = 0;
+    psState->isDirty = true;
+}
+
+// Read-only accessors
+const char* getLine(const tsState* psState __attribute__((nonnull)) , uint16_t index) {
+    if (!isIndexWithinCount(psState, index)) return NULL;
+    return psState->text[index];
+}
+uint16_t getLineCount(const tsState* psState) {
+    return psState ? psState->lines : 0;
+}
+uint16_t getMaxLines(const tsState* psState) {
+    return psState ? psState->max_lines : 0;
+}
+uint16_t getLineLength(const tsState* psState, uint16_t index) {
+    const char* l = getLine(psState, index);
+    return l ? (uint16_t)strlen(l) : 0;
+}

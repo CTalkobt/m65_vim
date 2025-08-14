@@ -114,9 +114,14 @@ void editCommand(tsState *psState, unsigned int kar) {
 void edit(tsState *psState) {
     debug_msg("edit:\n");
     loadLine(psState, psState->lineY);
+    DEBUG("After edit.loadLine");
+    DEBUG(psState->text[0]);
+    DEBUG(psState->editBuffer);
+
     draw_screen(psState);
     scrCursorOn();
-    kBsout(5); // white cursor. 
+    kBsout(5); // white cursor.
+    draw_screen(psState);
 
     do {
         scrCursorOn();
