@@ -23,7 +23,6 @@ bool allocLine(const tsState *psState, uint16_t lineIndex, const char* new_conte
         DEBUG("allocLine: ERROR: psState is NULL");
         return false;
     }
-
     if (lineIndex >= psState->max_lines) {
         DEBUG("allocLine: ERROR: lineIndex out of range");
         return false;
@@ -54,33 +53,26 @@ bool allocLine(const tsState *psState, uint16_t lineIndex, const char* new_conte
     return true;
 }
 
-/**
- * Insert the given content index line position index
- *
- * @param psState
- * @param index
- * @param content
- *
- * @return if able to successfully insert the line.
- */
-bool insertLine(tsState *psState, uint16_t index, const char* content) {
-    // Can't exceed max_lines.
-    if (psState->lines >= psState->max_lines) {
-        return false;
-    }
+   bool insertLine(tsState *psState, uint16_t index, const char* content) {
+       if (!psState || !content) return false;
 
-    // If we have to overwrite the last line, then abort.
-    if (psState->text[psState->lines] != NULL) {
-        return false;
-    }
+       // Can't exceed max_lines.
+       if (psState->lines >= psState->max_lines) {
+           return false;
+       }
 
-    // Shift lines down
-    for (uint16_t i = psState->lines; i > index; i--) {
-        psState->text[i] = psState->text[i-1];
-    }
-    psState->text[index] = NULL;
+       // If we have to overwrite the last line, then abort.
+       if (psState->text[psState->lines] != NULL) {
+           return false;
+       }
 
-    allocLine(psState, index, content);
-    psState->lines++;
-    return true;
-}
+       // Shift lines down
+       for (uint16_t i = psState->lines; i > index; i--) {
+           psState->text[i] = psState->text[i-1];
+       }
+       psState->text[index] = NULL;
+
+       allocLine(psState, index, content);
+       psState->lines++;
+       return true;
+   }

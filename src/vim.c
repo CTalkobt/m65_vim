@@ -26,7 +26,6 @@ unsigned int getFreeMemory(void) {
         size += 1024;
     }
 
-
     size = last_success + 128;
     while ((p = malloc(size))) {
         free(p);
@@ -39,7 +38,7 @@ unsigned int getFreeMemory(void) {
 
 void freeTextBuffer(const tsState *state) {
     if (state->text) {
-        for (int i = 0; i < state->lines; i++) {
+        for (int i = 0; i < state->max_lines; i++) {
             if (state->text[i]) {
                 free(state->text[i]);
             }
@@ -48,19 +47,23 @@ void freeTextBuffer(const tsState *state) {
     }
 }
 
-#define INITIAL_MAX_LINES 100
-
-int initTextBuffer(tsState *state) {
-    state->text = malloc(INITIAL_MAX_LINES * sizeof(char*));
+uint16_t initTextBuffer(tsState *state) {
+    // Dynamically determine the size of the text buffer based on max_lines
+    state->text = malloc(state->max_lines * sizeof(char*));
     if (!state->text) {
         return 0;
     }
 
-    for (int i = 0; i < INITIAL_MAX_LINES; i++) {
+    for (int i = 0; i < state->max_lines; i++) {
         state->text[i] = NULL; // Initialize all lines to NULL
     }
-    
-    return INITIAL_MAX_LINES;
+
+    {
+        char msg[80+1];
+        sprintf(msg, "Initialized text buffer with max_lines: %d", state->max_lines);
+        DEBUG(msg);
+    }
+    return state->max_lines;
 }
 
 int main(void) {
@@ -78,14 +81,11 @@ int main(void) {
         return -2;
     }
 
-    int max_lines = initTextBuffer(state);
-    if (max_lines == 0) {
-        DEBUG("initTextBuffer failed!");
-        free(state);
-        return -3;
-    }
-
+    // Determine the maximum number of lines allowed in the text buffer
+    const int max_lines = 50; // This should be set based on available memory or other criteria
     state->max_lines = max_lines;
+    initTextBuffer(state);
+
     state->lines=1;
     state->lineY=0;
     state->xPos=0;

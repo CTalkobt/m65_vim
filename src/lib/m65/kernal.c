@@ -50,12 +50,6 @@ unsigned char kGetin(void) {
 }
 
 void kPlotXY(unsigned char x, unsigned char y) {
-    {
-        char zTmp[80+1];
-        sprintf(zTmp, "kPlotXY(%d,%d)\n", x, y);
-        DEBUG(zTmp);
-    }
-
     asm volatile(
         "clc\n"
         "jsr $fff0\n"
