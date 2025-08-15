@@ -12,6 +12,8 @@
 #include "lib/m65/debug.h"
 #include "buffer.h"
 #include "editor.h"
+#include "lib/m65/screen.h"
+#include "lib/m65/kbd.h"
 
 #ifndef CTRL
 #define CTRL(kar) ((kar)-'a')
@@ -225,7 +227,29 @@ int cmdModeCommand(tsState *psState) {
 }
 
 int cmdHelp(tsState *psState) {
-    DEBUG("no help for you (yet)\n");
+    scrClear();
+    puts("vim hELP\n\n");
+    puts("kEY COMMANDS:\n");
+    puts(" h, <-    - cURSOR lEFT\n");
+    puts(" k, ^     - cURSOR uP\n");
+    puts(" j, v     - cURSOR dOWN\n");
+    puts(" l, ->    - cURSOR rIGHT\n");
+    puts(" H        - tOP OF SCREEN\n");
+    puts(" L        - bOTTOM OF SCREEN\n");
+    puts(" $        - eND OF LINE\n");
+    puts(" 0        - sTART OF LINE\n");
+    puts(" w        - nEXT WORD\n");
+    puts(" g        - gOTO LINE\n");
+    puts(" J        - jOIN LINES\n");
+    puts(" i        - iNSERT MODE\n");
+    puts(" a        - aPPEND MODE\n");
+    puts(" :        - cOMMAND MODE\n");
+    puts(" ctrl+f   - pAGE FORWARD\n");
+    puts(" ctrl+b   - pAGE BACK\n");
+    puts(" ?        - tHIS HELP SCREEN\n\n");
+    puts("pRESS ANY KEY TO CONTINUE...");
+    kbdHit();
+    draw_screen(psState);
     return 0;
 }
 

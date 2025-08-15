@@ -23,9 +23,5 @@ DEBUG("@2");
         psState->editBuffer[0] = '\0';
     }
     psState->lineY = lineIndex;
-    if (lineIndex == psState->lines) {
-DEBUG("@3");
-        psState->lines = lineIndex+1; 
-    }
 DEBUGF("loadLine - end: %s %d\n", psState->text[0], lineIndex, NULL);
 }
