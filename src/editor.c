@@ -121,11 +121,11 @@ void edit(tsState *psState) {
     draw_screen(psState);
     scrCursorOn();
     kBsout(5); // white cursor.
-    draw_screen(psState);
 
     do {
         scrCursorOn();
         if (psState->editMode == Default) {
+
             kPlotXY(psState->xPos + psState->screenStart.xPos, psState->lineY + psState->screenStart.yPos);
         }
 
@@ -165,10 +165,10 @@ void edit(tsState *psState) {
                             line[psState->xPos] = '\0';
 
                             // The order here is critical to avoid memory corruption.
-                            // 1. Insert a new line with the content that will be on the next line.
-                            insertLine(psState, psState->lineY + 1, temp_split);
-                            // 2. Now, commit the changes to the current line.
+                            // 1. Commit the changes to the current line.
                             commitLine(psState);
+                            // 2. Insert a new line with the content that will be on the next line.
+                            insertLine(psState, psState->lineY + 1, temp_split);
 
                             psState->lineY++;
                             psState->xPos = 0;

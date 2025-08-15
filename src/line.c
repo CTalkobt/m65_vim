@@ -24,6 +24,8 @@ static bool isIndexWithinCount(const tsState* s __attribute__((nonnull)), uint16
  * - Sets psState->isDirty on success.
  */
 bool allocLine(tsState *psState __attribute__((nonnull)) , uint16_t lineIndex, const char* new_content) {
+    DEBUGF("allocLine: %s, %d, %s", (psState!=NULL) ? "!NULL":"NULL", lineIndex, new_content); 
+
     if (!isIndexWithinMax(psState, lineIndex)) {
         DEBUG("allocLine: ERROR: lineIndex out of range");
         return false;
@@ -61,6 +63,8 @@ bool allocLine(tsState *psState __attribute__((nonnull)) , uint16_t lineIndex, c
 }
 
 bool insertLine(tsState *psState __attribute__((nonnull)), uint16_t index, const char* content __attribute__((nonnull)) ) {
+    DEBUGF("insertLine: %s, %d, %s", psState != NULL ? "!NULL":"NULL", index, content); 
+
     // Valid insertion positions are [0, lines]
     if (index > psState->lines) {
         return false;
@@ -91,6 +95,7 @@ bool insertLine(tsState *psState __attribute__((nonnull)), uint16_t index, const
 
     psState->lines++;
     psState->isDirty = true;
+DEBUGF("At end of insertLine: %s", psState->text[0], NULL, NULL);
     return true;
 }
 

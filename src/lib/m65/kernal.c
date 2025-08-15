@@ -107,7 +107,6 @@ bool kOpen(unsigned char fileNum, unsigned char *pzFilename, unsigned char devic
 
 
 bool kReadLine(unsigned char fileNum, char *buffer, unsigned length) {
-    DEBUG("kReadLine: start\n");
     if (!buffer || length == 0) {
         DEBUG("kReadLine: invalid args\n");
         return false;
@@ -147,7 +146,6 @@ bool kReadLine(unsigned char fileNum, char *buffer, unsigned length) {
     }
     buffer[i] = '\0'; // Null-terminate the line.
 
-    DEBUG("kReadLine: line read successfully\n");
     // Return true if we read any characters.
     return i > 0;
 }

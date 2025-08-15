@@ -110,6 +110,7 @@ int main(void) {
     DEBUG(state->text[0]);
 
     loadLine(state, 0);
+
     DEBUG("After loadLine:");
     DEBUG(state->text[0]);
     DEBUG(state->editBuffer);

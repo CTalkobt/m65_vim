@@ -15,11 +15,13 @@ void draw_screen(const tsState *psState) {
 
     scrClear();
     int visible = psState->screenEnd.yPos;
-DEBUG("draw_screen:");
-    for (int i = 0; i < visible && (psState->screenStart.yPos + i) < psState->lines; i++) {
+debug_msg("draw_screen:");
+    for (unsigned char i = 0; i < visible && (psState->screenStart.yPos + i) < psState->lines; i++) {
         kPlotXY(0, i);
         const char* line = psState->text[psState->screenStart.yPos + i];
+DEBUGF("Line: %d %s", i, line, NULL); 
 
+  debug_msg(line == NULL ? "NULL" : line);
         if (line != NULL) {
             DEBUG(line);
             scrPuts(line);
@@ -28,6 +30,7 @@ DEBUG("draw_screen:");
             scrClearEOL();
         }
     }
+debug_msg("draw_screen:end");
     drawStatus(psState);
 }
 
@@ -43,7 +46,6 @@ void drawStatus(const tsState *psState) {
     // "filename" <count>L, <count>B          x,ypos  n%
     // "text.txt" 20L, 400B                     5,6 10%
     //
-    DEBUG("drawStatus-start\n");
     scrDupeCharXY(0, psState->screenEnd.yPos-2, psState->screenEnd.xPos, '-');
 
     // Display mode
@@ -82,6 +84,4 @@ void drawStatus(const tsState *psState) {
 
     // RE-position cursor.
     kPlotXY(psState->xPos, psState->lineY);
-
-    DEBUG("drawStatus-end\n");
 }
