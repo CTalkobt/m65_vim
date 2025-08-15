@@ -115,7 +115,7 @@ bool kReadLine(unsigned char fileNum, char *buffer, unsigned length) {
     // Set the input channel correctly without corrupting the stack.
     kChkin(fileNum);
 
-    unsigned char i = 0;
+    unsigned int i = 0;
     for (i = 0; i < length - 1; i++) {
         unsigned char kar;
         unsigned char status;

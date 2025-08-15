@@ -57,7 +57,7 @@ void setEditMode(tsState *psState, EditMode newMode) {
     }
 }
 
-void editCommand(tsState *psState, unsigned int kar) {
+void editCommand(tsState *psState, unsigned char kar) {
     uint8_t l = strlen(zCmd);
 
     switch (kar) {
@@ -129,7 +129,7 @@ void edit(tsState *psState) {
             kPlotXY(psState->xPos + psState->screenStart.xPos, psState->lineY + psState->screenStart.yPos);
         }
 
-        unsigned int kar = kbdGetKey();
+        unsigned char kar = kbdGetKey();
 
         if (kar == 12) { // Ctrl-L
             draw_screen(psState);
