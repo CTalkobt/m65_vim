@@ -71,6 +71,7 @@ int main(void) {
     DEBUG("vim started");
 
     scrScreenMode(_80x50);
+    kFnKeyMacros(false);
     kbdBufferClear();
     scrClear();
     scrColor(COLOR_BLACK, COLOR_BLACK);

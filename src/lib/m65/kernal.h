@@ -78,4 +78,9 @@ void kWriteLine(uint8_t channel, const char* buffer);
 
 unsigned char kChkin(unsigned char lfn);
 
+/**
+ * Enable function key expansion. 
+ */
+void kFnKeyMacros(bool enable);
+
 #endif //KERNAL_H

@@ -171,6 +171,15 @@ void kClose(unsigned char fileNum) {
     asm volatile ("SEC\nJSR $FFC3\n" : : "a"(fileNum) : "p" );
 }
 
+void kFnKeyMacros(bool enable) {
+    // Bit 5 determines programmable functin keys. 
+    if (enable) {
+        __asm__("sec\n\tjsr $ff47\n\tand #$ff - 32\n\tclc\n\tjsr $ff47" : : : "a", "p");
+    } else {
+        __asm__("sec\n\tjsr $ff47\n\tora # 32\n\tclc\n\tjsr $ff47" : : : "a", "p");
+    }
+}
+
 void kWriteLine(uint8_t channel, const char* buffer) {
     // Set output channel
     __asm__("lda #%0\n\tjsr $ffc9" : : "r"(channel) : "a", "p");
