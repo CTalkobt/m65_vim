@@ -11,7 +11,6 @@
 #include "render.h"
 #include "editor.h"
 #include "line.h"
-#include "buffer.h"
 
 #define MAX_CMD 78
 
@@ -25,7 +24,7 @@ void setEditMode(tsState *psState, EditMode newMode) {
     // Leaving current mode
     switch (psState->editMode) {
         case Insert:
-            commitLine(psState);
+            allocLine(psState, psState->lineY, psState->editBuffer);
             if (psState->xPos > 0) {
                 psState->xPos--;
             }
@@ -77,12 +76,12 @@ void editCommand(tsState *psState, unsigned char kar) {
             if (strcmp(zCmd, "Q!") == 0) {
                 psState->doExit = true;
             } else if (strcmp(zCmd, "WQ") == 0) {
-                commitLine(psState);
+                allocLine(psState, psState->lineY, psState->editBuffer);
                 if (cmdWrite(psState, "", false) == 0) {
                     psState->doExit = true;
                 }
             } else if (strcmp(zCmd, "W!") == 0) {
-                commitLine(psState);
+                allocLine(psState, psState->lineY, psState->editBuffer);
                 cmdWrite(psState, "", true);
             } else if (strcmp(zCmd, "!$") == 0) {
                 cmdDirectoryListing(psState);
@@ -95,7 +94,7 @@ void editCommand(tsState *psState, unsigned char kar) {
             } else if (zCmd[0] == 'R') {
                 cmdRead(psState, zCmd + 1);
             } else if (zCmd[0] == 'W') {
-                commitLine(psState);
+                allocLine(psState, psState->lineY, psState->editBuffer);
                 cmdWrite(psState, zCmd + 1, false);
             }
             setEditMode(psState, Default);
@@ -146,6 +145,11 @@ void edit(tsState *psState) {
                     break;
                 case Insert: {
                     char *line = psState->editBuffer;
+//                    {
+//                        char zInsertDebug[80+1];
+//                        sprintf(zInsertDebug, "Insert: %d %d %s", psState->xPos, psState->lineY, line);
+//                        DEBUG(zInsertDebug);
+//                    }
                     uint16_t len = strlen(line);
                     switch (kar) {
                         case 20: // Backspace
@@ -157,21 +161,17 @@ void edit(tsState *psState) {
                             break;
                         case '\n':
                         case 13: {
-                            char temp_split[MAX_LINE_LENGTH];
-                            strcpy(temp_split, &line[psState->xPos]);
-                            line[psState->xPos] = '\0';
-
-                            // The order here is critical to avoid memory corruption.
-                            // 1. Commit the changes to the current line.
-                            commitLine(psState);
-                            // 2. Insert a new line with the content that will be on the next line.
-                            insertLine(psState, psState->lineY + 1, temp_split);
-
-                            psState->lineY++;
-                            psState->xPos = 0;
-                            psState->isDirty = true;
-                            loadLine(psState, psState->lineY);
-                            draw_screen(psState);
+                            // First, commit the current edit buffer to the line
+                            allocLine(psState, psState->lineY, line);
+                            // Now, split the newly committed line
+                            if (splitLine(psState, psState->lineY, psState->xPos)) {
+                                psState->lineY++;
+                                psState->xPos = 0;
+                                psState->isDirty = true;
+                                loadLine(psState, psState->lineY);
+                                draw_screen(psState);
+                            }
+                            // TODO: Handle splitLine failure
                             break;
                         }
                         case 27: // Escape. 

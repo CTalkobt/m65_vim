@@ -11,7 +11,6 @@
 #include "editor.h"
 #include "state.h"
 #include "line.h"
-#include "buffer.h"
 
 #define MEMORY_RESERVE 2048 // Reserve 2KB for stack and other needs
 

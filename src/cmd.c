@@ -10,7 +10,7 @@
 #include "editMode.h"
 #include "render.h"
 #include "lib/m65/debug.h"
-#include "buffer.h"
+#include "line.h"
 #include "editor.h"
 #include "lib/m65/screen.h"
 #include "lib/m65/kbd.h"
@@ -63,12 +63,12 @@ tpfnCmd getcmd(const EditMode mode, unsigned char kar) {
             return cmd->cmd;
         }
     }
-    DEBUGF("INFO: Couldn't find cmd: %d for mode: %d", kar, mode, NULL); 
+//    DEBUGF("INFO: Couldn't find cmd: %d for mode: %d", kar, mode, NULL);
     return NULL;
 }
 
 int cmdGotoLine(tsState *psState) {
-    commitLine(psState);
+    allocLine(psState, psState->lineY, psState->editBuffer);
     if (psState->lines > 0) {
         loadLine(psState, psState->lines - 1);
     }
@@ -86,7 +86,7 @@ int cmdCursorLeft(tsState *psState) {
 }
 
 int cmdCursorUp(tsState *psState) {
-    commitLine(psState);
+    allocLine(psState, psState->lineY, psState->editBuffer);
     if (psState->lineY > 0) {
         loadLine(psState, psState->lineY - 1);
     }
@@ -95,7 +95,7 @@ int cmdCursorUp(tsState *psState) {
 }
 
 int cmdCursorDown(tsState *psState) {
-    commitLine(psState);
+    allocLine(psState, psState->lineY, psState->editBuffer);
     if (psState->lineY < psState->lines - 1) {
         loadLine(psState, psState->lineY + 1);
     }
@@ -112,7 +112,7 @@ int cmdCursorRight(tsState *psState) {
 }
 
 int cmdCursorScreenTop(tsState *psState) {
-    commitLine(psState);
+    allocLine(psState, psState->lineY, psState->editBuffer);
     loadLine(psState, psState->screenStart.yPos);
     psState->xPos = 0;
     drawStatus(psState);
@@ -120,7 +120,7 @@ int cmdCursorScreenTop(tsState *psState) {
 }
 
 int cmdCursorScreenBottom(tsState *psState) {
-    commitLine(psState);
+    allocLine(psState, psState->lineY, psState->editBuffer);
     loadLine(psState, psState->screenEnd.yPos - 1);
     psState->xPos = 0;
     drawStatus(psState);
@@ -128,7 +128,7 @@ int cmdCursorScreenBottom(tsState *psState) {
 }
 
 int cmdLineJoin(tsState *psState) {
-    commitLine(psState);
+    allocLine(psState, psState->lineY, psState->editBuffer);
     if (psState->lineY < psState->lines - 1) {
         char *currentLine = psState->text[psState->lineY];
         char *nextLine = psState->text[psState->lineY + 1];
@@ -195,7 +195,7 @@ int cmdModeAppend(tsState *psState) {
 }
 
 int cmdPageForward(tsState *psState) {
-    commitLine(psState);
+    allocLine(psState, psState->lineY, psState->editBuffer);
     int pageHeight = psState->screenEnd.yPos - psState->screenStart.yPos;
     psState->screenStart.yPos += pageHeight;
     if (psState->screenStart.yPos > psState->lines - 1) {
@@ -207,7 +207,7 @@ int cmdPageForward(tsState *psState) {
 }
 
 int cmdPageBack(tsState *psState) {
-    commitLine(psState);
+    allocLine(psState, psState->lineY, psState->editBuffer);
     int pageHeight = psState->screenEnd.yPos - psState->screenStart.yPos;
     if (psState->screenStart.yPos > pageHeight) {
         psState->screenStart.yPos -= pageHeight;

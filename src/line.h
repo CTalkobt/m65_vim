@@ -135,4 +135,23 @@ uint16_t getMaxLines(const tsState* psState);
  */
 uint16_t getLineLength(const tsState* psState, uint16_t index);
 
+/*
+ * Loads a line from the main text buffer into the edit buffer
+ * 
+ * @param psState Pointer to the text editor state.
+ * @param lineIndex Index of the line to load.
+ * 
+ */
+void loadLine(tsState *psState, uint16_t lineIndex);
+
+/**
+ * Splits a line at a specified position, creating a new line with the remainder.
+ *
+ * @param psState Pointer to the text editor state.
+ * @param lineIndex Index of the line to split.
+ * @param xPos The column position at which to split the line.
+ * @return True if successful, false otherwise.
+ */
+bool splitLine(tsState *psState, uint16_t lineIndex, uint16_t xPos);
+
 #endif // LINE_H

@@ -65,7 +65,7 @@ add_executable(vim
         src/editor.c
         src/render.c
         src/line.c
-        src/buffer.c
+        
         src/lib/itostr.c
         src/lib/itostr.h
         src/lib/m65/debug.h
@@ -89,7 +89,7 @@ add_executable(vim_test
         src/editor.c
         src/render.c
         src/line.c
-        src/buffer.c
+        
         src/lib/itostr.c
         src/lib/itostr.h
         src/lib/m65/debug.h
