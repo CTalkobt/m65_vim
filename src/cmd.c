@@ -20,7 +20,8 @@
 #endif
 
 tsCmds cmds[] = {
-    {Default, 31, cmdHelp},            // Help
+    {Default, 132, cmdHelp},            // Help
+    {Default, '?', cmdHelp},            // Help
 
     // Single increment navigation.
     {Default, 157, cmdCursorLeft},      // Left Arrow
@@ -58,9 +59,11 @@ tsCmds cmds[] = {
 tpfnCmd getcmd(const EditMode mode, unsigned char kar) {
     for (tsCmds *cmd = &cmds[0]; cmd->cmd != NULL; cmd++) {
         if (cmd->kar == kar && cmd->mode == mode) {
+            DEBUGF("INFO: Found cmd: %d for mode: %d", kar, mode, NULL); 
             return cmd->cmd;
         }
     }
+    DEBUGF("INFO: Couldn't find cmd: %d for mode: %d", kar, mode, NULL); 
     return NULL;
 }
 
@@ -228,27 +231,28 @@ int cmdModeCommand(tsState *psState) {
 
 int cmdHelp(tsState *psState) {
     scrClear();
-    puts("vim hELP\n\n");
-    puts("kEY COMMANDS:\n");
-    puts(" h, <-    - cURSOR lEFT\n");
-    puts(" k, ^     - cURSOR uP\n");
-    puts(" j, v     - cURSOR dOWN\n");
-    puts(" l, ->    - cURSOR rIGHT\n");
-    puts(" H        - tOP OF SCREEN\n");
-    puts(" L        - bOTTOM OF SCREEN\n");
-    puts(" $        - eND OF LINE\n");
-    puts(" 0        - sTART OF LINE\n");
-    puts(" w        - nEXT WORD\n");
-    puts(" g        - gOTO LINE\n");
-    puts(" J        - jOIN LINES\n");
-    puts(" i        - iNSERT MODE\n");
-    puts(" a        - aPPEND MODE\n");
-    puts(" :        - cOMMAND MODE\n");
-    puts(" ctrl+f   - pAGE FORWARD\n");
-    puts(" ctrl+b   - pAGE BACK\n");
-    puts(" ?        - tHIS HELP SCREEN\n\n");
-    puts("pRESS ANY KEY TO CONTINUE...");
-    kbdHit();
+    puts("VIM Help\n\n");
+    puts("Key commands:\n");
+    puts(" h, <-    - Cursor Left\n");
+    puts(" k, ^     - Cursor Up\n");
+    puts(" j, v     - Cursor Down\n");
+    puts(" l, ->    - Cursor Right\n");
+    puts(" H        - Top of screen\n");
+    puts(" L        - Bottom of screen\n");
+    puts(" $        - End of line\n");
+    puts(" 0        - Start of line\n");
+    puts(" w        - Next word\n");
+    puts(" g        - Goto line\n");
+    puts(" J        - Join lines\n");
+    puts(" i        - Insert mode\n");
+    puts(" a        - Append mode\n");
+    puts(" :        - Command mode\n");
+    puts(" ctrl+f   - Page forward\n");
+    puts(" ctrl+b   - Page back\n");
+    puts(" ? / help - This help screen\n\n");
+    puts("Press any key to continue...");
+    kbdBufferClear(); 
+    kbdGetKey();
     draw_screen(psState);
     return 0;
 }

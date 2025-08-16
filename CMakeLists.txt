@@ -106,6 +106,8 @@ target_link_libraries(vim_test mega65libc)
 target_include_directories(vim_test PRIVATE src)
 target_include_directories(vim_test PRIVATE test)
 target_compile_definitions(vim_test PRIVATE DEBUG_ON)
+target_compile_definitions(vim_test PRIVATE DEBUG_TRACE)
+target_compile_definitions(vim_test PRIVATE DEBUG_BUFFER)
 
 
 

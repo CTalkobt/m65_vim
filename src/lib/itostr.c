@@ -6,7 +6,7 @@
 
 void itostr(uint16_t value, char* buffer) {
     if (buffer == NULL) {
-        DEBUG("itostr: Buffer is NULL\n");
+        DEBUG("ERROR: itostr: Buffer is NULL\n");
         return;
     }
 

@@ -87,10 +87,10 @@ void editCommand(tsState *psState, unsigned char kar) {
             } else if (strcmp(zCmd, "!$") == 0) {
                 cmdDirectoryListing(psState);
             } else if (zCmd[0] == 'Q') {
-                if (psState->isDirty) {
-                    DEBUG("No write since last change (:q! to override)\n");
-                } else {
+                if (!psState->isDirty) {
                     psState->doExit = true;
+                } else {
+                    // TODO: Indicate can't quit while buffer dirty, or use q!
                 }
             } else if (zCmd[0] == 'R') {
                 cmdRead(psState, zCmd + 1);
@@ -114,9 +114,6 @@ void editCommand(tsState *psState, unsigned char kar) {
 void edit(tsState *psState) {
     debug_msg("edit:\n");
     loadLine(psState, psState->lineY);
-    DEBUG("After edit.loadLine");
-    DEBUG(psState->text[0]);
-    DEBUG(psState->editBuffer);
 
     draw_screen(psState);
     scrCursorOn();

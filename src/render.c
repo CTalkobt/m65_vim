@@ -15,13 +15,10 @@ void draw_screen(const tsState *psState) {
 
     scrClear();
     int visible = psState->screenEnd.yPos;
-debug_msg("draw_screen:");
     for (unsigned char i = 0; i < visible && (psState->screenStart.yPos + i) < psState->lines; i++) {
         kPlotXY(0, i);
         const char* line = psState->text[psState->screenStart.yPos + i];
-DEBUGF("Line: %d %s", i, line, NULL); 
 
-  debug_msg(line == NULL ? "NULL" : line);
         if (line != NULL) {
             DEBUG(line);
             scrPuts(line);
@@ -30,7 +27,6 @@ DEBUGF("Line: %d %s", i, line, NULL);
             scrClearEOL();
         }
     }
-debug_msg("draw_screen:end");
     drawStatus(psState);
 }
 

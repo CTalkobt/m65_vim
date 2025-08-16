@@ -108,7 +108,7 @@ bool kOpen(unsigned char fileNum, unsigned char *pzFilename, unsigned char devic
 
 bool kReadLine(unsigned char fileNum, char *buffer, unsigned length) {
     if (!buffer || length == 0) {
-        DEBUG("kReadLine: invalid args\n");
+        DEBUG("ERROR: kReadLine: invalid args\n");
         return false;
     }
 
@@ -134,7 +134,7 @@ bool kReadLine(unsigned char fileNum, char *buffer, unsigned length) {
         // Check carry bit (bit 0) of the status register.
         if ((status & 1) != 0) {
             buffer[i] = '\0'; // Null-terminate what we have so far
-            DEBUG("kReadLine: EOF or error\n");
+            DEBUG("ERROR: kReadLine: EOF or error\n");
             return false;     // Return false on EOF or other error
         }
 

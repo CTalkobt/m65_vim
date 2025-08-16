@@ -60,7 +60,7 @@ uint16_t initTextBuffer(tsState *state) {
 
     {
         char msg[80+1];
-        sprintf(msg, "Initialized text buffer with max_lines: %d", state->max_lines);
+        sprintf(msg, "INFO: Initialized text buffer with max_lines: %d", state->max_lines);
         DEBUG(msg);
     }
     return state->max_lines;
@@ -68,7 +68,7 @@ uint16_t initTextBuffer(tsState *state) {
 
 int main(void) {
     asm volatile ("cli");
-    DEBUG("vim started");
+    DEBUG("INFO: vim started");
 
     scrScreenMode(_80x50);
     kFnKeyMacros(false);
@@ -78,7 +78,7 @@ int main(void) {
 
     tsState *state = calloc(1, sizeof(tsState));
     if (!state) {
-        DEBUG("malloc for state failed!");
+        DEBUG("ERROR: malloc for state failed!");
         return -2;
     }
 
@@ -101,20 +101,10 @@ int main(void) {
     state->zFilename[0] = '\0';
     
     bool initialAlloc = allocLine(state, 0, "vIM3 eDITOR - v0.1");
-    ASSERT(initialAlloc, "iNITIAL ALLOCATION FAILED.");
-    DEBUG("After allocLine:");
-    DEBUG(state->text[0]);
-    DEBUG(state->editBuffer);
+    ASSERT(initialAlloc, "eRROR: iNITIAL ALLOCATION FAILED.");
 
     state->lines = 1;
-    DEBUG("Line 0:");
-    DEBUG(state->text[0]);
-
     loadLine(state, 0);
-
-    DEBUG("After loadLine:");
-    DEBUG(state->text[0]);
-    DEBUG(state->editBuffer);
 
     edit(state);
 

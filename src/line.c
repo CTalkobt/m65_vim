@@ -24,10 +24,8 @@ static bool isIndexWithinCount(const tsState* s __attribute__((nonnull)), uint16
  * - Sets psState->isDirty on success.
  */
 bool allocLine(tsState *psState __attribute__((nonnull)) , uint16_t lineIndex, const char* new_content) {
-    DEBUGF("allocLine: %s, %d, %s", (psState!=NULL) ? "!NULL":"NULL", lineIndex, new_content); 
-
     if (!isIndexWithinMax(psState, lineIndex)) {
-        DEBUG("allocLine: ERROR: lineIndex out of range");
+        DEBUG("ERROR: allocLine: lineIndex out of range");
         return false;
     }
     if (new_content == NULL) {
@@ -41,13 +39,13 @@ bool allocLine(tsState *psState __attribute__((nonnull)) , uint16_t lineIndex, c
 
     unsigned int len = strlen(new_content);
     if (len >= MAX_LINE_LENGTH) {
-        DEBUG("allocLine: ERROR: Attempting to update past MAX_LINE_LENGTH");
+        DEBUG("ERROR: allocLine: Attempting to update past MAX_LINE_LENGTH");
         return false;
     }
 
     char* new_line = realloc(psState->text[lineIndex], len + 1);
     if (!new_line) {
-        DEBUG("allocLine: ERROR: Memory allocation failed.");
+        DEBUG("ERROR: allocLine: Memory allocation failed.");
         kPlotXY(0, psState->screenEnd.yPos - 1);
         scrPuts("Memory allocation failed!");
         return false;
@@ -63,8 +61,6 @@ bool allocLine(tsState *psState __attribute__((nonnull)) , uint16_t lineIndex, c
 }
 
 bool insertLine(tsState *psState __attribute__((nonnull)), uint16_t index, const char* content __attribute__((nonnull)) ) {
-    DEBUGF("insertLine: %s, %d, %s", psState != NULL ? "!NULL":"NULL", index, content); 
-
     // Valid insertion positions are [0, lines]
     if (index > psState->lines) {
         return false;

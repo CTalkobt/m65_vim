@@ -82,7 +82,6 @@ void scrPutDec(unsigned long n, unsigned char leadingZeros) {
     char buffer[11];
     unsigned char rem = 0;
     unsigned char digit = 9;
-DEBUG("scrPutDec-start\n");
     buffer[10] = '\0';
     do {
         rem = n % 10;
@@ -93,6 +92,5 @@ DEBUG("scrPutDec-start\n");
     while (((int)digit >= 0) && (leadingZeros--)) {
         buffer[digit--] = hexDigits[0];
     }
-DEBUG("scrPutDec-end\n");
     scrPuts(&buffer[digit + 1]);
 }
