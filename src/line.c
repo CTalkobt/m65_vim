@@ -9,10 +9,6 @@
 #include "line.h"
 #include "state.h"
 
-// Static buffers for temporary storage
-static char zTemp1[MAX_LINE_LENGTH];
-static char zTemp2[MAX_LINE_LENGTH];
-
 static bool isIndexWithinMax(const tsState* s, uint16_t idx) {
     return s && idx < s->max_lines;
 }

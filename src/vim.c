@@ -14,6 +14,10 @@
 
 #define MEMORY_RESERVE 2048 // Reserve 2KB for stack and other needs
 
+// Static buffers for temporary storage
+char zTemp1[MAX_LINE_LENGTH];
+char zTemp2[MAX_LINE_LENGTH];
+
 unsigned int getFreeMemory(void) {
     unsigned int size = 1024;
     unsigned int last_success = 0;
@@ -67,23 +71,41 @@ uint16_t initTextBuffer(tsState *state) {
     return state->max_lines;
 }
 
-int main(void) {
-    asm volatile ("cli");
-    DEBUG("INFO: vim started");
+tsState inline *getInitialEditState() {
+    tsState *state = calloc(1, sizeof(tsState));
+    #ifdef MALLOC_CHECKS
+    if (!state) {
+        DEBUG("ERROR: malloc for state failed!");
+        return NULL;
+    }
+    #endif
+    return state;
+}
 
-    DEBUGF("Free memory: %d", getFreeMemory(), NULL, NULL);
-
+void inline setupScreen() {
     scrScreenMode(_80x50);
     kFnKeyMacros(false);
     kbdBufferClear();
     scrClear();
     scrColor(COLOR_BLACK, COLOR_BLACK);
 
-    tsState *state = calloc(1, sizeof(tsState));
-    if (!state) {
-        DEBUG("ERROR: malloc for state failed!");
-        return -2;
-    }
+}
+
+int main(void) {
+    asm volatile ("cli");
+    DEBUG("INFO: vim started");
+    // {
+    //     char *txt1 = malloc(4096);
+    //     unsigned int fm = getFreeMemory();
+    //
+    //     DEBUGF("Free memory: %d %s", fm, (!txt1)?"txt1 failed":"", NULL);
+    //     if (txt1)
+    //         free(txt1);
+    // }
+
+    setupScreen();
+
+    tsState *state = getInitialEditState();
 
     // Determine the maximum number of lines allowed in the text buffer
     const int max_lines = 50; // This should be set based on available memory or other criteria
