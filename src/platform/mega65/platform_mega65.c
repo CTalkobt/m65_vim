@@ -1,6 +1,8 @@
-#include "platform.h"
+#include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include "platform.h"
+
 #include <cbm.h>
 
 // Headers from mega65-libc dependency
@@ -39,6 +41,8 @@ void platform_init_video() {
 }
 
 void platform_init_screen() {
+    _curScreenW = 80;
+    _curScreenH = 50;
     scrScreenMode(_80x50);
     kFnKeyMacros(false);
     kbdBufferClear();
@@ -48,6 +52,8 @@ void platform_init_screen() {
 
 void platform_shutdown_screen() {
     // Restore default screen mode or colors if necessary
+    _curScreenW = 80;
+    _curScreenH = 25;
     scrScreenMode(_80x25);
     scrColor(COLOR_WHITE, COLOR_BLUE);
     scrClear();
@@ -90,21 +96,21 @@ unsigned char platform_get_screen_height() { return _curScreenH; }
 // --- High-level output ---
 void platform_puts(const char* s) {
     while (*s) {
-        cbm_k_bsout(*s++);
+        kBsout(*s++);
     }
 }
 
 void platform_put_char(char c) {
-    cbm_k_bsout(c);
+    kBsout(c);
 }
 
 void platform_clear_eol() {
-    cbm_k_bsout(27);
-    cbm_k_bsout('Q');
+    kBsout(27);
+    kBsout('Q');
 }
 
 void platform_set_color(unsigned char color) {
-    cbm_k_bsout(color);
+    kBsout(color);
 }
 
 // --- Debugging ---
@@ -133,31 +139,31 @@ int platform_is_key_pressed() {
 // --- File I/O Functions (Stubs for now) ---
 
 platform_file_handle platform_open_file(const char* filename, const char* mode) {
-    // This needs a proper implementation using kernal routines
+    // @@TODO: This needs a proper implementation using kernal routines
     return NULL;
 }
 
 int platform_read_file(platform_file_handle handle, void* buffer, unsigned int size) {
-    // This needs a proper implementation
+    // @@TODO: This needs a proper implementation
     return -1;
 }
 
 int platform_write_file(platform_file_handle handle, const void* buffer, unsigned int size) {
-    // This needs a proper implementation
+    // @@TODO: This needs a proper implementation
     return -1;
 }
 
 void platform_close_file(platform_file_handle handle) {
-    // This needs a proper implementation
+    // @@TODO: This needs a proper implementation
 }
 
 int platform_remove_file(const char* filename) {
-    // This needs a proper implementation
+    // @@TODO: This needs a proper implementation
     return -1;
 }
 
 int platform_rename_file(const char* old_filename, const char* new_filename) {
-    // This needs a proper implementation
+    // @@TODO: This needs a proper implementation
     return -1;
 }
 
@@ -167,11 +173,12 @@ int platform_rename_file(const char* old_filename, const char* new_filename) {
 // For now, we'll return NULL.
 
 void* platform_alloc(unsigned int size) {
-    return NULL;
+    return malloc(size);
 }
 
 void platform_free(void* ptr) {
-    // Matching free for the allocator
+    if (ptr) 
+        free(ptr);
 }
 
 
@@ -183,6 +190,6 @@ void platform_exit(int code) {
 }
 
 long platform_get_time() {
-    // This would require reading the RTC registers on the MEGA65
+    // @@TODO: This would require reading the RTC registers on the MEGA65
     return 0;
 }

@@ -110,7 +110,6 @@ int main(void) {
     ASSERT(initialAlloc, "eRROR: iNITIAL ALLOCATION FAILED.");
 
     state->lines = 1;
-    loadLine(state, 0);
 
     edit(state);
 

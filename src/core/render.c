@@ -6,21 +6,38 @@
 #include "ui_strings.h"
 #include "platform.h"
 #include "lib/itostr.h"
+#include "debug.h"
 
 char zTemp[32+1];
+
+void dbg_first5lines(tsState *psState, char *message) {
+    DEBUG(message);
+    for (int i=0; i<5; i++) {
+        DEBUGF2("  %d  %s", i, psState->text[i] == NULL ? "<NULL>" : psState->text[i]);
+    }
+}
 
 void draw_screen(const tsState *psState) {
     if (psState == NULL) return;
 
-    platform_clear_screen();
+    dbg_first5lines((tsState*)psState, "drawScreen: <start>");
+
     int visible = psState->screenEnd.yPos;
+DEBUGF1("draw_screen: yOffset = %d", psState->screenStart.yPos);
+
     for (unsigned char i = 0; i < visible && (psState->screenStart.yPos + i) < psState->lines; i++) {
         platform_set_cursor(0, i);
-        const char* line = psState->text[psState->screenStart.yPos + i];
+        unsigned int index = psState->screenStart.yPos + i; 
+
+        const char* line = psState->text[index];
+DEBUGF3("draw_screen: %d %d %c ", i, index, line == NULL ? '*' : line[index]);
 
         if (line != NULL) {
+DEBUG(line);
             platform_puts(line);
+            platform_clear_eol();
         } else {
+DEBUG("@2");
             platform_clear_eol();
         }
     }
@@ -29,6 +46,8 @@ void draw_screen(const tsState *psState) {
 
 void drawStatus(const tsState *psState) {
     if (psState == NULL) return;
+
+    dbg_first5lines((tsState*)psState, "drawStatus: <start>");
 
     // Status line:
     // "filename" <count>L, <count>B          x,ypos  n%
@@ -78,3 +97,4 @@ void drawStatus(const tsState *psState) {
     // RE-position cursor.
     platform_set_cursor(psState->xPos, psState->lineY);
 }
+

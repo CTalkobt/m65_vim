@@ -44,6 +44,7 @@ set(CORE_SOURCES
     src/core/render.c
     src/core/line.c
     src/core/lib/itostr.c
+    src/core/debug.c
 )
 
 # --- Add packages and sources based on platform ---

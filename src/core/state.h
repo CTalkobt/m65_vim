@@ -17,7 +17,7 @@ typedef struct {
 } tsXYPos;
 
 
-typedef struct {
+typedef struct sState {
     uint16_t lines;        // Number of lines within the files. 
     uint16_t max_lines;    // Maximum number of lines the buffer can hold.
     uint16_t lineY;        // Current .Y position within buffer. 

@@ -48,6 +48,7 @@ void setEditMode(tsState *psState, EditMode newMode) {
             draw_screen(psState);
             break;
         case Insert:
+            loadLine(psState, psState->lineY);
             drawStatus(psState);
             break;
     }
@@ -109,10 +110,9 @@ void editCommand(tsState *psState, unsigned char kar) {
 
 void edit(tsState *psState) {
     loadLine(psState, psState->lineY);
-
-    draw_screen(psState);
-    platform_show_cursor();
     platform_set_color(PETSCII_COLOR_WHITE);
+    draw_screen(psState);
+    platform_set_cursor(psState->xPos + psState->screenStart.xPos, psState->lineY + psState->screenStart.yPos);
 
     do {
         platform_show_cursor();

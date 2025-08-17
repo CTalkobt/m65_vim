@@ -6,154 +6,88 @@
 
 #include "state.h"
 
-extern char zTemp1[MAX_LINE_LENGTH];
-extern char zTemp2[MAX_LINE_LENGTH]; 
-
 /**
- * Allocates or reallocates memory for a line at a specific index in the text editor state.
+ * Allocates or reallocates memory for a line at a specific index.
+ * If new_content is NULL, the line is freed.
  *
- * @param psState Pointer to the text editor state.
- * @param lineIndex Index of the line to allocate memory for.
- * @param new_content New content to set for the line.
- * @return True if successful, false otherwise.
+ * @param psState A pointer to the current editor state.
+ * @param lineIndex The index of the line to allocate or free.
+ * @param new_content The new text content for the line. If NULL, the line is deallocated.
+ * @return Returns true on success, false on failure (e.g., memory allocation error).
  */
 bool allocLine(tsState *psState, uint16_t lineIndex, const char* new_content);
 
 /**
- * Inserts a new line at a specified index, shifting existing lines down.
+ * Inserts a new line with specified content at a given index, shifting subsequent lines down.
  *
- * @param psState Pointer to the text editor state.
- * @param index Index where the new line should be inserted.
- * @param content Content of the new line.
- * @return True if successful, false otherwise.
+ * @param psState A pointer to the current editor state.
+ * @param index The index at which to insert the new line.
+ * @param content The text content for the new line.
+ * @return Returns true on success, false on failure.
  */
 bool insertLine(tsState *psState, uint16_t index, const char* content);
 
 /**
  * Replaces an existing line with new content.
  *
- * @param psState Pointer to the text editor state.
- * @param index Index of the line to replace.
- * @param content New content for the line.
- * @return True if successful, false otherwise.
+ * @param psState A pointer to the current editor state.
+ * @param index The index of the line to replace.
+ * @param content The new text content for the line.
+ * @return Returns true on success, false on failure.
  */
-static inline bool replaceLine(tsState *psState, uint16_t index, const char* content) {
-    return allocLine(psState, index, content);
-}
+bool replaceLine(tsState *psState, uint16_t index, const char* content);
 
 /**
- * Appends a new line at the end of the text editor state.
+ * Appends a new line at the end of the text buffer.
  *
- * @param psState Pointer to the text editor state.
- * @param content Content of the new line.
- * @return True if successful, false otherwise.
+ * @param psState A pointer to the current editor state.
+ * @param content The text content for the new line.
+ * @return Returns true on success, false on failure.
  */
-static inline bool appendLine(tsState *psState, const char* content) {
-    return insertLine(psState, psState->lines, content);
-}
+bool appendLine(tsState *psState, const char* content);
 
 /**
- * Deletes a line at a specified index.
+ * Deletes a line at a specified index, shifting subsequent lines up.
  *
- * @param psState Pointer to the text editor state.
- * @param index Index of the line to delete.
- * @return True if successful, false otherwise.
+ * @param psState A pointer to the current editor state.
+ * @param index The index of the line to delete.
+ * @return Returns true on success, false on failure.
  */
 bool deleteLine(tsState *psState, uint16_t index);
 
 /**
- * Clears the content of a line but keeps it in the allocation pool.
+ * Frees all allocated memory for the text buffer and resets the line count.
  *
- * @param psState Pointer to the text editor state.
- * @param index Index of the line to clear.
- * @return True if successful, false otherwise.
- */
-bool clearLine(tsState *psState, uint16_t index);
-
-/**
- * Swaps two lines at specified indices.
- *
- * @param psState Pointer to the text editor state.
- * @param a Index of the first line.
- * @param b Index of the second line.
- * @return True if successful, false otherwise.
- */
-bool swapLines(tsState *psState, uint16_t a, uint16_t b);
-
-/**
- * Moves a line from one index to another.
- *
- * @param psState Pointer to the text editor state.
- * @param from Index of the line to move.
- * @param to New index for the line.
- * @return True if successful, false otherwise.
- */
-bool moveLine(tsState *psState, uint16_t from, uint16_t to);
-
-/**
- * Compacts the lines in the text editor state by removing any unused memory.
- *
- * @param psState Pointer to the text editor state.
- */
-bool compactLines(tsState *psState);
-
-/**
- * Frees all allocated lines and resets the text editor state.
- *
- * @param psState Pointer to the text editor state.
+ * @param psState A pointer to the current editor state.
  */
 void freeAllLines(tsState *psState);
 
 /**
- * Retrieves the content of a line at a specified index.
+ * Retrieves a read-only pointer to the content of a line at a specified index.
  *
- * @param psState Pointer to the text editor state.
- * @param index Index of the line to retrieve.
- * @return Pointer to the content of the line, or NULL if invalid index.
+ * @param psState A pointer to the current editor state.
+ * @param index The index of the line to retrieve.
+ * @return A const char* pointer to the line's content, or NULL if the index is out of bounds.
  */
 const char* getLine(const tsState* psState, uint16_t index);
 
 /**
- * Retrieves the total number of lines in the text editor state.
+ * Copies the content of a specified line from the main text buffer into the shared edit buffer.
+ * Also updates the current line number (lineY) in the state.
  *
- * @param psState Pointer to the text editor state.
- * @return Total number of lines.
- */
-uint16_t getLineCount(const tsState* psState);
-
-/**
- * Retrieves the maximum number of lines that can be allocated in the text editor state.
- *
- * @param psState Pointer to the text editor state.
- * @return Maximum number of lines.
- */
-uint16_t getMaxLines(const tsState* psState);
-
-/**
- * Retrieves the length (number of characters) of a line at a specified index.
- *
- * @param psState Pointer to the text editor state.
- * @param index Index of the line to retrieve.
- * @return Length of the line, or 0 if invalid index.
- */
-uint16_t getLineLength(const tsState* psState, uint16_t index);
-
-/*
- * Loads a line from the main text buffer into the edit buffer
- * 
- * @param psState Pointer to the text editor state.
- * @param lineIndex Index of the line to load.
- * 
+ * @param psState A pointer to the current editor state.
+ * @param lineIndex The index of the line to load into the edit buffer.
  */
 void loadLine(tsState *psState, uint16_t lineIndex);
 
 /**
- * Splits a line at a specified position, creating a new line with the remainder.
+ * Splits a line at a specified column position. The text from the split position to the end of the
+ * line is moved to a new line inserted immediately after the current line.
  *
- * @param psState Pointer to the text editor state.
- * @param lineIndex Index of the line to split.
+ * @param psState A pointer to the current editor state.
+ * @param lineIndex The index of the line to split.
  * @param xPos The column position at which to split the line.
- * @return True if successful, false otherwise.
+ * @return Returns true on success, false on failure.
  */
 bool splitLine(tsState *psState, uint16_t lineIndex, uint16_t xPos);
 
