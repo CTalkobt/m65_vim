@@ -23,6 +23,7 @@ unsigned int getFreeMemory(void) {
         free(p);
         last_success = size;
         size += 1024;
+        DEBUGF("Free small/memory: %d", size, NULL, NULL);
     }
 
     size = last_success + 128;
@@ -30,9 +31,10 @@ unsigned int getFreeMemory(void) {
         free(p);
         last_success = size;
         size += 128;
+        DEBUGF("Free large/memory: %d", size, NULL, NULL);
     }
 
-    return last_success;
+    return last_success - MEMORY_RESERVE;
 }
 
 void freeTextBuffer(const tsState *state) {
@@ -57,17 +59,19 @@ uint16_t initTextBuffer(tsState *state) {
         state->text[i] = NULL; // Initialize all lines to NULL
     }
 
-    {
-        char msg[80+1];
-        sprintf(msg, "INFO: Initialized text buffer with max_lines: %d", state->max_lines);
-        DEBUG(msg);
-    }
+//    {
+//        char msg[80+1];
+//        sprintf(msg, "INFO: Initialized text buffer with max_lines: %d", state->max_lines);
+//      DEBUG(msg);
+//    }
     return state->max_lines;
 }
 
 int main(void) {
     asm volatile ("cli");
     DEBUG("INFO: vim started");
+
+    DEBUGF("Free memory: %d", getFreeMemory(), NULL, NULL);
 
     scrScreenMode(_80x50);
     kFnKeyMacros(false);

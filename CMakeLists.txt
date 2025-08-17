@@ -77,7 +77,9 @@ add_executable(vim
         src/lib/m65/screen.h
 )
 target_link_libraries(vim mega65libc)
-target_compile_definitions(vim PRIVATE DEBUG_ON)                                                                                                         
+target_compile_definitions(vim PRIVATE DEBUG_ON)
+target_link_options(vim PRIVATE "-Wl,-z,stack-size=8192")
+set_target_properties(vim PROPERTIES LINK_FLAGS "-Wl,-Map=vim.map")
 
 add_executable(vim_test
         test/LineTestSuite.h
@@ -108,6 +110,8 @@ target_include_directories(vim_test PRIVATE test)
 target_compile_definitions(vim_test PRIVATE DEBUG_ON)
 target_compile_definitions(vim_test PRIVATE DEBUG_TRACE)
 target_compile_definitions(vim_test PRIVATE DEBUG_BUFFER)
+target_link_options(vim_test PRIVATE "-Wl,-z,stack-size=8192")
+set_target_properties(vim_test PROPERTIES LINK_FLAGS "-Wl,-Map=vim_test.map")
 
 
 

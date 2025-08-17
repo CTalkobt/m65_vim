@@ -17,12 +17,12 @@ static bool isIndexWithinCount(const tsState* s __attribute__((nonnull)), uint16
 }
 
 
-void dumpFirst5(tsState *psState) {
-    DEBUG("First 5 lines:");
-    for (int i = 0; i < 5; i++) {
-        char* line = getLine(psState, i);
-        DEBUGF("  %d %s", i, line ? line : "NULL", NULL);
-    }
+void inline dumpFirst5(tsState *psState) {
+//    DEBUG("First 5 lines:");
+//    for (int i = 0; i < 5; i++) {
+//        char* line = getLine(psState, i);
+//        DEBUGF("  %d %s", i, line ? line : "NULL", NULL);
+//    }
 }
 
 /**
@@ -33,12 +33,12 @@ void dumpFirst5(tsState *psState) {
  * - Sets psState->isDirty on success.
  */
 bool allocLine(tsState *psState __attribute__((nonnull)) , uint16_t lineIndex, const char* new_content) {
-    {
-        char zDbg[80+1];
-        sprintf(zDbg, "allocLine(%d, %s)", lineIndex, new_content);
-        DEBUG(zDbg);
-        dumpFirst5(psState);
-    }
+//    {
+//        char zDbg[80+1];
+//        sprintf(zDbg, "allocLine(%d, %s)", lineIndex, new_content);
+//        DEBUG(zDbg);
+//        dumpFirst5(psState);
+//    }
     if (!isIndexWithinMax(psState, lineIndex)) {
         DEBUG("ERROR: allocLine: lineIndex out of range");
         return false;
@@ -81,26 +81,26 @@ bool allocLine(tsState *psState __attribute__((nonnull)) , uint16_t lineIndex, c
 }
 
 bool insertLine(tsState *psState __attribute__((nonnull)), uint16_t index, const char* content __attribute__((nonnull)) ) {
-    {
-        char zInsDbg[80+1];
-        sprintf(zInsDbg, "insertLine(%d, %s)", index, content);
-        DEBUG(zInsDbg);
-        dumpFirst5(psState);
-    }
+//    {
+//        char zInsDbg[80+1];
+//        sprintf(zInsDbg, "insertLine(%d, %s)", index, content);
+//        DEBUG(zInsDbg);
+//        dumpFirst5(psState);
+//    }
 
     // Valid insertion positions are [0, lines]
     if (index > psState->lines) {
-        DEBUG("@1");
+        DEBUG("ERROR:Can't insert past lines.");
         return false;
     }
     // Can't exceed max_lines.
     if (psState->lines >= psState->max_lines) {
-        DEBUG("@2");
+        DEBUG("ERROR:Can't insert past max_lines.");
         return false;
     }
     // If we have to overwrite the last line, then abort.
     if (psState->text[psState->lines] != NULL) {
-        DEBUG("@3");
+        DEBUG("ERROR:Can't insert past last line.");
         return false;
     }
 
@@ -111,7 +111,7 @@ bool insertLine(tsState *psState __attribute__((nonnull)), uint16_t index, const
     psState->text[index] = NULL;
 
     if (!allocLine(psState, index, content)) {
-DEBUG("@allocFail");
+        DEBUG("ERROR: insertLine.allocLine: Memory allocation failed.");
         // Rollback shift if allocation failed
         for (uint16_t i = index; i < psState->lines; i++) {
             psState->text[i] = psState->text[i+1];
@@ -122,8 +122,8 @@ DEBUG("@allocFail");
 
     psState->lines++;
     psState->isDirty = true;
-DEBUG("allocLine - at end:");
-dumpFirst5(psState);
+//DEBUG("allocLine - at end:");
+//dumpFirst5(psState);
 
     return true;
 }
