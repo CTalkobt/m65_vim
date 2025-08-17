@@ -1,6 +1,9 @@
 #pragma once
 #include "kernal.h"
 
+extern unsigned char _curScreenW;
+extern unsigned char _curScreenH;
+
 enum ScreenMode {
     _80x25,
     _80x50,

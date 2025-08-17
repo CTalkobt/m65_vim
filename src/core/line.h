@@ -6,6 +6,9 @@
 
 #include "state.h"
 
+extern char zTemp1[MAX_LINE_LENGTH];
+extern char zTemp2[MAX_LINE_LENGTH]; 
+
 /**
  * Allocates or reallocates memory for a line at a specific index in the text editor state.
  *

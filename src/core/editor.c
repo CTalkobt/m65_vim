@@ -1,11 +1,7 @@
 #include <string.h>
-#include <mega65.h>
 #include <stdio.h>
 
-#include "lib/m65/debug.h"
-#include "lib/m65/screen.h"
-#include "lib/m65/kbd.h"
-
+#include "platform.h"
 #include "state.h"
 #include "cmd.h"
 #include "render.h"
@@ -13,6 +9,7 @@
 #include "line.h"
 
 #define MAX_CMD 78
+#define PETSCII_COLOR_WHITE 5
 
 char zCmd[MAX_CMD + 1] = {0};
 
@@ -41,10 +38,10 @@ void setEditMode(tsState *psState, EditMode newMode) {
     // Entering new mode
     switch (newMode) {
         case Command:
-            kPlotXY(0, psState->screenEnd.yPos - 1);
-            scrClearEOL();
-            kBsout(':');
-            scrCursorOn();
+            platform_set_cursor(0, psState->screenEnd.yPos - 1);
+            platform_clear_eol();
+            platform_put_char(':');
+            platform_show_cursor();
             break;
         case Default:
             loadLine(psState, psState->lineY);
@@ -63,7 +60,7 @@ void editCommand(tsState *psState, unsigned char kar) {
         case 20: // ins/del
             if (l > 0) {
                 zCmd[l - 1] = '\0';
-                kBsout(kar);
+                platform_put_char(kar);
             }
             break;
 
@@ -104,28 +101,26 @@ void editCommand(tsState *psState, unsigned char kar) {
             if (l < MAX_CMD) {
                 zCmd[l] = kar;
                 zCmd[l + 1] = '\0';
-                kBsout(kar);
+                platform_put_char(kar);
             }
             break;
     }
 }
 
 void edit(tsState *psState) {
-    debug_msg("edit:\n");
     loadLine(psState, psState->lineY);
 
     draw_screen(psState);
-    scrCursorOn();
-    kBsout(5); // white cursor.
+    platform_show_cursor();
+    platform_set_color(PETSCII_COLOR_WHITE);
 
     do {
-        scrCursorOn();
+        platform_show_cursor();
         if (psState->editMode == Default) {
-
-            kPlotXY(psState->xPos + psState->screenStart.xPos, psState->lineY + psState->screenStart.yPos);
+            platform_set_cursor(psState->xPos + psState->screenStart.xPos, psState->lineY + psState->screenStart.yPos);
         }
 
-        unsigned char kar = kbdGetKey();
+        unsigned char kar = platform_get_key();
 
         if (kar == 12) { // Ctrl-L
             draw_screen(psState);
@@ -134,9 +129,9 @@ void edit(tsState *psState) {
 
         tpfnCmd cmdFn = getcmd(psState->editMode, kar);
         if (cmdFn) {
-            scrCursorOff();
+            platform_hide_cursor();
             cmdFn(psState);
-            scrCursorOn();
+            platform_show_cursor();
         } else {
             // Not a command, handle as input for the current mode
             switch (psState->editMode) {
@@ -145,11 +140,6 @@ void edit(tsState *psState) {
                     break;
                 case Insert: {
                     char *line = psState->editBuffer;
-//                    {
-//                        char zInsertDebug[80+1];
-//                        sprintf(zInsertDebug, "Insert: %d %d %s", psState->xPos, psState->lineY, line);
-//                        DEBUG(zInsertDebug);
-//                    }
                     uint16_t len = strlen(line);
                     switch (kar) {
                         case 20: // Backspace
@@ -161,9 +151,7 @@ void edit(tsState *psState) {
                             break;
                         case '\n':
                         case 13: {
-                            // First, commit the current edit buffer to the line
                             allocLine(psState, psState->lineY, line);
-                            // Now, split the newly committed line
                             if (splitLine(psState, psState->lineY, psState->xPos)) {
                                 psState->lineY++;
                                 psState->xPos = 0;
@@ -171,10 +159,9 @@ void edit(tsState *psState) {
                                 loadLine(psState, psState->lineY);
                                 draw_screen(psState);
                             }
-                            // TODO: Handle splitLine failure
                             break;
                         }
-                        case 27: // Escape. 
+                        case 27: // Escape.
                         case 3:  // Run/Stop
                             loadLine(psState, psState->lineY);
                             psState->editMode = Default;
@@ -189,11 +176,11 @@ void edit(tsState *psState) {
                             break;
                     }
                     // Redraw the modified line and update the cursor
-                    kPlotXY(0, psState->lineY);
-                    scrPuts(line);
-                    scrClearEOL();
+                    platform_set_cursor(0, psState->lineY);
+                    platform_puts(line);
+                    platform_clear_eol();
                     drawStatus(psState);
-                    kPlotXY(psState->xPos, psState->lineY);
+                    platform_set_cursor(psState->xPos, psState->lineY);
                     break;
                 }
                 default:
@@ -201,5 +188,5 @@ void edit(tsState *psState) {
             }
         }
     } while (!psState->doExit);
-    scrCursorOff();
+    platform_hide_cursor();
 }

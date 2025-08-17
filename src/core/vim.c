@@ -1,13 +1,12 @@
 #include <stdio.h>
-#include <mega65.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "lib/m65/debug.h"
-#include "lib/m65/screen.h"
-#include "lib/m65/kbd.h"
+#include <string.h>
 
+#include "platform.h"
+#include "debug.h"
 #include "editor.h"
 #include "state.h"
 #include "line.h"
@@ -27,7 +26,7 @@ unsigned int getFreeMemory(void) {
         free(p);
         last_success = size;
         size += 1024;
-        DEBUGF("Free small/memory: %d", size, NULL, NULL);
+        DEBUGF1("Free small/memory: %d", size);
     }
 
     size = last_success + 128;
@@ -35,7 +34,7 @@ unsigned int getFreeMemory(void) {
         free(p);
         last_success = size;
         size += 128;
-        DEBUGF("Free large/memory: %d", size, NULL, NULL);
+        DEBUGF1("Free large/memory: %d", size);
     }
 
     return last_success - MEMORY_RESERVE;
@@ -71,7 +70,7 @@ uint16_t initTextBuffer(tsState *state) {
     return state->max_lines;
 }
 
-tsState inline *getInitialEditState() {
+tsState _INLINE_ *getInitialEditState() {
     tsState *state = calloc(1, sizeof(tsState));
     #ifdef MALLOC_CHECKS
     if (!state) {
@@ -82,28 +81,10 @@ tsState inline *getInitialEditState() {
     return state;
 }
 
-void inline setupScreen() {
-    scrScreenMode(_80x50);
-    kFnKeyMacros(false);
-    kbdBufferClear();
-    scrClear();
-    scrColor(COLOR_BLACK, COLOR_BLACK);
-
-}
-
 int main(void) {
-    asm volatile ("cli");
     DEBUG("INFO: vim started");
-    // {
-    //     char *txt1 = malloc(4096);
-    //     unsigned int fm = getFreeMemory();
-    //
-    //     DEBUGF("Free memory: %d %s", fm, (!txt1)?"txt1 failed":"", NULL);
-    //     if (txt1)
-    //         free(txt1);
-    // }
 
-    setupScreen();
+    platform_init_screen();
 
     tsState *state = getInitialEditState();
 
@@ -136,6 +117,7 @@ int main(void) {
     freeTextBuffer(state);
     free(state);
 
-    kReset(WarmBoot);
+    platform_shutdown_screen();
+    platform_exit(0);
     return 0;
 }

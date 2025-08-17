@@ -8,8 +8,8 @@
 #include "debug.h"
 #include "mega65/memory.h"
 
-unsigned char _curScreenW; // NOLINT(*-reserved-identifier)
-unsigned char _curScreenH; // NOLINT(*-reserved-identifier)
+unsigned char _curScreenW = 80; // NOLINT(*-reserved-identifier)
+unsigned char _curScreenH = 25; // NOLINT(*-reserved-identifier)
 
 
 void scrScreenMode(enum ScreenMode mode) {

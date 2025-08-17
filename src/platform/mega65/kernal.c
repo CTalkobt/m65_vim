@@ -8,7 +8,7 @@
 #include <string.h>
 
 #include "debug.h"
-#include "../../cmd.h"
+#include "cmd.h"
 
 #ifdef KERNAL_LOWLEVEL
 unsigned char k_acptr(void) {

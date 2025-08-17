@@ -1,8 +1,7 @@
 #include "itostr.h"
-
+#include "debug.h"
 #include <stdio.h>
-
-#include "m65/debug.h"
+#include <stdint.h>
 
 void itostr(uint16_t value, char* buffer) {
     if (buffer == NULL) {
@@ -13,7 +12,6 @@ void itostr(uint16_t value, char* buffer) {
     char temp_buffer[7]; // Max 5 digits, null terminator for 16-bit int
     int i = 0;
 
-    // Handle zero cases
     if (value == 0) {
         buffer[0] = '0';
         buffer[1] = '\0';
@@ -26,8 +24,6 @@ void itostr(uint16_t value, char* buffer) {
     }
 
     int j = 0;
-
-    // Reverse the string
     while (i > 0) {
         buffer[j++] = temp_buffer[--i];
     }

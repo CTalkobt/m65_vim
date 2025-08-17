@@ -1,19 +1,16 @@
 #include <stdio.h>
 #include <stdbool.h>
-
-#include "state.h"
-#include "cmd.h"
-
 #include <stddef.h>
 #include <string.h>
 
+#include "platform.h"
+#include "debug.h"
+#include "state.h"
+#include "cmd.h"
 #include "editMode.h"
 #include "render.h"
-#include "lib/m65/debug.h"
 #include "line.h"
 #include "editor.h"
-#include "lib/m65/screen.h"
-#include "lib/m65/kbd.h"
 
 #ifndef CTRL
 #define CTRL(kar) ((kar)-'a')
@@ -59,11 +56,10 @@ tsCmds cmds[] = {
 tpfnCmd getcmd(const EditMode mode, unsigned char kar) {
     for (tsCmds *cmd = &cmds[0]; cmd->cmd != NULL; cmd++) {
         if (cmd->kar == kar && cmd->mode == mode) {
-            DEBUGF("INFO: Found cmd: %d for mode: %d", kar, mode, NULL); 
+            DEBUGF2("INFO: Found cmd: %d for mode: %d", kar, mode);
             return cmd->cmd;
         }
     }
-//    DEBUGF("INFO: Couldn't find cmd: %d for mode: %d", kar, mode, NULL);
     return NULL;
 }
 
@@ -230,44 +226,44 @@ int cmdModeCommand(tsState *psState) {
 }
 
 int cmdHelp(tsState *psState) {
-    scrClear();
-    puts("VIM Help\n\n");
-    puts("Key commands:\n");
-    puts(" h, <-    - Cursor Left\n");
-    puts(" k, ^     - Cursor Up\n");
-    puts(" j, v     - Cursor Down\n");
-    puts(" l, ->    - Cursor Right\n");
-    puts(" H        - Top of screen\n");
-    puts(" L        - Bottom of screen\n");
-    puts(" $        - End of line\n");
-    puts(" 0        - Start of line\n");
-    puts(" w        - Next word\n");
-    puts(" g        - Goto line\n");
-    puts(" J        - Join lines\n");
-    puts(" i        - Insert mode\n");
-    puts(" a        - Append mode\n");
-    puts(" :        - Command mode\n");
-    puts(" ctrl+f   - Page forward\n");
-    puts(" ctrl+b   - Page back\n");
-    puts(" ? / help - This help screen\n\n");
-    puts("Press any key to continue...");
-    kbdBufferClear(); 
-    kbdGetKey();
+    platform_clear_screen();
+    platform_puts("VIM Help\n\n");
+    platform_puts("Key commands:\n");
+    platform_puts(" h, <-    - Cursor Left\n");
+    platform_puts(" k, ^     - Cursor Up\n");
+    platform_puts(" j, v     - Cursor Down\n");
+    platform_puts(" l, ->    - Cursor Right\n");
+    platform_puts(" H        - Top of screen\n");
+    platform_puts(" L        - Bottom of screen\n");
+    platform_puts(" $        - End of line\n");
+    platform_puts(" 0        - Start of line\n");
+    platform_puts(" w        - Next word\n");
+    platform_puts(" g        - Goto line\n");
+    platform_puts(" J        - Join lines\n");
+    platform_puts(" i        - Insert mode\n");
+    platform_puts(" a        - Append mode\n");
+    platform_puts(" :        - Command mode\n");
+    platform_puts(" ctrl+f   - Page forward\n");
+    platform_puts(" ctrl+b   - Page back\n");
+    platform_puts(" ? / help - This help screen\n\n");
+    platform_puts("Press any key to continue...");
+    while(platform_is_key_pressed()) platform_get_key(); // Clear buffer
+    platform_get_key();
     draw_screen(psState);
     return 0;
 }
 
 int cmdRead(tsState *psState, char *pzCmdRemainder) {
-    // ... (implementation unchanged)
+    // ... (implementation unchanged for now)
     return 0;
 }
 
 int cmdWrite(tsState *psState, char *pzCmdRemainder, bool force) {
-    // ... (implementation unchanged)
+    // ... (implementation unchanged for now)
     return 0;
 }
 
 int cmdDirectoryListing(tsState *psState) {
-    // ... (implementation unchanged)
+    // ... (implementation unchanged for now)
     return 0;
 }
