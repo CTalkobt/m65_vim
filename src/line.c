@@ -9,13 +9,16 @@
 #include "line.h"
 #include "state.h"
 
+// Static buffers for temporary storage
+static char zTemp1[MAX_LINE_LENGTH];
+static char zTemp2[MAX_LINE_LENGTH];
+
 static bool isIndexWithinMax(const tsState* s, uint16_t idx) {
     return s && idx < s->max_lines;
 }
 static bool isIndexWithinCount(const tsState* s __attribute__((nonnull)), uint16_t idx) {
     return idx < s->lines;
 }
-
 
 void inline dumpFirst5(tsState *psState) {
 //    DEBUG("First 5 lines:");
@@ -249,30 +252,24 @@ bool splitLine(tsState *psState, uint16_t lineIndex, uint16_t xPos) {
         return false; // Cannot split past the end of the line
     }
 
-    // Create temporary buffers for both parts of the split line
-    // to avoid dangling pointers after the first allocLine call.
-    char temp_first_part[MAX_LINE_LENGTH];
-    char temp_remainder[MAX_LINE_LENGTH];
+    // Copy first part to zTemp1
+    strncpy(zTemp1, currentLine, xPos);
+    zTemp1[xPos] = '\0';
 
-    // Copy first part
-    strncpy(temp_first_part, currentLine, xPos);
-    temp_first_part[xPos] = '\0';
-
-    // Copy remainder
-    strncpy(temp_remainder, currentLine + xPos, MAX_LINE_LENGTH - 1);
-    temp_remainder[MAX_LINE_LENGTH - 1] = '\0';
+    // Copy remainder to zTemp2
+    strcpy(zTemp2, currentLine + xPos);
 
     // Update the original line with the truncated content
-    if (!allocLine(psState, lineIndex, temp_first_part)) {
+    if (!allocLine(psState, lineIndex, zTemp1)) {
         return false; // Failed to reallocate and truncate the original line
     }
 
     // Insert the new line with the remainder
-    if (!insertLine(psState, lineIndex + 1, temp_remainder)) {
+    if (!insertLine(psState, lineIndex + 1, zTemp2)) {
         // Attempt to restore the original line if insertion fails.
         // This is a best-effort and might fail if memory is truly corrupted.
-        strncat(temp_first_part, temp_remainder, MAX_LINE_LENGTH - strlen(temp_first_part) - 1);
-        allocLine(psState, lineIndex, temp_first_part);
+        strncat(zTemp1, zTemp2, MAX_LINE_LENGTH - strlen(zTemp1) - 1);
+        allocLine(psState, lineIndex, zTemp1);
         return false;
     }
 
