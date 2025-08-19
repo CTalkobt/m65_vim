@@ -11,6 +11,8 @@
 #define MAX_CMD 78
 #define PETSCII_COLOR_WHITE 5
 
+unsigned char lastKar;
+
 char zCmd[MAX_CMD + 1] = {0};
 
 void setEditMode(tsState *psState, EditMode newMode) {
@@ -109,6 +111,8 @@ void editCommand(tsState *psState, unsigned char kar) {
 }
 
 void edit(tsState *psState) {
+    tsEditState sEditState = {0};
+
     loadLine(psState, psState->lineY);
     platform_set_color(PETSCII_COLOR_WHITE);
     draw_screen(psState);
@@ -121,6 +125,8 @@ void edit(tsState *psState) {
         }
 
         unsigned char kar = platform_get_key();
+        sEditState.kar = kar;
+        teCmdResult cmd_result = CMD_RESULT_SINGLE_CHAR_ACK;
 
         if (kar == 12) { // Ctrl-L
             draw_screen(psState);
@@ -130,7 +136,7 @@ void edit(tsState *psState) {
         tpfnCmd cmdFn = getcmd(psState->editMode, kar);
         if (cmdFn) {
             platform_hide_cursor();
-            cmdFn(psState);
+            cmd_result = cmdFn(psState, &sEditState);
             platform_show_cursor();
         } else {
             // Not a command, handle as input for the current mode
@@ -186,6 +192,12 @@ void edit(tsState *psState) {
                 default:
                     break;
             }
+        }
+
+        if (cmd_result == CMD_RESULT_MORE_CHARS_REQUIRED) {
+            sEditState.lastKar = kar; // Preserve for next char in sequence
+        } else {
+            sEditState.lastKar = 0; // Reset for next command sequence
         }
     } while (!psState->doExit);
     platform_hide_cursor();

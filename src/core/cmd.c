@@ -36,6 +36,7 @@ tsCmds cmds[] = {
     {Default, 147, cmdCursorScreenBottom}, // Shift-Home/Clr Key. 
     {Default, 'l', cmdCursorScreenBottom},
 
+    { Default, 'd', cmdDelete},
     {Default, 'g', cmdGotoLine},
     {Default, 'j', cmdLineJoin},
     {Default, 'W', cmdCursorNextWord},
@@ -63,67 +64,96 @@ tpfnCmd getcmd(const EditMode mode, unsigned char kar) {
     return NULL;
 }
 
-int cmdGotoLine(tsState *psState) {
+teCmdResult cmdDelete(tsState *psState, tsEditState *psEditState) {
+    if (psEditState->lastKar != 'd') {
+        // This is the first 'd', wait for the next key.
+        return CMD_RESULT_MORE_CHARS_REQUIRED;
+    }
+
+    // This is the second 'd', so we perform the delete.
+    if (psState->lines > 0) {
+        deleteLine(psState, psState->lineY);
+
+        if (psState->lines == 0) {
+            // we deleted the only line in the file.
+            // create a new empty one.
+            insertLine(psState, 0, "");
+        } else {
+            if (psState->lineY >= psState->lines) {
+                psState->lineY = psState->lines - 1;
+            }
+        }
+
+        // after deleting a line, cursor should be at the beginning of the current line
+        psState->xPos = 0;
+        loadLine(psState, psState->lineY);
+        draw_screen(psState);
+    }
+
+    return CMD_RESULT_MULTI_CHAR_ACK;
+}
+
+teCmdResult cmdGotoLine(tsState *psState, tsEditState *psEditState) {
     allocLine(psState, psState->lineY, psState->editBuffer);
     if (psState->lines > 0) {
         loadLine(psState, psState->lines - 1);
     }
     psState->xPos = 0;
     drawStatus(psState);
-    return 0;
+    return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
-int cmdCursorLeft(tsState *psState) {
+teCmdResult cmdCursorLeft(tsState *psState, tsEditState *psEditState) {
     if (psState->xPos > 0) { 
         psState->xPos--; 
         drawStatus(psState); 
     }
-    return 0;
+    return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
-int cmdCursorUp(tsState *psState) {
+teCmdResult cmdCursorUp(tsState *psState, tsEditState *psEditState) {
     allocLine(psState, psState->lineY, psState->editBuffer);
     if (psState->lineY > 0) {
         loadLine(psState, psState->lineY - 1);
     }
     drawStatus(psState);
-    return 0;
+    return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
-int cmdCursorDown(tsState *psState) {
+teCmdResult cmdCursorDown(tsState *psState, tsEditState *psEditState) {
     allocLine(psState, psState->lineY, psState->editBuffer);
     if (psState->lineY < psState->lines - 1) {
         loadLine(psState, psState->lineY + 1);
     }
     drawStatus(psState);
-    return 0;
+    return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
-int cmdCursorRight(tsState *psState) {
+teCmdResult cmdCursorRight(tsState *psState, tsEditState *psEditState) {
     if (psState->xPos < strlen(psState->editBuffer)) {
         psState->xPos++;
         drawStatus(psState);
     }
-    return 0;
+    return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
-int cmdCursorScreenTop(tsState *psState) {
+teCmdResult cmdCursorScreenTop(tsState *psState, tsEditState *psEditState) {
     allocLine(psState, psState->lineY, psState->editBuffer);
     loadLine(psState, psState->screenStart.yPos);
     psState->xPos = 0;
     drawStatus(psState);
-    return 0;
+    return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
-int cmdCursorScreenBottom(tsState *psState) {
+teCmdResult cmdCursorScreenBottom(tsState *psState, tsEditState *psEditState) {
     allocLine(psState, psState->lineY, psState->editBuffer);
     loadLine(psState, psState->screenEnd.yPos - 1);
     psState->xPos = 0;
     drawStatus(psState);
-    return 0;
+    return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
-int cmdLineJoin(tsState *psState) {
+teCmdResult cmdLineJoin(tsState *psState, tsEditState *psEditState) {
     allocLine(psState, psState->lineY, psState->editBuffer);
     if (psState->lineY < psState->lines - 1) {
         char *currentLine = psState->text[psState->lineY];
@@ -143,10 +173,10 @@ int cmdLineJoin(tsState *psState) {
             draw_screen(psState);
         }
     }
-    return 0;
+    return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
-int cmdCursorNextWord(tsState *psState) {
+teCmdResult cmdCursorNextWord(tsState *psState, tsEditState *psEditState) {
     char *line = psState->editBuffer;
     int newX = psState->xPos;
     while (line[newX] != ' ' && line[newX] != '\0') {
@@ -159,38 +189,38 @@ int cmdCursorNextWord(tsState *psState) {
         psState->xPos = newX;
         drawStatus(psState);
     }
-    return 0;
+    return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
-int cmdCursorLineEnd(tsState *psState) {
+teCmdResult cmdCursorLineEnd(tsState *psState, tsEditState *psEditState) {
     psState->xPos = strlen(psState->editBuffer);
     if (psState->xPos > 0) {
         psState->xPos--;
     }
     drawStatus(psState);
-    return 0;
+    return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
-int cmdCursorLineStart(tsState *psState) {
+teCmdResult cmdCursorLineStart(tsState *psState, tsEditState *psEditState) {
     psState->xPos = 0;
     drawStatus(psState);
-    return 0;
+    return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
-int cmdModeInsert(tsState *psState) {
+teCmdResult cmdModeInsert(tsState *psState, tsEditState *psEditState) {
     setEditMode(psState, Insert);
-    return 0;
+    return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
-int cmdModeAppend(tsState *psState) {
+teCmdResult cmdModeAppend(tsState *psState, tsEditState *psEditState) {
     if (psState->xPos < strlen(psState->editBuffer)) {
         psState->xPos++;
     }
     setEditMode(psState, Insert);
-    return 0;
+    return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
-int cmdPageForward(tsState *psState) {
+teCmdResult cmdPageForward(tsState *psState, tsEditState *psEditState) {
     allocLine(psState, psState->lineY, psState->editBuffer);
     int pageHeight = psState->screenEnd.yPos - psState->screenStart.yPos;
     psState->screenStart.yPos += pageHeight;
@@ -199,10 +229,10 @@ int cmdPageForward(tsState *psState) {
     }
     loadLine(psState, psState->screenStart.yPos);
     draw_screen(psState);
-    return 0;
+    return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
-int cmdPageBack(tsState *psState) {
+teCmdResult cmdPageBack(tsState *psState, tsEditState *psEditState) {
     allocLine(psState, psState->lineY, psState->editBuffer);
     int pageHeight = psState->screenEnd.yPos - psState->screenStart.yPos;
     if (psState->screenStart.yPos > pageHeight) {
@@ -212,20 +242,20 @@ int cmdPageBack(tsState *psState) {
     }
     loadLine(psState, psState->screenStart.yPos);
     draw_screen(psState);
-    return 0;
+    return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
-int cmdModeDefault(tsState *psState) {
+teCmdResult cmdModeDefault(tsState *psState, tsEditState *psEditState) {
     setEditMode(psState, Default);
-    return 0;
+    return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
-int cmdModeCommand(tsState *psState) {
+teCmdResult cmdModeCommand(tsState *psState, tsEditState *psEditState) {
     setEditMode(psState, Command);
-    return 0;
+    return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
-int cmdHelp(tsState *psState) {
+teCmdResult cmdHelp(tsState *psState, tsEditState *psEditState) {
     platform_clear_screen();
     platform_puts("VIM Help\n\n");
     platform_puts("Key commands:\n");
@@ -250,20 +280,21 @@ int cmdHelp(tsState *psState) {
     while(platform_is_key_pressed()) platform_get_key(); // Clear buffer
     platform_get_key();
     draw_screen(psState);
-    return 0;
+    return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
-int cmdRead(tsState *psState, char *pzCmdRemainder) {
+teCmdResult cmdRead(tsState *psState, char *pzCmdRemainder) {
     // ... (implementation unchanged for now)
-    return 0;
+    return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
-int cmdWrite(tsState *psState, char *pzCmdRemainder, bool force) {
+teCmdResult cmdWrite(tsState *psState, char *pzCmdRemainder, bool force) {
     // ... (implementation unchanged for now)
-    return 0;
+    return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
-int cmdDirectoryListing(tsState *psState) {
+teCmdResult cmdDirectoryListing(tsState *psState) {
     // ... (implementation unchanged for now)
-    return 0;
+    return CMD_RESULT_SINGLE_CHAR_ACK;
 }
+
