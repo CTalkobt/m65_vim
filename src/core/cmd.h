@@ -5,8 +5,7 @@
 #include "state.h"
 
 typedef struct {
-    unsigned char kar;
-    unsigned char lastKar;
+    unsigned char kars[10];
     // int repeatCount
     // Undo buffer.
 } tsEditState;
@@ -14,17 +13,26 @@ typedef struct {
 typedef enum {
     CMD_RESULT_SINGLE_CHAR_ACK = 0,     // Single character acknowledgement (clears lastKar)
     CMD_RESULT_MULTI_CHAR_ACK = 1,      // Multi-character acknowledgement (clears lastKar)
-    // Values 2-15 are reserved
-    CMD_RESULT_MORE_CHARS_REQUIRED = 16 // Additional characters required
 } teCmdResult;
 
 typedef teCmdResult (*tpfnCmd)(tsState *psState, tsEditState *psEditState);
 
-tpfnCmd getcmd(EditMode mode, unsigned char kar);
+typedef enum {
+    CMD_LOOKUP_NOT_FOUND,
+    CMD_LOOKUP_PARTIAL_MATCH,
+    CMD_LOOKUP_EXACT_MATCH
+} teCmdLookupStatus;
+
+typedef struct {
+    tpfnCmd cmd;
+    teCmdLookupStatus status;
+} tsCmdLookupResult;
+
+tsCmdLookupResult getCmd(const EditMode mode, unsigned char *kars);
 
 typedef struct {
     EditMode mode;
-    unsigned char kar;
+    const char *kars;
     tpfnCmd cmd;
 } tsCmds;
 
@@ -50,6 +58,7 @@ teCmdResult cmdRead(tsState *psState, char *pzCmdRemainder);
 teCmdResult cmdWrite(tsState *psState, char *pzCmdRemainder, bool force);
 teCmdResult cmdDirectoryListing(tsState *psState);
 teCmdResult cmdDelete(tsState *psState, tsEditState *psEditState);
+teCmdResult cmdDeleteLine(tsState *psState, tsEditState *psEditState);
 
 void cmdRepeat(tsState *psState);
 

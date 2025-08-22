@@ -25,11 +25,17 @@ void draw_screen(const tsState *psState) {
     int visible = psState->screenEnd.yPos;
 DEBUGF1("draw_screen: yOffset = %d", psState->screenStart.yPos);
 
-    for (unsigned char i = 0; i < visible && (psState->screenStart.yPos + i) < psState->lines; i++) {
+    unsigned char i;
+    for ( i = 0; i < visible && (psState->screenStart.yPos + i) < psState->lines; i++) {
         platform_set_cursor(0, i);
-        unsigned int index = psState->screenStart.yPos + i; 
+        unsigned int index = psState->screenStart.yPos + i;
 
-        const char* line = psState->text[index];
+        const char* line;
+        if (psState->editMode == Insert && index == psState->lineY) {
+            line = psState->editBuffer;
+        } else {
+            line = psState->text[index];
+        }
 DEBUGF3("draw_screen: %d %d %c ", i, index, line == NULL ? '*' : line[index]);
 
         if (line != NULL) {
@@ -41,6 +47,13 @@ DEBUG("@2");
             platform_clear_eol();
         }
     }
+
+    // Note: Attempt to use for ( ; i<visible; i++)  results in infinate loop.
+    for (int k=i; k < visible; k++) {
+        platform_set_cursor(0, k);
+        platform_clear_eol();
+    }
+
     drawStatus(psState);
 }
 

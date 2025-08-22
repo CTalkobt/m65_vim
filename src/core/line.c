@@ -140,8 +140,7 @@ const char* getLine(const tsState* psState, uint16_t index) {
 
 void loadLine(tsState *psState, uint16_t lineIndex) {
     if (psState->text[lineIndex]) {
-        strncpy(psState->editBuffer, psState->text[lineIndex], MAX_LINE_LENGTH - 1);
-        psState->editBuffer[MAX_LINE_LENGTH - 1] = '\0';
+        strcpy(psState->editBuffer, psState->text[lineIndex]);
     } else {
         psState->editBuffer[0] = '\0';
     }

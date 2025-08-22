@@ -31,7 +31,7 @@ typedef struct sState {
     tsXYPos screenEnd;    // End X,Y of render screen.
     EditMode editMode;    // Current edit mode.
     char **text;
-    char editBuffer[MAX_LINE_LENGTH];
+    char *editBuffer;
 } tsState;
 
 #endif

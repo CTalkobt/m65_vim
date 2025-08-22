@@ -17,60 +17,94 @@
 #endif
 
 tsCmds cmds[] = {
-    {Default, 132, cmdHelp},            // Help
-    {Default, '?', cmdHelp},            // Help
+    {Default, "\x84", cmdHelp},            // Help
+    {Default, "?", cmdHelp},               // Help
 
     // Single increment navigation.
-    {Default, 157, cmdCursorLeft},      // Left Arrow
-    {Default, 'H', cmdCursorLeft},
-    {Default, 145, cmdCursorUp},        // Up Arrow
-    {Default, 'K', cmdCursorUp},
-    {Default, 17,  cmdCursorDown},       // Down Arrow. 
-    {Default, 'J', cmdCursorDown},
-    {Default, 29,  cmdCursorRight},      // Right arrow. 
-    {Default, 'L', cmdCursorRight},
+    {Default, "\x9d", cmdCursorLeft},      // Left Arrow
+    {Default, "H", cmdCursorLeft},         // h
+    {Default, "\x91", cmdCursorUp},        // Up Arrow
+    {Default, "K", cmdCursorUp},           // k
+    {Default, "\x11",  cmdCursorDown},       // Down Arrow.
+    {Default, "J", cmdCursorDown},
+    {Default, "\x1d",  cmdCursorRight},      // Right arrow.
+    {Default, "L", cmdCursorRight},
 
     // Top/Bottom of Screen jumps. 
-    {Default, 19,  cmdCursorScreenTop},     // Home key. 
-    {Default, 'h', cmdCursorScreenTop},
-    {Default, 147, cmdCursorScreenBottom}, // Shift-Home/Clr Key. 
-    {Default, 'l', cmdCursorScreenBottom},
+    {Default, "\x13", cmdCursorScreenTop},     // Home key.
+    {Default, "h",    cmdCursorScreenTop},
+    {Default, "\x93", cmdCursorScreenBottom}, // Shift-Home/Clr Key.
+    {Default, "l",    cmdCursorScreenBottom},
 
-    { Default, 'd', cmdDelete},
-    {Default, 'g', cmdGotoLine},
-    {Default, 'j', cmdLineJoin},
-    {Default, 'W', cmdCursorNextWord},
-    {Default, '$', cmdCursorLineEnd},
-    {Default, '0', cmdCursorLineStart},
-    {Default, 'i', cmdModeInsert},
-    {Default, 'I', cmdModeInsert},
-    {Default, 'A', cmdModeAppend},
-    {Default, CTRL('f'), cmdPageForward},
-    {Default, CTRL('b'), cmdPageBack},
+    {Default, "DD", cmdDeleteLine},
+    {Default, "D", cmdDelete},
+    {Default, "g", cmdGotoLine},
+    {Default, "j", cmdLineJoin},
+    {Default, "W", cmdCursorNextWord},
+    {Default, "$", cmdCursorLineEnd},
+    {Default, "0", cmdCursorLineStart},
+    {Default, "i", cmdModeInsert},
+    {Default, "I", cmdModeInsert},
+    {Default, "A", cmdModeAppend},
+    {Default, "\x06", cmdPageForward},      // Ctrl-F
+    {Default, "\x02", cmdPageBack},          // Ctrl-B
 
-    {Default, ':', cmdModeCommand},
-    {Insert, 27, cmdModeDefault}, // Handle Esc key in Insert mode
+    {Default, ":", cmdModeCommand},
+    {Insert, "\x1b", cmdModeDefault}, // Handle Esc key in Insert mode
+    {Insert, "\x03", cmdModeDefault}, // Handle Run/Stop in Insert mode
 
-    {Insert, 255, NULL} // End of the list.
+    {Insert, "---", NULL} // End of the list.
 };
 
-tpfnCmd getcmd(const EditMode mode, unsigned char kar) {
+
+
+tsCmdLookupResult getCmd(const EditMode mode, unsigned char *kars) {
+    size_t len = strlen(kars);
+    tsCmdLookupResult result = {NULL, CMD_LOOKUP_NOT_FOUND};
+    tsCmds *exactMatchCmd = NULL;
+    bool partialMatchPossible = false;
+
     for (tsCmds *cmd = &cmds[0]; cmd->cmd != NULL; cmd++) {
-        if (cmd->kar == kar && cmd->mode == mode) {
-            DEBUGF2("INFO: Found cmd: %d for mode: %d", kar, mode);
-            return cmd->cmd;
+        if (cmd->mode == mode) {
+            // Check for an exact match
+            if (strcmp((char *)cmd->kars, kars) == 0) {
+                exactMatchCmd = cmd;
+            }
+                // Check if a longer command is possible (partial match)
+            else if (strlen(cmd->kars) > len && strncmp((char *)cmd->kars, kars, len) == 0) {
+                partialMatchPossible = true;
+            }
         }
     }
-    return NULL;
+
+    if (exactMatchCmd && !partialMatchPossible) {
+        // We have an exact match and no longer command is possible.
+        result.cmd = exactMatchCmd->cmd;
+        result.status = CMD_LOOKUP_EXACT_MATCH;
+    } else if (partialMatchPossible) {
+        // A longer command is possible, so we wait for more input.
+        // This also covers the case where we have an exact match but a longer one is also possible (e.g. 'D' vs 'DD')
+        result.status = CMD_LOOKUP_PARTIAL_MATCH;
+    } else if (exactMatchCmd) {
+        // This case is for when an exact match is found, and no partials are possible.
+        result.cmd = exactMatchCmd->cmd;
+        result.status = CMD_LOOKUP_EXACT_MATCH;
+    }
+    // If neither, the result remains CMD_LOOKUP_NOT_FOUND
+
+    DEBUGF3("DEBUG: Final match status for cmd '%s' in mode %d: %d", kars, mode, result.status);
+    return result;
 }
 
 teCmdResult cmdDelete(tsState *psState, tsEditState *psEditState) {
-    if (psEditState->lastKar != 'd') {
-        // This is the first 'd', wait for the next key.
-        return CMD_RESULT_MORE_CHARS_REQUIRED;
-    }
+    dbg_psState(psState, "cmdDelete");
+    // This function will be used for commands like 'dw' etc.
+    // For now, it does nothing.
+    return CMD_RESULT_SINGLE_CHAR_ACK;
+}
 
-    // This is the second 'd', so we perform the delete.
+teCmdResult cmdDeleteLine(tsState *psState, tsEditState *psEditState) {
+    dbg_psState(psState, "cmdDeleteLine");
     if (psState->lines > 0) {
         deleteLine(psState, psState->lineY);
 
@@ -208,11 +242,13 @@ teCmdResult cmdCursorLineStart(tsState *psState, tsEditState *psEditState) {
 }
 
 teCmdResult cmdModeInsert(tsState *psState, tsEditState *psEditState) {
+    loadLine(psState, psState->lineY);
     setEditMode(psState, Insert);
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
 teCmdResult cmdModeAppend(tsState *psState, tsEditState *psEditState) {
+    loadLine(psState, psState->lineY);
     if (psState->xPos < strlen(psState->editBuffer)) {
         psState->xPos++;
     }

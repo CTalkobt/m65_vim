@@ -6,6 +6,8 @@
 #include "cmd.h"
 #include "render.h"
 #include "editor.h"
+
+#include "debug.h"
 #include "line.h"
 
 #define MAX_CMD 78
@@ -50,7 +52,6 @@ void setEditMode(tsState *psState, EditMode newMode) {
             draw_screen(psState);
             break;
         case Insert:
-            loadLine(psState, psState->lineY);
             drawStatus(psState);
             break;
     }
@@ -112,92 +113,102 @@ void editCommand(tsState *psState, unsigned char kar) {
 
 void edit(tsState *psState) {
     tsEditState sEditState = {0};
+    zCmd[0] = '\0';
 
     loadLine(psState, psState->lineY);
     platform_set_color(PETSCII_COLOR_WHITE);
     draw_screen(psState);
     platform_set_cursor(psState->xPos + psState->screenStart.xPos, psState->lineY + psState->screenStart.yPos);
+    platform_show_cursor();
 
     do {
-        platform_show_cursor();
+
         if (psState->editMode == Default) {
             platform_set_cursor(psState->xPos + psState->screenStart.xPos, psState->lineY + psState->screenStart.yPos);
         }
 
         unsigned char kar = platform_get_key();
-        sEditState.kar = kar;
-        teCmdResult cmd_result = CMD_RESULT_SINGLE_CHAR_ACK;
+        DEBUGF3("\nKey pressed:%c(%d) / mode:%d", kar, kar, (int)psState->editMode);
+
+        size_t len = strlen(sEditState.kars);
+        if (len < sizeof(sEditState.kars) - 1) {
+            sEditState.kars[len] = kar;
+            sEditState.kars[len+1] = '\0';
+        }
 
         if (kar == 12) { // Ctrl-L
             draw_screen(psState);
             continue;
         }
 
-        tpfnCmd cmdFn = getcmd(psState->editMode, kar);
-        if (cmdFn) {
-            platform_hide_cursor();
-            cmd_result = cmdFn(psState, &sEditState);
-            platform_show_cursor();
-        } else {
-            // Not a command, handle as input for the current mode
-            switch (psState->editMode) {
-                case Command:
-                    editCommand(psState, kar);
-                    break;
-                case Insert: {
-                    char *line = psState->editBuffer;
-                    uint16_t len = strlen(line);
-                    switch (kar) {
-                        case 20: // Backspace
-                            if (psState->xPos > 0) {
-                                memmove(&line[psState->xPos - 1], &line[psState->xPos], len - psState->xPos + 1);
-                                psState->xPos--;
-                                psState->isDirty = true;
-                            }
+        tsCmdLookupResult cmdLookup = getCmd(psState->editMode, sEditState.kars);
+        dbg_psState(psState, "editor key pressed");
+
+        switch (cmdLookup.status) {
+            case CMD_LOOKUP_EXACT_MATCH:
+                DEBUG("***CMD_LOOKUP_EXACT_MATCH***");
+                platform_hide_cursor();
+                cmdLookup.cmd(psState, &sEditState);
+                platform_show_cursor();
+                sEditState.kars[0] = '\0';
+                break;
+            case CMD_LOOKUP_PARTIAL_MATCH:
+                DEBUG("***CMD_LOOKUP_PARTIAL_MATCH***");
+                // Waiting for more characters, do nothing.
+                break;
+            case CMD_LOOKUP_NOT_FOUND:
+                DEBUGF1("***CMD_LOOKUP_NOT_FOUND***:%s", sEditState.kars);
+                // Not a command, handle as input for the current mode
+                {
+                    unsigned char single_kar = sEditState.kars[0];
+                    switch (psState->editMode) {
+                        case Command:
+                            DEBUG("-Command");
+                            editCommand(psState, single_kar);
                             break;
-                        case '\n':
-                        case 13: {
-                            allocLine(psState, psState->lineY, line);
-                            if (splitLine(psState, psState->lineY, psState->xPos)) {
-                                psState->lineY++;
-                                psState->xPos = 0;
-                                psState->isDirty = true;
-                                loadLine(psState, psState->lineY);
-                                draw_screen(psState);
+                        case Insert: {
+                            DEBUG("-Insert");
+                            char *line = psState->editBuffer;
+                            uint16_t lineLen = strlen(line);
+                            switch (single_kar) {
+                                case 20: // Backspace
+                                    if (psState->xPos > 0) {
+                                        memmove(&line[psState->xPos - 1], &line[psState->xPos], lineLen - psState->xPos + 1);
+                                        psState->xPos--;
+                                        psState->isDirty = true;
+                                    }
+                                    break;
+                                case '\n':
+                                case 13: {
+                                    allocLine(psState, psState->lineY, line);
+                                    if (splitLine(psState, psState->lineY, psState->xPos)) {
+                                        psState->lineY++;
+                                        psState->xPos = 0;
+                                        psState->isDirty = true;
+                                        loadLine(psState, psState->lineY);
+                                    }
+                                    break;
+                                }
+                                default:
+                                    if (single_kar >= 32 && single_kar <= 126 && lineLen < MAX_LINE_LENGTH - 1) {
+                                        memmove(&line[psState->xPos + 1], &line[psState->xPos], lineLen - psState->xPos + 1);
+                                        line[psState->xPos] = single_kar;
+                                        psState->xPos++;
+                                        psState->isDirty = true;
+                                    }
+                                    break;
                             }
                             break;
                         }
-                        case 27: // Escape.
-                        case 3:  // Run/Stop
-                            loadLine(psState, psState->lineY);
-                            psState->editMode = Default;
-                            break;
                         default:
-                            if (kar >= 32 && kar <= 126 && len < MAX_LINE_LENGTH - 1) {
-                                memmove(&line[psState->xPos + 1], &line[psState->xPos], len - psState->xPos + 1);
-                                line[psState->xPos] = kar;
-                                psState->xPos++;
-                                psState->isDirty = true;
-                            }
+                            DEBUG("-Default");
                             break;
                     }
-                    // Redraw the modified line and update the cursor
-                    platform_set_cursor(0, psState->lineY);
-                    platform_puts(line);
-                    platform_clear_eol();
-                    drawStatus(psState);
-                    platform_set_cursor(psState->xPos, psState->lineY);
-                    break;
                 }
-                default:
-                    break;
-            }
-        }
-
-        if (cmd_result == CMD_RESULT_MORE_CHARS_REQUIRED) {
-            sEditState.lastKar = kar; // Preserve for next char in sequence
-        } else {
-            sEditState.lastKar = 0; // Reset for next command sequence
+                // In all "not found" cases, we discard the buffer and start fresh.
+                sEditState.kars[0] = '\0';
+                draw_screen(psState);
+                break;
         }
     } while (!psState->doExit);
     platform_hide_cursor();

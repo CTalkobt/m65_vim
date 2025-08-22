@@ -78,6 +78,15 @@ tsState _INLINE_ *getInitialEditState() {
         return NULL;
     }
     #endif
+
+    state->editBuffer = malloc(MAX_LINE_LENGTH);
+    #ifdef MALLOC_CHECKS
+    if (!state->editBuffer) {
+        DEBUG("ERROR: malloc for editBuffer failed!");
+        free(state);
+        return NULL;
+    }
+    #endif
     return state;
 }
 
@@ -114,6 +123,7 @@ int main(void) {
     edit(state);
 
     freeTextBuffer(state);
+    free(state->editBuffer);
     free(state);
 
     platform_shutdown_screen();

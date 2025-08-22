@@ -15,6 +15,14 @@ void dbg_psState(struct sState *psState, const char *message) {
     DEBUGF4("lines: %d/%d, cursor: (%d, %d)", psState->lines, psState->max_lines, psState->xPos, psState->lineY);
     DEBUGF4("screenStart: (%d, %d) screenEnd: (%d, %d)", psState->screenStart.xPos, psState->screenStart.yPos, psState->screenEnd.xPos, psState->screenEnd.yPos);
     DEBUGF1("isDirty: %d", psState->isDirty);
+    char zTemp[80+1];
+    sprintf(zTemp, "editBuffer:%c(%d) %c(%d) %c(%d) %c(%d)",
+        psState->editBuffer[0], psState->editBuffer[0],
+        psState->editBuffer[1], psState->editBuffer[1],
+        psState->editBuffer[2], psState->editBuffer[2],
+        psState->editBuffer[3], psState->editBuffer[3]
+        );
+    DEBUG(zTemp);
 
     DEBUG("First 5 lines of text buffer:");
     for (int i = 0; i < 5; i++) {
