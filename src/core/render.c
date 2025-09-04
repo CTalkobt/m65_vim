@@ -22,12 +22,13 @@ void draw_screen(const tsState *psState) {
 
     dbg_first5lines((tsState*)psState, "drawScreen: <start>");
 
-    int visible = psState->screenEnd.yPos;
+    unsigned char screen_height = plGetScreenHeight();
+    int visible = screen_height > 1 ? screen_height - 2 : 0;
 DEBUGF1("draw_screen: yOffset = %d", psState->screenStart.yPos);
 
     unsigned char i;
     for ( i = 0; i < visible && (psState->screenStart.yPos + i) < psState->lines; i++) {
-        platform_set_cursor(0, i);
+        plSetCursor(0, i);
         unsigned int index = psState->screenStart.yPos + i;
 
         const char* line;
@@ -40,18 +41,18 @@ DEBUGF3("draw_screen: %d %d %c ", i, index, line == NULL ? '*' : line[index]);
 
         if (line != NULL) {
 DEBUG(line);
-            platform_puts(line);
-            platform_clear_eol();
+            plPuts(line);
+            plClearEOL();
         } else {
 DEBUG("@2");
-            platform_clear_eol();
+            plClearEOL();
         }
     }
 
     // Note: Attempt to use for ( ; i<visible; i++)  results in infinate loop.
     for (int k=i; k < visible; k++) {
-        platform_set_cursor(0, k);
-        platform_clear_eol();
+        plSetCursor(0, k);
+        plClearEOL();
     }
 
     drawStatus(psState);
@@ -62,23 +63,26 @@ void drawStatus(const tsState *psState) {
 
     dbg_first5lines((tsState*)psState, "drawStatus: <start>");
 
+    unsigned char screen_height = plGetScreenHeight();
+    unsigned char screen_width = plGetScreenWidth();
+
     // Status line:
     // "filename" <count>L, <count>B          x,ypos  n%
     // "text.txt" 20L, 400B                     5,6 10%
     //
-    platform_set_cursor(0, psState->screenEnd.yPos - 2);
-    for (unsigned char i = 0; i < platform_get_screen_width(); ++i) {
-        platform_put_char('-');
+    plSetCursor(0, screen_height - 2);
+    for (unsigned char i = 0; i < screen_width; ++i) {
+        plPutChar('-');
     }
 
     // Display mode
-    platform_set_cursor(2, psState->screenEnd.yPos - 1);
+    plSetCursor(2, screen_height - 1);
     switch (psState->editMode) {
         case Default:
-            platform_puts(MODE_NORMAL);
+            plPuts(MODE_NORMAL);
             break;
         case Insert:
-            platform_puts(MODE_INSERT);
+            plPuts(MODE_INSERT);
             break;
         case Command:
             // In command mode, the command is typed on the status line,
@@ -86,28 +90,28 @@ void drawStatus(const tsState *psState) {
             break;
     }
 
-    platform_set_cursor(20, psState->screenEnd.yPos - 1);
+    plSetCursor(20, screen_height - 1);
 
-    platform_put_char('"');
-    platform_puts(psState->zFilename);
-    platform_put_char('"');
-    platform_clear_eol();
+    plPutChar('"');
+    plPuts(psState->zFilename);
+    plPutChar('"');
+    plClearEOL();
 
-    platform_set_cursor(psState->screenEnd.xPos - 16, psState->screenEnd.yPos - 1);
+    plSetCursor(screen_width - 16, screen_height - 1);
     itostr(psState->xPos, zTemp);
-    platform_puts(zTemp);
-    platform_put_char(',');
+    plPuts(zTemp);
+    plPutChar(',');
     itostr(psState->lineY, zTemp);
-    platform_puts(zTemp);
-    platform_set_cursor(psState->screenEnd.xPos - 5, psState->screenEnd.yPos - 1);
+    plPuts(zTemp);
+    plSetCursor(screen_width - 5, screen_height - 1);
 
     unsigned int percent = (psState->lines == 0) ? 0 : ((psState->lineY * 100) / (psState->lines));
     if (percent > 100) percent = 100;
     itostr(percent, zTemp);
-    platform_puts(zTemp);
-    platform_put_char('%');
+    plPuts(zTemp);
+    plPutChar('%');
 
     // RE-position cursor.
-    platform_set_cursor(psState->xPos, psState->lineY);
+    plSetCursor(psState->xPos, psState->lineY - psState->screenStart.yPos);
 }
 

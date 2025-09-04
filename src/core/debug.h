@@ -12,35 +12,35 @@
 // @buildIssue1 #endif
 
 #ifdef DEBUG_ON
-#define DEBUG(X) do { platform_debug_msg(X); } while (0);
+#define DEBUG(X) do { plDebugMsg(X); } while (0);
 
 #define DEBUGF1(M, Y1) do {  \
     char debug_buffer[81];          \
     snprintf(debug_buffer, sizeof(debug_buffer), M, Y1);  \
-    platform_debug_msg(debug_buffer);  \
+    plDebugMsg(debug_buffer);  \
 } while (0);
 
 #define DEBUGF2(M, Y1, Y2) do {  \
     char debug_buffer[81];          \
     snprintf(debug_buffer, sizeof(debug_buffer), M, Y1, Y2);  \
-    platform_debug_msg(debug_buffer);  \
+    plDebugMsg(debug_buffer);  \
 } while (0);
 
 #define DEBUGF3(M, Y1, Y2, Y3) do {  \
     char debug_buffer[81];          \
     snprintf(debug_buffer, sizeof(debug_buffer), M, Y1, Y2, Y3);  \
-    platform_debug_msg(debug_buffer);  \
+    plDebugMsg(debug_buffer);  \
 } while (0);
 
 #define DEBUGF4(M, Y1, Y2, Y3, Y4) do {  \
     char debug_buffer[121];         \
     snprintf(debug_buffer, sizeof(debug_buffer), M, Y1, Y2, Y3, Y4);  \
-    platform_debug_msg(debug_buffer);  \
+    plDebugMsg(debug_buffer);  \
 } while (0);
 
 #define ASSERT(C, X) do { \
     if (!(C)) {           \
-        platform_debug_msg("Assertion Error: " X "\n");  \
+        plDebugMsg("Assertion Error: " X "\n");  \
         exit(1);          \
     }  \
 } while (0);

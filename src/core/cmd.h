@@ -4,8 +4,10 @@
 #include "editMode.h"
 #include "state.h"
 
+#include "keycodes.h"
+
 typedef struct {
-    unsigned char kars[10];
+    eVimKeyCode kars[10];
     // int repeatCount
     // Undo buffer.
 } tsEditState;
@@ -28,11 +30,11 @@ typedef struct {
     teCmdLookupStatus status;
 } tsCmdLookupResult;
 
-tsCmdLookupResult getCmd(const EditMode mode, unsigned char *kars);
+tsCmdLookupResult getCmd(const EditMode mode, eVimKeyCode *kars);
 
 typedef struct {
     EditMode mode;
-    const char *kars;
+    const eVimKeyCode kars[10];
     tpfnCmd cmd;
 } tsCmds;
 
@@ -49,7 +51,9 @@ teCmdResult cmdCursorNextWord(tsState *psState, tsEditState *psEditState);
 teCmdResult cmdCursorLineEnd(tsState *psState, tsEditState *psEditState);
 teCmdResult cmdCursorLineStart(tsState *psState, tsEditState *psEditState);
 teCmdResult cmdModeInsert(tsState *psState, tsEditState *psEditState);
+teCmdResult cmdModeInsertLineStart(tsState *psState, tsEditState *psEditState);
 teCmdResult cmdModeAppend(tsState *psState, tsEditState *psEditState);
+teCmdResult cmdModeAppendEnd(tsState *psState, tsEditState *psEditState);
 teCmdResult cmdPageForward(tsState *psState, tsEditState *psEditState);
 teCmdResult cmdPageBack(tsState *psState, tsEditState *psEditState);
 teCmdResult cmdModeDefault(tsState *psState, tsEditState *psEditState);

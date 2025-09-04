@@ -93,7 +93,8 @@ tsState _INLINE_ *getInitialEditState() {
 int main(void) {
     DEBUG("INFO: vim started");
 
-    platform_init_screen();
+    plInitVideo();
+    plInitScreen();
 
     tsState *state = getInitialEditState();
 
@@ -110,8 +111,6 @@ int main(void) {
     state->isReadOnly = false;
     state->screenStart.xPos = 0;
     state->screenStart.yPos = 0;
-    state->screenEnd.yPos=50-3;
-    state->screenEnd.xPos=80;
     state->editMode = Default;
     state->zFilename[0] = '\0';
     
@@ -126,7 +125,7 @@ int main(void) {
     free(state->editBuffer);
     free(state);
 
-    platform_shutdown_screen();
-    platform_exit(0);
+    plScreenShutdown();
+    plExit(0);
     return 0;
 }

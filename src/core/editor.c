@@ -8,14 +8,14 @@
 #include "editor.h"
 
 #include "debug.h"
+#include "lib/keycodes.h"
 #include "line.h"
 
 #define MAX_CMD 78
 #define PETSCII_COLOR_WHITE 5
 
-unsigned char lastKar;
+eVimKeyCode eCmd[MAX_CMD + 1] = {0};
 
-char zCmd[MAX_CMD + 1] = {0};
 
 void setEditMode(tsState *psState, EditMode newMode) {
     if (psState->editMode == newMode) {
@@ -31,7 +31,7 @@ void setEditMode(tsState *psState, EditMode newMode) {
             }
             break;
         case Command:
-            zCmd[0] = '\0';
+            eCmd[0] = VIM_KEY_NULL;
             break;
         default:
             break;
@@ -42,10 +42,10 @@ void setEditMode(tsState *psState, EditMode newMode) {
     // Entering new mode
     switch (newMode) {
         case Command:
-            platform_set_cursor(0, psState->screenEnd.yPos - 1);
-            platform_clear_eol();
-            platform_put_char(':');
-            platform_show_cursor();
+            plSetCursor(0, plGetScreenHeight() - 1);
+            plClearEOL();
+            plPutChar(':');
+            plShowCursor();
             break;
         case Default:
             loadLine(psState, psState->lineY);
@@ -57,129 +57,134 @@ void setEditMode(tsState *psState, EditMode newMode) {
     }
 }
 
-void editCommand(tsState *psState, unsigned char kar) {
-    uint8_t l = strlen(zCmd);
+void editCommand(tsState *psState, eVimKeyCode kar) {
+    uint8_t l = keycodes_len(eCmd);
 
     switch (kar) {
-        case 20: // ins/del
+        case VIM_KEY_BACKSPACE:
             if (l > 0) {
-                zCmd[l - 1] = '\0';
-                platform_put_char(kar);
+                eCmd[l - 1] = VIM_KEY_NULL;
+                // This is tricky - we need to redraw the command line.
+                // For now, just backspace visually.
+                plPutChar('\b');
+                plPutChar(' ');
+                plPutChar('\b');
             }
             break;
 
-        case 27: // escape
+        case VIM_KEY_ESC:
             setEditMode(psState, Default);
             break;
 
-        case '\n':
-        case 13:
-            if (strcmp(zCmd, "Q!") == 0) {
+        case VIM_KEY_CR: {
+            const eVimKeyCode cmd_q[] = {VIM_KEY_Q_LOWER, VIM_KEY_NULL};
+            const eVimKeyCode cmd_q_bang[] = {VIM_KEY_Q_LOWER, VIM_KEY_EXCLAMATION, VIM_KEY_NULL};
+            const eVimKeyCode cmd_wq[] = {VIM_KEY_W_LOWER, VIM_KEY_Q_LOWER, VIM_KEY_NULL};
+            const eVimKeyCode cmd_w_bang[] = {VIM_KEY_W_LOWER, VIM_KEY_EXCLAMATION, VIM_KEY_NULL};
+            const eVimKeyCode cmd_dollar[] = {VIM_KEY_EXCLAMATION, VIM_KEY_DOLLAR, VIM_KEY_NULL};
+
+            if (keycodes_cmp(eCmd, cmd_q_bang) == 0) {
                 psState->doExit = true;
-            } else if (strcmp(zCmd, "WQ") == 0) {
+            } else if (keycodes_cmp(eCmd, cmd_wq) == 0) {
                 allocLine(psState, psState->lineY, psState->editBuffer);
                 if (cmdWrite(psState, "", false) == 0) {
                     psState->doExit = true;
                 }
-            } else if (strcmp(zCmd, "W!") == 0) {
+            } else if (keycodes_cmp(eCmd, cmd_w_bang) == 0) {
                 allocLine(psState, psState->lineY, psState->editBuffer);
                 cmdWrite(psState, "", true);
-            } else if (strcmp(zCmd, "!$") == 0) {
+            } else if (keycodes_cmp(eCmd, cmd_dollar) == 0) {
                 cmdDirectoryListing(psState);
-            } else if (zCmd[0] == 'Q') {
+            } else if (keycodes_cmp(eCmd, cmd_q) == 0) {
                 if (!psState->isDirty) {
                     psState->doExit = true;
                 } else {
                     // TODO: Indicate can't quit while buffer dirty, or use q!
                 }
-            } else if (zCmd[0] == 'R') {
-                cmdRead(psState, zCmd + 1);
-            } else if (zCmd[0] == 'W') {
+            } else if (eCmd[0] == VIM_KEY_R_LOWER) {
+                char filename[MAX_CMD];
+                keycodes_to_string(&eCmd[1], filename, MAX_CMD);
+                cmdRead(psState, filename);
+            } else if (eCmd[0] == VIM_KEY_W_LOWER) {
+                char filename[MAX_CMD];
+                keycodes_to_string(&eCmd[1], filename, MAX_CMD);
                 allocLine(psState, psState->lineY, psState->editBuffer);
-                cmdWrite(psState, zCmd + 1, false);
+                cmdWrite(psState, filename, false);
             }
             setEditMode(psState, Default);
             break;
-
+        }
         default:
-            if (l < MAX_CMD) {
-                zCmd[l] = kar;
-                zCmd[l + 1] = '\0';
-                platform_put_char(kar);
+            // Allow only printable ASCII characters in command line
+            if (l < MAX_CMD && kar >= 32 && kar <= 126) {
+                eCmd[l] = kar;
+                eCmd[l + 1] = VIM_KEY_NULL;
+                plPutChar((char)kar);
             }
             break;
     }
 }
 
 void edit(tsState *psState) {
-    tsEditState sEditState = {0};
-    zCmd[0] = '\0';
+    tsEditState sEditState;
+    sEditState.kars[0] = VIM_KEY_NULL;
+    eCmd[0] = VIM_KEY_NULL;
 
     loadLine(psState, psState->lineY);
-    platform_set_color(PETSCII_COLOR_WHITE);
+    plSetColor(PETSCII_COLOR_WHITE);
     draw_screen(psState);
-    platform_set_cursor(psState->xPos + psState->screenStart.xPos, psState->lineY + psState->screenStart.yPos);
-    platform_show_cursor();
+    plShowCursor();
 
     do {
+        eVimKeyCode kar = plGetKey();
+        DEBUGF3("\nKey pressed:%c(%d) / mode:%d", (char)kar, kar, (int)psState->editMode);
 
-        if (psState->editMode == Default) {
-            platform_set_cursor(psState->xPos + psState->screenStart.xPos, psState->lineY + psState->screenStart.yPos);
-        }
+        if (psState->editMode == Command) {
+            editCommand(psState, kar);
+        } else {
+            size_t len = keycodes_len(sEditState.kars);
+            if (len < (sizeof(sEditState.kars) / sizeof(eVimKeyCode)) - 1) {
+                sEditState.kars[len] = kar;
+                sEditState.kars[len+1] = VIM_KEY_NULL;
+            }
 
-        unsigned char kar = platform_get_key();
-        DEBUGF3("\nKey pressed:%c(%d) / mode:%d", kar, kar, (int)psState->editMode);
+            if (kar == VIM_KEY_CTRL_L) {
+                draw_screen(psState);
+                sEditState.kars[0] = VIM_KEY_NULL; // Clear buffer after screen redraw
+                continue;
+            }
 
-        size_t len = strlen(sEditState.kars);
-        if (len < sizeof(sEditState.kars) - 1) {
-            sEditState.kars[len] = kar;
-            sEditState.kars[len+1] = '\0';
-        }
+            tsCmdLookupResult cmdLookup = getCmd(psState->editMode, sEditState.kars);
+            dbg_psState(psState, "editor key pressed");
 
-        if (kar == 12) { // Ctrl-L
-            draw_screen(psState);
-            continue;
-        }
-
-        tsCmdLookupResult cmdLookup = getCmd(psState->editMode, sEditState.kars);
-        dbg_psState(psState, "editor key pressed");
-
-        switch (cmdLookup.status) {
-            case CMD_LOOKUP_EXACT_MATCH:
-                DEBUG("***CMD_LOOKUP_EXACT_MATCH***");
-                platform_hide_cursor();
-                cmdLookup.cmd(psState, &sEditState);
-                platform_show_cursor();
-                sEditState.kars[0] = '\0';
-                break;
-            case CMD_LOOKUP_PARTIAL_MATCH:
-                DEBUG("***CMD_LOOKUP_PARTIAL_MATCH***");
-                // Waiting for more characters, do nothing.
-                break;
-            case CMD_LOOKUP_NOT_FOUND:
-                DEBUGF1("***CMD_LOOKUP_NOT_FOUND***:%s", sEditState.kars);
-                // Not a command, handle as input for the current mode
-                {
-                    unsigned char single_kar = sEditState.kars[0];
-                    switch (psState->editMode) {
-                        case Command:
-                            DEBUG("-Command");
-                            editCommand(psState, single_kar);
-                            break;
-                        case Insert: {
+            switch (cmdLookup.status) {
+                case CMD_LOOKUP_EXACT_MATCH:
+                    DEBUG("***CMD_LOOKUP_EXACT_MATCH***");
+                    plHideCursor();
+                    cmdLookup.cmd(psState, &sEditState);
+                    plShowCursor();
+                    sEditState.kars[0] = VIM_KEY_NULL;
+                    break;
+                case CMD_LOOKUP_PARTIAL_MATCH:
+                    DEBUG("***CMD_LOOKUP_PARTIAL_MATCH***");
+                    // Waiting for more characters, do nothing.
+                    break;
+                case CMD_LOOKUP_NOT_FOUND:
+                    {
+                        eVimKeyCode single_kar = sEditState.kars[0];
+                        if (psState->editMode == Insert) {
                             DEBUG("-Insert");
                             char *line = psState->editBuffer;
                             uint16_t lineLen = strlen(line);
                             switch (single_kar) {
-                                case 20: // Backspace
+                                case VIM_KEY_BACKSPACE:
                                     if (psState->xPos > 0) {
                                         memmove(&line[psState->xPos - 1], &line[psState->xPos], lineLen - psState->xPos + 1);
                                         psState->xPos--;
                                         psState->isDirty = true;
                                     }
                                     break;
-                                case '\n':
-                                case 13: {
+                                case VIM_KEY_CR: {
                                     allocLine(psState, psState->lineY, line);
                                     if (splitLine(psState, psState->lineY, psState->xPos)) {
                                         psState->lineY++;
@@ -192,24 +197,19 @@ void edit(tsState *psState) {
                                 default:
                                     if (single_kar >= 32 && single_kar <= 126 && lineLen < MAX_LINE_LENGTH - 1) {
                                         memmove(&line[psState->xPos + 1], &line[psState->xPos], lineLen - psState->xPos + 1);
-                                        line[psState->xPos] = single_kar;
+                                        line[psState->xPos] = (char)single_kar;
                                         psState->xPos++;
                                         psState->isDirty = true;
                                     }
                                     break;
                             }
-                            break;
                         }
-                        default:
-                            DEBUG("-Default");
-                            break;
                     }
-                }
-                // In all "not found" cases, we discard the buffer and start fresh.
-                sEditState.kars[0] = '\0';
-                draw_screen(psState);
-                break;
+                    sEditState.kars[0] = VIM_KEY_NULL;
+                    draw_screen(psState);
+                    break;
+            }
         }
     } while (!psState->doExit);
-    platform_hide_cursor();
+    plHideCursor();
 }

@@ -44,8 +44,13 @@ set(CORE_SOURCES
     src/core/render.c
     src/core/line.c
     src/core/lib/itostr.c
+    src/core/lib/keycodes.c
     src/core/debug.c
 )
+
+if (${PLATFORM} STREQUAL "mega65" OR ${PLATFORM} STREQUAL "c64")
+    list(APPEND CORE_SOURCES src/platform/cbm/kernal.c)
+endif()
 
 # --- Add packages and sources based on platform ---
 if (${PLATFORM} STREQUAL "mega65")
@@ -59,7 +64,6 @@ if (${PLATFORM} STREQUAL "mega65")
         src/platform/mega65/platform_mega65.c
         src/platform/mega65/screen.c
         src/platform/mega65/kbd.c
-        src/platform/mega65/kernal.c
     )
     set(PLATFORM_LIBRARIES mega65libc)
     set(PLATFORM_LINK_FLAGS "-Wl,-z,stack-size=8192" "-Wl,-Map=vim.map")
@@ -77,7 +81,7 @@ endif()
 
 # --- Main Executable Target ---
 add_executable(vim ${CORE_SOURCES} ${PLATFORM_SOURCES})
-target_include_directories(vim PRIVATE src/core src/platform)
+target_include_directories(vim PRIVATE src/core src/platform src/platform/cbm)
 target_link_libraries(vim PRIVATE ${PLATFORM_LIBRARIES})
 target_link_options(vim PRIVATE ${PLATFORM_LINK_FLAGS})
 

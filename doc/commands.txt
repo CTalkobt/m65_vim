@@ -1,42 +1,48 @@
-Vim3 Command Reference
+VIM3 Command Reference
 =======================
+
+This document lists the VIM commands currently implemented in this editor.
 
 Normal Mode Commands
 --------------------
-h, Left Arrow   - Move cursor left
-j, Down Arrow   - Move cursor down
-k, Up Arrow     - Move cursor up
-l, Right Arrow  - Move cursor right
 
-H, Home         - Move cursor to the top of the screen
-L, Shift-Home   - Move cursor to the bottom of the screen
+### Navigation
+- `h` / `Left Arrow`:  Move cursor left
+- `k` / `Up Arrow`:    Move cursor up
+- `j` / `Down Arrow`:  Move cursor down
+- `l` / `Right Arrow`: Move cursor right
+- `H` / `Home`:        Move to the top of the screen
+- `L` / `Shift-Home`:  Move to the bottom of the screen
+- `$` :                Move to the end of the current line
+- `0` :                Move to the start of the current line
+- `w` :                Move to the start of the next word
+- `g` :                Go to the last line of the file
+- `Ctrl-F`:            Page forward
+- `Ctrl-B`:            Page back
 
-0               - Move cursor to the beginning of the line
-$               - Move cursor to the end of the line
-w               - Move cursor to the beginning of the next word
-G               - Move to the last line of the file
-J               - Join the current line with the next one
+### Editing
+- `dd`:                Delete the current line
+- `d`:                 Delete (currently a placeholder)
+- `J`:                 Join the current line with the next one
+- `i`:                 Enter Insert Mode at the current cursor position
+- `I`:                 Enter Insert Mode at the start of the line
+- `a`:                 Enter Insert Mode after the current cursor position
+- `A`:                 Enter Insert Mode at the end of the line
 
-i               - Enter Insert Mode
-a               - Append text after the cursor
-:               - Enter Command Mode
-Ctrl+F          - Page down
-Ctrl+B          - Page up
-Ctrl+L          - Redraw screen
+### Other
+- `:`:                 Enter Command Mode
+- `?` / `Help Key`:    Display the help screen
 
 Insert Mode Commands
 --------------------
-Esc, Run/Stop   - Exit Insert Mode and return to Normal Mode
-Backspace       - Delete character to the left of the cursor
-Ctrl+L          - Redraw screen
+- `Esc` / `Ctrl-C`:    Return to Normal Mode
 
 Command Mode Commands
 ---------------------
-:r <filename>   - Read a file into the buffer
-:w <filename>   - Write the buffer to a file
-:w              - Write the buffer to the current file
-:w!             - Write the buffer to a file, overriding read-only
-:q              - Quit the editor (fails if there are unsaved changes)
-:q!             - Quit the editor and discard any changes
-:wq             - Write the buffer and then quit
-:!$             - Show a directory listing
+- `:q`:                Quit (if no changes have been made)
+- `:q!`:               Quit and discard any changes
+- `:w`:                Write the file
+- `:w!`:               Force write the file
+- `:wq`:               Write the file and quit
+- `:r <filename>`:     Read a file into the buffer (placeholder)
+- `:!$`:               Directory listing (placeholder)

@@ -1,52 +1,153 @@
-#include "platform.h"
+#include <ncurses.h>
 #include <stdlib.h> // for NULL, malloc, free, exit
 #include <time.h>   // for time
 #include <stdio.h>  // for fprintf, stderr
 
+#include "platform.h"
+
 // Video/Rendering Functions
-void platform_init_video() {}
-void platform_clear_screen() {}
-void platform_draw_char(unsigned char x, unsigned char y, char c, unsigned char color) {}
-void platform_set_cursor(unsigned char x, unsigned char y) {}
-void platform_hide_cursor() {}
-void platform_show_cursor() {}
-void platform_init_screen() {}
-void platform_shutdown_screen() {}
+void plInitVideo() {
+    initscr();
+    set_escdelay(25);
+    start_color();
+    // @@TODO: Add color pair initialization
+    cbreak();
+    noecho();
+    keypad(stdscr, TRUE);
+}
+void plClearScreen() {
+    clear();
+}
+void plDrawChar(unsigned char x, unsigned char y, char c, unsigned char color) {
+    // @@TODO: color handling
+    mvaddch(y, x, c);
+}
+void plSetCursor(unsigned char x, unsigned char y) {
+    move(y, x);
+}
+void plHideCursor() {
+    curs_set(0);
+}
+void plShowCursor() {
+    curs_set(1);
+}
+void plInitScreen() {
+    // Same as plInitVideo for ncurses
+    plInitVideo();
+}
+void plScreenShutdown() {
+    endwin();
+}
 
 // Screen Information
-unsigned char platform_get_screen_width() { return 80; }
-unsigned char platform_get_screen_height() { return 24; }
+unsigned char plGetScreenWidth() {
+    int x, y;
+    getmaxyx(stdscr, y, x);
+    return x;
+}
+unsigned char plGetScreenHeight() {
+    int x, y;
+    getmaxyx(stdscr, y, x);
+    return y;
+}
 
 // High-level output
-void platform_puts(const char* s) {}
-void platform_put_char(char c) {}
-void platform_clear_eol() {}
-void platform_set_color(unsigned char color) {}
+void plPuts(const char* s) {
+    printw(s);
+}
+void plPutChar(char c) {
+    addch(c);
+}
+void plClearEOL() {
+    clrtoeol();
+}
+void plSetColor(unsigned char color) {
+    // @@TODO: color handling
+}
 
 // Debugging
-void platform_debug_msg(const char* msg) {
-    fprintf(stderr, "%s\n", msg);
+void plDebugMsg(const char* msg) {
+    // With ncurses, we can't just print to stderr.
+    // We could write to a file, or display it on the screen.
+    // For now, do nothing.
 }
 
 // Keyboard Input Functions
+eVimKeyCode plGetKey() {
+    int ch = getch();
 
-char platform_get_key() { return 0; }
-int platform_is_key_pressed() { return 0; }
+    if (ch == ERR) {
+        return VIM_KEY_NULL;
+    }
+
+    // Handle special keys first
+    switch (ch) {
+        case KEY_DOWN:
+            return VIM_KEY_DOWN;
+        case KEY_UP:
+            return VIM_KEY_UP;
+        case KEY_LEFT:
+            return VIM_KEY_LEFT;
+        case KEY_RIGHT:
+            return VIM_KEY_RIGHT;
+        case KEY_HOME:
+            return VIM_KEY_HOME;
+        case KEY_BACKSPACE:
+        case 127: // Fallback for some terminals
+            return VIM_KEY_BACKSPACE;
+        case KEY_DC:
+            // Not mapped yet
+            return VIM_KEY_NULL;
+        case KEY_IC:
+            // Not mapped yet
+            return VIM_KEY_NULL;
+        case KEY_NPAGE:
+            return VIM_KEY_CTRL_F;
+        case KEY_PPAGE:
+            return VIM_KEY_CTRL_B;
+        case 27: // Escape key
+            return VIM_KEY_ESC;
+        case 10: // Enter key
+            return VIM_KEY_CR;
+    }
+
+    // Handle printable characters and control characters
+    if (ch >= 0 && ch <= 127) {
+        return (eVimKeyCode)ch;
+    }
+
+    return VIM_KEY_NULL;
+}
 
 // File I/O Functions
-platform_file_handle platform_open_file(const char* filename, const char* mode) { return NULL; }
-int platform_read_file(platform_file_handle handle, void* buffer, unsigned int size) { return -1; }
-int platform_write_file(platform_file_handle handle, const void* buffer, unsigned int size) { return -1; }
-void platform_close_file(platform_file_handle handle) {}
-int platform_remove_file(const char* filename) { return -1; }
-int platform_rename_file(const char* old_filename, const char* new_filename) { return -1; }
+PlFileHandle plOpenFile(const char* filename, const char* mode) {
+    return fopen(filename, mode);
+}
+int plReadFile(PlFileHandle handle, void* buffer, unsigned int size) {
+    return fread(buffer, 1, size, (FILE*)handle);
+}
+int plWriteFile(PlFileHandle handle, const void* buffer, unsigned int size) {
+    return fwrite(buffer, 1, size, (FILE*)handle);
+}
+void plCloseFile(PlFileHandle handle) {
+    fclose((FILE*)handle);
+}
+int plRemoveFile(const char* filename) {
+    return remove(filename);
+}
+int plRenameFile(const char* old_filename, const char* new_filename) {
+    return rename(old_filename, new_filename);
+}
 
 
 // Memory Management Functions
 // For ubuntu, we can use standard library malloc/free
-void* platform_alloc(unsigned int size) { return malloc(size); }
-void platform_free(void* ptr) { free(ptr); }
+void* plAlloc(unsigned int size) { return malloc(size); }
+void plFree(void* ptr) { free(ptr); }
 
 // System Functions
-void platform_exit(int code) { exit(code); }
-long platform_get_time() { return time(NULL); }
+void plExit(int code) {
+    endwin();
+    exit(code);
+}
+long plGetTime() { return time(NULL); }

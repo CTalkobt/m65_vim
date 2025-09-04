@@ -10,56 +10,52 @@
 #include "editMode.h"
 #include "render.h"
 #include "line.h"
+#include "lib/keycodes.h"
 #include "editor.h"
 
-#ifndef CTRL
-#define CTRL(kar) ((kar)-'a')
-#endif
-
 tsCmds cmds[] = {
-    {Default, "\x84", cmdHelp},            // Help
-    {Default, "?", cmdHelp},               // Help
+    {Default, {VIM_KEY_HELP, VIM_KEY_NULL}, cmdHelp},
+    {Default, {VIM_KEY_QUESTION, VIM_KEY_NULL}, cmdHelp},
 
     // Single increment navigation.
-    {Default, "\x9d", cmdCursorLeft},      // Left Arrow
-    {Default, "H", cmdCursorLeft},         // h
-    {Default, "\x91", cmdCursorUp},        // Up Arrow
-    {Default, "K", cmdCursorUp},           // k
-    {Default, "\x11",  cmdCursorDown},       // Down Arrow.
-    {Default, "J", cmdCursorDown},
-    {Default, "\x1d",  cmdCursorRight},      // Right arrow.
-    {Default, "L", cmdCursorRight},
+    {Default, {VIM_KEY_LEFT, VIM_KEY_NULL}, cmdCursorLeft},
+    {Default, {VIM_KEY_H_LOWER, VIM_KEY_NULL}, cmdCursorLeft},
+    {Default, {VIM_KEY_UP, VIM_KEY_NULL}, cmdCursorUp},
+    {Default, {VIM_KEY_K_LOWER, VIM_KEY_NULL}, cmdCursorUp},
+    {Default, {VIM_KEY_DOWN, VIM_KEY_NULL}, cmdCursorDown},
+    {Default, {VIM_KEY_J_LOWER, VIM_KEY_NULL}, cmdCursorDown},
+    {Default, {VIM_KEY_RIGHT, VIM_KEY_NULL}, cmdCursorRight},
+    {Default, {VIM_KEY_L_LOWER, VIM_KEY_NULL}, cmdCursorRight},
 
-    // Top/Bottom of Screen jumps. 
-    {Default, "\x13", cmdCursorScreenTop},     // Home key.
-    {Default, "h",    cmdCursorScreenTop},
-    {Default, "\x93", cmdCursorScreenBottom}, // Shift-Home/Clr Key.
-    {Default, "l",    cmdCursorScreenBottom},
+    // Top/Bottom of Screen jumps.
+    {Default, {VIM_KEY_HOME, VIM_KEY_NULL}, cmdCursorScreenTop},
+    {Default, {VIM_KEY_H_UPPER, VIM_KEY_NULL}, cmdCursorScreenTop}, // Shift-h
+    {Default, {VIM_KEY_SHIFT_HOME, VIM_KEY_NULL}, cmdCursorScreenBottom},
+    {Default, {VIM_KEY_L_UPPER, VIM_KEY_NULL}, cmdCursorScreenBottom}, // Shift-l
 
-    {Default, "DD", cmdDeleteLine},
-    {Default, "D", cmdDelete},
-    {Default, "g", cmdGotoLine},
-    {Default, "j", cmdLineJoin},
-    {Default, "W", cmdCursorNextWord},
-    {Default, "$", cmdCursorLineEnd},
-    {Default, "0", cmdCursorLineStart},
-    {Default, "i", cmdModeInsert},
-    {Default, "I", cmdModeInsert},
-    {Default, "A", cmdModeAppend},
-    {Default, "\x06", cmdPageForward},      // Ctrl-F
-    {Default, "\x02", cmdPageBack},          // Ctrl-B
+    {Default, {VIM_KEY_D_LOWER, VIM_KEY_D_LOWER, VIM_KEY_NULL}, cmdDeleteLine},
+    {Default, {VIM_KEY_D_LOWER, VIM_KEY_NULL}, cmdDelete},
+    {Default, {VIM_KEY_G_LOWER, VIM_KEY_NULL}, cmdGotoLine},
+    {Default, {VIM_KEY_J_UPPER, VIM_KEY_NULL}, cmdLineJoin},
+    {Default, {VIM_KEY_W_LOWER, VIM_KEY_NULL}, cmdCursorNextWord},
+    {Default, {VIM_KEY_DOLLAR, VIM_KEY_NULL}, cmdCursorLineEnd},
+    {Default, {VIM_KEY_0, VIM_KEY_NULL}, cmdCursorLineStart},
+    {Default, {VIM_KEY_I_LOWER, VIM_KEY_NULL}, cmdModeInsert},
+    {Default, {VIM_KEY_I_UPPER, VIM_KEY_NULL}, cmdModeInsertLineStart},
+    {Default, {VIM_KEY_A_LOWER, VIM_KEY_NULL}, cmdModeAppend},
+    {Default, {VIM_KEY_A_UPPER, VIM_KEY_NULL}, cmdModeAppendEnd},
+    {Default, {VIM_KEY_CTRL_F, VIM_KEY_NULL}, cmdPageForward},
+    {Default, {VIM_KEY_CTRL_B, VIM_KEY_NULL}, cmdPageBack},
 
-    {Default, ":", cmdModeCommand},
-    {Insert, "\x1b", cmdModeDefault}, // Handle Esc key in Insert mode
-    {Insert, "\x03", cmdModeDefault}, // Handle Run/Stop in Insert mode
+    {Default, {VIM_KEY_COLON, VIM_KEY_NULL}, cmdModeCommand},
+    {Insert, {VIM_KEY_ESC, VIM_KEY_NULL}, cmdModeDefault},
+    {Insert, {VIM_KEY_CTRL_C, VIM_KEY_NULL}, cmdModeDefault},
 
-    {Insert, "---", NULL} // End of the list.
+    {Insert, {VIM_KEY_NULL}, NULL} // End of the list.
 };
 
-
-
-tsCmdLookupResult getCmd(const EditMode mode, unsigned char *kars) {
-    size_t len = strlen(kars);
+tsCmdLookupResult getCmd(const EditMode mode, eVimKeyCode *kars) {
+    size_t len = keycodes_len(kars);
     tsCmdLookupResult result = {NULL, CMD_LOOKUP_NOT_FOUND};
     tsCmds *exactMatchCmd = NULL;
     bool partialMatchPossible = false;
@@ -67,11 +63,11 @@ tsCmdLookupResult getCmd(const EditMode mode, unsigned char *kars) {
     for (tsCmds *cmd = &cmds[0]; cmd->cmd != NULL; cmd++) {
         if (cmd->mode == mode) {
             // Check for an exact match
-            if (strcmp((char *)cmd->kars, kars) == 0) {
+            if (keycodes_cmp(cmd->kars, kars) == 0) {
                 exactMatchCmd = cmd;
             }
                 // Check if a longer command is possible (partial match)
-            else if (strlen(cmd->kars) > len && strncmp((char *)cmd->kars, kars, len) == 0) {
+            else if (keycodes_len(cmd->kars) > len && keycodes_ncmp(cmd->kars, kars, len) == 0) {
                 partialMatchPossible = true;
             }
         }
@@ -92,7 +88,7 @@ tsCmdLookupResult getCmd(const EditMode mode, unsigned char *kars) {
     }
     // If neither, the result remains CMD_LOOKUP_NOT_FOUND
 
-    DEBUGF3("DEBUG: Final match status for cmd '%s' in mode %d: %d", kars, mode, result.status);
+    // DEBUGF3("DEBUG: Final match status for cmd '%s' in mode %d: %d", kars, mode, result.status);
     return result;
 }
 
@@ -130,10 +126,19 @@ teCmdResult cmdDeleteLine(tsState *psState, tsEditState *psEditState) {
 teCmdResult cmdGotoLine(tsState *psState, tsEditState *psEditState) {
     allocLine(psState, psState->lineY, psState->editBuffer);
     if (psState->lines > 0) {
-        loadLine(psState, psState->lines - 1);
+        psState->lineY = psState->lines - 1;
+        psState->xPos = 0;
+
+        // Adjust screen viewport if necessary
+        unsigned char screen_height = plGetScreenHeight();
+        unsigned char text_height = screen_height > 2 ? screen_height - 2 : 0;
+        if (psState->lineY >= psState->screenStart.yPos + text_height) {
+            psState->screenStart.yPos = psState->lineY - text_height + 1;
+        }
+        
+        loadLine(psState, psState->lineY);
+        draw_screen(psState);
     }
-    psState->xPos = 0;
-    drawStatus(psState);
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
@@ -148,18 +153,34 @@ teCmdResult cmdCursorLeft(tsState *psState, tsEditState *psEditState) {
 teCmdResult cmdCursorUp(tsState *psState, tsEditState *psEditState) {
     allocLine(psState, psState->lineY, psState->editBuffer);
     if (psState->lineY > 0) {
-        loadLine(psState, psState->lineY - 1);
+        psState->lineY--;
+
+        // Check if we need to scroll up
+        if (psState->lineY < psState->screenStart.yPos) {
+            psState->screenStart.yPos--;
+        }
+
+        loadLine(psState, psState->lineY);
+        draw_screen(psState);
     }
-    drawStatus(psState);
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
 teCmdResult cmdCursorDown(tsState *psState, tsEditState *psEditState) {
     allocLine(psState, psState->lineY, psState->editBuffer);
     if (psState->lineY < psState->lines - 1) {
-        loadLine(psState, psState->lineY + 1);
+        psState->lineY++;
+        
+        // Check if we need to scroll down
+        unsigned char screen_height = plGetScreenHeight();
+        unsigned char text_height = screen_height > 2 ? screen_height - 2 : 0;
+        if ((psState->lineY - psState->screenStart.yPos) >= text_height) {
+            psState->screenStart.yPos++;
+        }
+        
+        loadLine(psState, psState->lineY);
+        draw_screen(psState);
     }
-    drawStatus(psState);
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
@@ -181,7 +202,7 @@ teCmdResult cmdCursorScreenTop(tsState *psState, tsEditState *psEditState) {
 
 teCmdResult cmdCursorScreenBottom(tsState *psState, tsEditState *psEditState) {
     allocLine(psState, psState->lineY, psState->editBuffer);
-    loadLine(psState, psState->screenEnd.yPos - 1);
+    loadLine(psState, plGetScreenHeight() - 2);
     psState->xPos = 0;
     drawStatus(psState);
     return CMD_RESULT_SINGLE_CHAR_ACK;
@@ -247,6 +268,13 @@ teCmdResult cmdModeInsert(tsState *psState, tsEditState *psEditState) {
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
+teCmdResult cmdModeInsertLineStart(tsState *psState, tsEditState *psEditState) {
+    loadLine(psState, psState->lineY);
+    psState->xPos = 0;
+    setEditMode(psState, Insert);
+    return CMD_RESULT_SINGLE_CHAR_ACK;
+}
+
 teCmdResult cmdModeAppend(tsState *psState, tsEditState *psEditState) {
     loadLine(psState, psState->lineY);
     if (psState->xPos < strlen(psState->editBuffer)) {
@@ -256,9 +284,16 @@ teCmdResult cmdModeAppend(tsState *psState, tsEditState *psEditState) {
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
+teCmdResult cmdModeAppendEnd(tsState *psState, tsEditState *psEditState) {
+    loadLine(psState, psState->lineY);
+    psState->xPos = strlen(psState->editBuffer);
+    setEditMode(psState, Insert);
+    return CMD_RESULT_SINGLE_CHAR_ACK;
+}
+
 teCmdResult cmdPageForward(tsState *psState, tsEditState *psEditState) {
     allocLine(psState, psState->lineY, psState->editBuffer);
-    int pageHeight = psState->screenEnd.yPos - psState->screenStart.yPos;
+    int pageHeight = plGetScreenHeight() - 2;
     psState->screenStart.yPos += pageHeight;
     if (psState->screenStart.yPos > psState->lines - 1) {
         psState->screenStart.yPos = psState->lines - 1;
@@ -270,7 +305,7 @@ teCmdResult cmdPageForward(tsState *psState, tsEditState *psEditState) {
 
 teCmdResult cmdPageBack(tsState *psState, tsEditState *psEditState) {
     allocLine(psState, psState->lineY, psState->editBuffer);
-    int pageHeight = psState->screenEnd.yPos - psState->screenStart.yPos;
+    int pageHeight = plGetScreenHeight() - 2;
     if (psState->screenStart.yPos > pageHeight) {
         psState->screenStart.yPos -= pageHeight;
     } else {
@@ -292,37 +327,101 @@ teCmdResult cmdModeCommand(tsState *psState, tsEditState *psEditState) {
 }
 
 teCmdResult cmdHelp(tsState *psState, tsEditState *psEditState) {
-    platform_clear_screen();
-    platform_puts("VIM Help\n\n");
-    platform_puts("Key commands:\n");
-    platform_puts(" h, <-    - Cursor Left\n");
-    platform_puts(" k, ^     - Cursor Up\n");
-    platform_puts(" j, v     - Cursor Down\n");
-    platform_puts(" l, ->    - Cursor Right\n");
-    platform_puts(" H        - Top of screen\n");
-    platform_puts(" L        - Bottom of screen\n");
-    platform_puts(" $        - End of line\n");
-    platform_puts(" 0        - Start of line\n");
-    platform_puts(" w        - Next word\n");
-    platform_puts(" g        - Goto line\n");
-    platform_puts(" J        - Join lines\n");
-    platform_puts(" i        - Insert mode\n");
-    platform_puts(" a        - Append mode\n");
-    platform_puts(" :        - Command mode\n");
-    platform_puts(" ctrl+f   - Page forward\n");
-    platform_puts(" ctrl+b   - Page back\n");
-    platform_puts(" ? / help - This help screen\n\n");
-    platform_puts("Press any key to continue...");
-    while(platform_is_key_pressed()) platform_get_key(); // Clear buffer
-    platform_get_key();
+    plClearScreen();
+    plPuts("VIM Help\n\n");
+    plPuts("Key commands:\n");
+    plPuts(" h, <-    - Cursor Left\n");
+    plPuts(" k, ^     - Cursor Up\n");
+    plPuts(" j, v     - Cursor Down\n");
+    plPuts(" l, ->    - Cursor Right\n");
+    plPuts(" H        - Top of screen\n");
+    plPuts(" L        - Bottom of screen\n");
+    plPuts(" $        - End of line\n");
+    plPuts(" 0        - Start of line\n");
+    plPuts(" w        - Next word\n");
+    plPuts(" g        - Goto line\n");
+    plPuts(" J        - Join lines\n");
+    plPuts(" i        - Insert mode\n");
+    plPuts(" a        - Append mode\n");
+    plPuts(" :        - Command mode\n");
+    plPuts(" ctrl+f   - Page forward\n");
+    plPuts(" ctrl+b   - Page back\n");
+    plPuts(" ? / help - This help screen\n\n");
+    plPuts("Press any key to continue...");
+    plGetKey(); // Clear buffer and wait for a key
     draw_screen(psState);
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
 teCmdResult cmdRead(tsState *psState, char *pzCmdRemainder) {
-    // ... (implementation unchanged for now)
+    // 1. Get filename, skipping leading space
+    char* filename = pzCmdRemainder;
+    while (*filename == ' ') {
+        filename++;
+    }
+
+    if (*filename == '\0') {
+        // TODO: Show "E32: No file name" error
+        return CMD_RESULT_SINGLE_CHAR_ACK;
+    }
+
+    // 2. Open file
+    PlFileHandle handle = plOpenFile(filename, "r");
+    if (!handle) {
+        // TODO: Show "E484: Can't open file" error
+        return CMD_RESULT_SINGLE_CHAR_ACK;
+    }
+
+    // 3. Read the file in chunks and insert lines
+    char read_buf[256];
+    char line_buf[MAX_LINE_LENGTH] = {0};
+    int line_len = 0;
+    int bytes_read;
+    unsigned int lines_read = 0;
+    uint16_t insert_pos = psState->lineY;
+
+    while ((bytes_read = plReadFile(handle, read_buf, sizeof(read_buf))) > 0) {
+        for (int i = 0; i < bytes_read; i++) {
+            char c = read_buf[i];
+            if (c == '\n') {
+                line_buf[line_len] = '\0';
+                if (!insertLine(psState, insert_pos + 1, line_buf)) {
+                    // TODO: Show error, buffer full
+                    goto end_read;
+                }
+                insert_pos++;
+                lines_read++;
+                line_len = 0; // Reset for the next line
+            } else if (c != '\r') { // Ignore carriage returns
+                if (line_len < MAX_LINE_LENGTH - 1) {
+                    line_buf[line_len++] = c;
+                }
+            }
+        }
+    }
+
+end_read:
+    // If the file doesn't end with a newline, insert the last partial line.
+    if (line_len > 0) {
+        line_buf[line_len] = '\0';
+        if (insertLine(psState, insert_pos + 1, line_buf)) {
+            lines_read++;
+        }
+    }
+
+    // 4. Close file
+    plCloseFile(handle);
+
+    // 5. Redraw and show status
+    if (lines_read > 0) {
+        psState->isDirty = true;
+        draw_screen(psState);
+        // TODO: show status message: "%s" %dL read", filename, lines_read
+    }
+
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
+
 
 teCmdResult cmdWrite(tsState *psState, char *pzCmdRemainder, bool force) {
     // ... (implementation unchanged for now)
@@ -333,4 +432,3 @@ teCmdResult cmdDirectoryListing(tsState *psState) {
     // ... (implementation unchanged for now)
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
-

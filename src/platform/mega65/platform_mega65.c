@@ -12,7 +12,7 @@
 // Local headers
 #include "screen.h"
 #include "kbd.h"
-#include "kernal.h"
+#include "cbm/kernal.h"
 
 // Undefine conflicting macros from mega65-libc's memory.h
 // before including the llvm-mos SDK's mega65.h
@@ -30,17 +30,18 @@
 
 // --- Video/Rendering Functions ---
 
-void platform_init_video() {
+void plInitVideo() {
     // Set 80x25 mode by default
     _curScreenW = 80;
     _curScreenH = 25;
+    cbm_k_bsout(14); // Switch to lowercase character set
     cbm_k_bsout(27);
     cbm_k_bsout('8');
     // Clear screen
     cbm_k_bsout(147);
 }
 
-void platform_init_screen() {
+void plInitScreen() {
     _curScreenW = 80;
     _curScreenH = 50;
     scrScreenMode(_80x50);
@@ -50,7 +51,7 @@ void platform_init_screen() {
     scrColor(COLOR_BLACK, COLOR_BLACK);
 }
 
-void platform_shutdown_screen() {
+void plScreenShutdown() {
     // Restore default screen mode or colors if necessary
     _curScreenW = 80;
     _curScreenH = 25;
@@ -59,21 +60,21 @@ void platform_shutdown_screen() {
     scrClear();
 }
 
-void platform_clear_screen() {
+void plClearScreen() {
     cbm_k_bsout(147);
 }
 
-void platform_draw_char(unsigned char x, unsigned char y, char c, unsigned char color) {
+void plDrawChar(unsigned char x, unsigned char y, char c, unsigned char color) {
     // Set color
     POKE(0x0400 + y * _curScreenW + x, c);
     POKE(0xD800 + y * _curScreenW + x, color);
 }
 
-void platform_set_cursor(unsigned char x, unsigned char y) {
+void plSetCursor(unsigned char x, unsigned char y) {
     kPlotXY(x, y);
 }
 
-void platform_hide_cursor() {
+void plHideCursor() {
     __asm__ volatile (
         "sec\n"
         "jsr $ff35\n"
@@ -81,7 +82,7 @@ void platform_hide_cursor() {
     );
 }
 
-void platform_show_cursor() {
+void plShowCursor() {
     __asm__ volatile (
         "clc\n"
         "jsr $ff35\n"
@@ -90,37 +91,37 @@ void platform_show_cursor() {
 }
 
 // --- Screen Information ---
-unsigned char platform_get_screen_width() { return _curScreenW; }
-unsigned char platform_get_screen_height() { return _curScreenH; }
+unsigned char plGetScreenWidth() { return _curScreenW; }
+unsigned char plGetScreenHeight() { return _curScreenH; }
 
 // --- High-level output ---
-void platform_puts(const char* s) {
+void plPuts(const char* s) {
     while (*s) {
         kBsout(*s++);
     }
 }
 
-void platform_put_char(char c) {
+void plPutChar(char c) {
     kBsout(c);
 }
 
-void platform_clear_eol() {
+void plClearEOL() {
     kBsout(27);
     kBsout('Q');
 }
 
-void platform_set_color(unsigned char color) {
+void plSetColor(unsigned char color) {
     kBsout(color);
 }
 
 // --- Debugging ---
-void platform_debug_msg(const char* msg) {
+void plDebugMsg(const char* msg) {
     debug_msg(msg);
 }
 
 // --- Keyboard Input Functions ---
 
-char platform_get_key() {
+eVimKeyCode plGetKey() {
     unsigned char k;
 
     POKE(0xD619U, 0);
@@ -128,41 +129,41 @@ char platform_get_key() {
     while ((k = PEEK(0xD610U)) == 0)
         ;
 
-    return PEEK(0xD619U);
+    return (eVimKeyCode)PEEK(0xD619U);
 }
 
-int platform_is_key_pressed() {
+int plIsKeyPressed() {
     return PEEK(0xD610U);
 }
 
 
 // --- File I/O Functions (Stubs for now) ---
 
-platform_file_handle platform_open_file(const char* filename, const char* mode) {
+PlFileHandle plOpenFile(const char* filename, const char* mode) {
     // @@TODO: This needs a proper implementation using kernal routines
     return NULL;
 }
 
-int platform_read_file(platform_file_handle handle, void* buffer, unsigned int size) {
+int plReadFile(PlFileHandle handle, void* buffer, unsigned int size) {
     // @@TODO: This needs a proper implementation
     return -1;
 }
 
-int platform_write_file(platform_file_handle handle, const void* buffer, unsigned int size) {
+int plWriteFile(PlFileHandle handle, const void* buffer, unsigned int size) {
     // @@TODO: This needs a proper implementation
     return -1;
 }
 
-void platform_close_file(platform_file_handle handle) {
+void plCloseFile(PlFileHandle handle) {
     // @@TODO: This needs a proper implementation
 }
 
-int platform_remove_file(const char* filename) {
+int plRemoveFile(const char* filename) {
     // @@TODO: This needs a proper implementation
     return -1;
 }
 
-int platform_rename_file(const char* old_filename, const char* new_filename) {
+int plRenameFile(const char* old_filename, const char* new_filename) {
     // @@TODO: This needs a proper implementation
     return -1;
 }
@@ -172,11 +173,11 @@ int platform_rename_file(const char* old_filename, const char* new_filename) {
 // On MEGA65, memory management is often manual or uses a custom allocator.
 // For now, we'll return NULL.
 
-void* platform_alloc(unsigned int size) {
+void* plAlloc(unsigned int size) {
     return malloc(size);
 }
 
-void platform_free(void* ptr) {
+void plFree(void* ptr) {
     if (ptr) 
         free(ptr);
 }
@@ -184,12 +185,12 @@ void platform_free(void* ptr) {
 
 // --- System Functions ---
 
-void platform_exit(int code) {
+void plExit(int code) {
     (void)code; // Code is unused on this platform
     kReset(WarmBoot);
 }
 
-long platform_get_time() {
+long plGetTime() {
     // @@TODO: This would require reading the RTC registers on the MEGA65
     return 0;
 }

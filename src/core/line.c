@@ -47,8 +47,8 @@ bool allocLine(tsState *psState, uint16_t lineIndex, const char* new_content) {
     char* new_line = malloc(len + 1);
     if (!new_line) {
         DEBUG("ERROR: allocLine: Memory allocation failed.");
-        platform_set_cursor(0, psState->screenEnd.yPos - 1);
-        platform_puts("Memory allocation failed!");
+        plSetCursor(0, plGetScreenHeight() - 1);
+        plPuts("Memory allocation failed!");
         return false;
     }
 

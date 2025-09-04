@@ -28,7 +28,6 @@ typedef struct sState {
     bool isDirty;      // True if the file has been modified.
     bool isReadOnly;   // True if the file is read-only.
     tsXYPos screenStart;  // Start X,Y of render screen. 
-    tsXYPos screenEnd;    // End X,Y of render screen.
     EditMode editMode;    // Current edit mode.
     char **text;
     char *editBuffer;

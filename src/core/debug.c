@@ -13,7 +13,7 @@ void dbg_psState(struct sState *psState, const char *message) {
     DEBUG("--- DEBUG STATE DUMP ---");
     DEBUGF1("Message: %s", message);
     DEBUGF4("lines: %d/%d, cursor: (%d, %d)", psState->lines, psState->max_lines, psState->xPos, psState->lineY);
-    DEBUGF4("screenStart: (%d, %d) screenEnd: (%d, %d)", psState->screenStart.xPos, psState->screenStart.yPos, psState->screenEnd.xPos, psState->screenEnd.yPos);
+    DEBUGF2("screenStart: (%d, %d)", psState->screenStart.xPos, psState->screenStart.yPos);
     DEBUGF1("isDirty: %d", psState->isDirty);
     char zTemp[80+1];
     sprintf(zTemp, "editBuffer:%c(%d) %c(%d) %c(%d) %c(%d)",
