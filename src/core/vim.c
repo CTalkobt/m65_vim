@@ -114,7 +114,11 @@ int main(void) {
     state->editMode = Default;
     state->zFilename[0] = '\0';
     
+    #ifdef __UBUNTU__
+    bool initialAlloc = allocLine(state, 0, "Vim3 Editor - V0.1");
+#else
     bool initialAlloc = allocLine(state, 0, "vIM3 eDITOR - v0.1");
+#endif
     ASSERT(initialAlloc, "eRROR: iNITIAL ALLOCATION FAILED.");
 
     state->lines = 1;

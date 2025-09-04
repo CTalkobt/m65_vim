@@ -76,7 +76,7 @@ void drawStatus(const tsState *psState) {
     }
 
     // Display mode
-    plSetCursor(2, screen_height - 1);
+    plSetCursor(0, screen_height - 1);
     switch (psState->editMode) {
         case Default:
             plPuts(MODE_NORMAL);

@@ -81,6 +81,19 @@ endif()
 
 # --- Main Executable Target ---
 add_executable(vim ${CORE_SOURCES} ${PLATFORM_SOURCES})
+
+if (${PLATFORM} STREQUAL "ubuntu")
+    target_compile_definitions(vim PRIVATE __UBUNTU__)
+endif()
+if (${PLATFORM} STREQUAL "mega65")
+    target_compile_definitions(vim PRIVATE __MEGA65__)
+    target_compile_definitions(vim PRIVATE __CBM__)
+endif()
+if (${PLATFORM} STREQUAL "c64")
+    target_compile_definitions(vim PRIVATE __C64__)
+    target_compile_definitions(vim PRIVATE __CBM__)
+endif()
+
 target_include_directories(vim PRIVATE src/core src/platform src/platform/cbm)
 target_link_libraries(vim PRIVATE ${PLATFORM_LIBRARIES})
 target_link_options(vim PRIVATE ${PLATFORM_LINK_FLAGS})
