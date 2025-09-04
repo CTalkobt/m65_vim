@@ -67,6 +67,7 @@ dkms.conf
 CMakeFiles/
 CMakeCache.txt
 cmake_*
+cmake-*
 compile_commands.json
 Makefile
 _deps
