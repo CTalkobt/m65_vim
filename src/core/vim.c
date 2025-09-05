@@ -17,28 +17,70 @@
 char zTemp1[MAX_LINE_LENGTH];
 char zTemp2[MAX_LINE_LENGTH];
 
+
 unsigned int getFreeMemory(void) {
-    unsigned int size = 1024;
-    unsigned int last_success = 0;
+#ifdef __UBUNTU__
+    // On Ubuntu, probing for memory with malloc is slow and unreliable due to virtual memory.
+    // Return a generous fixed size.
+    return 1024 * 1024; // 1MB
+#else
+    // On CBM targets, probe memory to find a more accurate free memory amount.
+    // Use a combination of exponential probing and binary search for efficiency and safety.
     void *p = NULL;
+    unsigned int low = 0;
+    unsigned int high = 0;
+    unsigned int probe_size = 1024;
 
-    while ((p = malloc(size))) {
-        free(p);
-        last_success = size;
-        size += 1024;
-        DEBUGF1("Free small/memory: %d", size);
+    // 1. Find a rough upper bound using exponential probing.
+    while (probe_size < 65535) {
+        p = malloc(probe_size);
+        if (p) {
+            free(p);
+            low = probe_size; // `low` is the last known good size
+            if (probe_size > 65535 / 2) {
+                probe_size = 65535;
+            } else {
+                probe_size *= 2;
+            }
+        } else {
+            high = probe_size; // `high` is the first known bad size
+            break;
+        }
+    }
+    
+    // If we exited the loop because probe_size got too big, check 65535 itself
+    if (high == 0) {
+        p = malloc(65535);
+        if (p) {
+            free(p);
+            return 65535 - MEMORY_RESERVE; // We can allocate the max, no need to search
+        } else {
+            high = 65535;
+        }
     }
 
-    size = last_success + 128;
-    while ((p = malloc(size))) {
-        free(p);
-        last_success = size;
-        size += 128;
-        DEBUGF1("Free large/memory: %d", size);
+    // 2. Binary search between low and high
+    unsigned int best_fit = low;
+    while (low <= high) {
+        unsigned int mid = low + (high - low) / 2;
+        if (mid == 0 || mid > 65535) { // Safeguard
+             break;
+        }
+        p = malloc(mid);
+        if (p) {
+            free(p);
+            best_fit = mid;
+            low = mid + 1;
+        } else {
+            if (mid == 0) break;
+            high = mid - 1;
+        }
     }
-
-    return last_success - MEMORY_RESERVE;
+    
+    return (best_fit > MEMORY_RESERVE) ? (best_fit - MEMORY_RESERVE) : 0;
+#endif
 }
+
 
 void freeTextBuffer(const tsState *state) {
     if (state->text) {
