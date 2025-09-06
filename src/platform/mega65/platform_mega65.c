@@ -11,7 +11,6 @@
 
 // Local headers
 #include "screen.h"
-#include "kbd.h"
 #include "cbm/kernal.h"
 
 // Undefine conflicting macros from mega65-libc's memory.h
@@ -46,7 +45,7 @@ void plInitScreen() {
     _curScreenH = 50;
     scrScreenMode(_80x50);
     kFnKeyMacros(false);
-    kbdBufferClear();
+    plKbdBufferClear();
     scrClear();
     scrColor(COLOR_BLACK, COLOR_BLACK);
 }
@@ -130,6 +129,21 @@ eVimKeyCode plGetKey() {
         ;
 
     return (eVimKeyCode)PEEK(0xD619U);
+}
+
+unsigned char plKbHit(void)
+{
+    unsigned char c = PEEK(0xD610U);
+    if (c != 0)
+        c = PEEK(0xD619U);
+    return c;
+}
+
+void plKbdBufferClear(void)
+{
+    while (PEEK(0xD610U)) {
+        POKE(0xD610U, 0);
+    }
 }
 
 int plIsKeyPressed() {

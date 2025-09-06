@@ -4,8 +4,7 @@
 #include <string.h> // for strcpy, strcat
 #include <cbm.h>
 #include <stdlib.h>
-
-#include "../../../cmake-build-m65/_deps/mega65libc-src/include/mega65/memory.h"
+#include <peekpoke.h>
 
 // Video/Rendering Functions
 void plInitVideo() {
@@ -78,6 +77,14 @@ void plDebugMsg(const char* msg) {
 // Keyboard Input Functions
 eVimKeyCode plGetKey() {
     return (eVimKeyCode)cbm_k_getin();
+}
+
+unsigned char plKbHit(void) {
+    return PEEK(197);
+}
+
+void plKbdBufferClear(void) {
+    // @@TODO: Implement if possible
 }
 
 int plIsKeyPressed() {

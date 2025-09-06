@@ -163,6 +163,7 @@ int main(void) {
 #endif
     ASSERT(initialAlloc, "eRROR: iNITIAL ALLOCATION FAILED.");
 
+    state->isDirty = false;
     state->lines = 1;
 
     edit(state);

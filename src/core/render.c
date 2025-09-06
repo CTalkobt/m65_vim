@@ -95,6 +95,9 @@ void drawStatus(const tsState *psState) {
     plPutChar('"');
     plPuts(psState->zFilename);
     plPutChar('"');
+    if (psState->isDirty) {
+        plPutChar('*');
+    }
     plClearEOL();
 
     plSetCursor(screen_width - 16, screen_height - 1);

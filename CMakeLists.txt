@@ -63,7 +63,6 @@ if (${PLATFORM} STREQUAL "mega65")
     list(APPEND PLATFORM_SOURCES
         src/platform/mega65/platform_mega65.c
         src/platform/mega65/screen.c
-        src/platform/mega65/kbd.c
     )
     set(PLATFORM_LIBRARIES mega65libc)
     set(PLATFORM_LINK_FLAGS "-Wl,-z,stack-size=8192" "-Wl,-Map=vim.map")

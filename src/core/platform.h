@@ -34,6 +34,8 @@ void plDebugMsg(const char* msg);
 
 // Keyboard Input Functions
 eVimKeyCode plGetKey();
+unsigned char plKbHit(void);
+void plKbdBufferClear(void);
 
 // File I/O Functions
 typedef void* PlFileHandle;

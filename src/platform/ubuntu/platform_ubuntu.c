@@ -119,6 +119,14 @@ eVimKeyCode plGetKey() {
     return VIM_KEY_NULL;
 }
 
+unsigned char plKbHit(void) {
+    return (unsigned char)getch();
+}
+
+void plKbdBufferClear(void) {
+    flushinp();
+}
+
 // File I/O Functions
 PlFileHandle plOpenFile(const char* filename, const char* mode) {
     return fopen(filename, mode);

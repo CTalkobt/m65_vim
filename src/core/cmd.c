@@ -414,7 +414,6 @@ end_read:
 
     // 5. Redraw and show status
     if (lines_read > 0) {
-        psState->isDirty = true;
         draw_screen(psState);
         // TODO: show status message: "%s" %dL read", filename, lines_read
     }
