@@ -7,6 +7,7 @@
 #include "platform.h"
 #include "lib/itostr.h"
 #include "debug.h"
+#include "undo.h"
 
 char zTemp[32+1];
 
@@ -95,7 +96,7 @@ void drawStatus(const tsState *psState) {
     plPutChar('"');
     plPuts(psState->zFilename);
     plPutChar('"');
-    if (psState->isDirty) {
+    if (undo_is_dirty()) {
         plPutChar('*');
     }
     plClearEOL();

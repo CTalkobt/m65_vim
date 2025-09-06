@@ -12,6 +12,9 @@
 #include "line.h"
 #include "lib/keycodes.h"
 #include "editor.h"
+#include "undo.h"
+
+teCmdResult cmdUndo(tsState *psState, tsEditState *psEditState);
 
 tsCmds cmds[] = {
     {Default, {VIM_KEY_HELP, VIM_KEY_NULL}, cmdHelp},
@@ -33,6 +36,7 @@ tsCmds cmds[] = {
     {Default, {VIM_KEY_SHIFT_HOME, VIM_KEY_NULL}, cmdCursorScreenBottom},
     {Default, {VIM_KEY_L_UPPER, VIM_KEY_NULL}, cmdCursorScreenBottom}, // Shift-l
 
+    {Default, {VIM_KEY_U_LOWER, VIM_KEY_NULL}, cmdUndo},
     {Default, {VIM_KEY_D_LOWER, VIM_KEY_D_LOWER, VIM_KEY_NULL}, cmdDeleteLine},
     {Default, {VIM_KEY_D_LOWER, VIM_KEY_NULL}, cmdDelete},
     {Default, {VIM_KEY_G_LOWER, VIM_KEY_NULL}, cmdGotoLine},
@@ -102,6 +106,10 @@ teCmdResult cmdDelete(tsState *psState, tsEditState *psEditState) {
 teCmdResult cmdDeleteLine(tsState *psState, tsEditState *psEditState) {
     dbg_psState(psState, "cmdDeleteLine");
     if (psState->lines > 0) {
+        // Store the line content for undo before deleting it.
+        const char* line_content = getLine(psState, psState->lineY);
+        undo_store_action(UNDO_REPLACE_LINE, psState->lineY, 0, line_content);
+
         deleteLine(psState, psState->lineY);
 
         if (psState->lines == 0) {
@@ -217,14 +225,12 @@ teCmdResult cmdLineJoin(tsState *psState, tsEditState *psEditState) {
         uint16_t nextLen = strlen(nextLine);
 
         if (currentLen + nextLen + 1 < MAX_LINE_LENGTH) {
+            // Store the position for undo before joining the lines
+            undo_store_action(UNDO_JOIN_LINE, psState->lineY, currentLen, NULL);
+
             currentLine[currentLen] = ' ';
             strcpy(&currentLine[currentLen + 1], nextLine);
-            for (uint16_t i = psState->lineY + 1; i < psState->lines; i++) {
-                psState->text[i] = psState->text[i + 1];
-            }
-            psState->text[psState->lines -1] = NULL;
-            psState->lines--;
-            psState->isDirty = true;
+            deleteLine(psState, psState->lineY + 1);
             draw_screen(psState);
         }
     }
@@ -353,12 +359,21 @@ teCmdResult cmdHelp(tsState *psState, tsEditState *psEditState) {
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
+teCmdResult cmdUndo(tsState *psState, tsEditState *psEditState) {
+    undo_perform(psState);
+    drawStatus(psState); // Redraw status to reflect potential change in dirty flag
+    return CMD_RESULT_SINGLE_CHAR_ACK;
+}
+
 teCmdResult cmdRead(tsState *psState, char *pzCmdRemainder) {
     // 1. Get filename, skipping leading space
     char* filename = pzCmdRemainder;
     while (*filename == ' ') {
         filename++;
     }
+
+    // Clear any previous undo history when reading a new file.
+    undo_clear();
 
     if (*filename == '\0') {
         // TODO: Show "E32: No file name" error
@@ -421,9 +436,54 @@ end_read:
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
-
 teCmdResult cmdWrite(tsState *psState, char *pzCmdRemainder, bool force) {
-    // ... (implementation unchanged for now)
+    char* filename = pzCmdRemainder;
+    while (*filename == ' ') {
+        filename++;
+    }
+
+    // If no filename is provided, use the one from the state.
+    if (*filename == '\0') {
+        filename = psState->zFilename;
+    }
+    
+    if (*filename == '\0') {
+        // TODO: Show "E32: No file name" error
+        return CMD_RESULT_SINGLE_CHAR_ACK;
+    }
+
+    PlFileHandle handle = plOpenFile(filename, "w");
+    if (!handle) {
+        // TODO: Show "E509: Can't open file for writing"
+        return CMD_RESULT_SINGLE_CHAR_ACK;
+    }
+
+    unsigned int bytes_written = 0;
+    for (uint16_t i = 0; i < psState->lines; i++) {
+        const char* line = getLine(psState, i);
+        int len = strlen(line);
+        if (plWriteFile(handle, line, len) != len) {
+            // TODO: Show write error
+            goto end_write;
+        }
+        bytes_written += len;
+
+        // Write newline, except for the last line if it's empty
+        if (i < psState->lines - 1) {
+            if (plWriteFile(handle, "\n", 1) != 1) {
+                // TODO: Show write error
+                goto end_write;
+            }
+            bytes_written++;
+        }
+    }
+
+    // If we get here, the write was successful.
+    undo_set_save_point();
+    // TODO: Show status: "%s" %dL, %dB written", filename, psState->lines, bytes_written
+
+end_write:
+    plCloseFile(handle);
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 

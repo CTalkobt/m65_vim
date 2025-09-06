@@ -10,6 +10,7 @@
 #include "debug.h"
 #include "lib/keycodes.h"
 #include "line.h"
+#include "undo.h"
 
 #define MAX_CMD 78
 #define PETSCII_COLOR_WHITE 5
@@ -96,7 +97,7 @@ void editCommand(tsState *psState, eVimKeyCode kar) {
             } else if (keycodes_cmp(eCmd, cmd_dollar) == 0) {
                 cmdDirectoryListing(psState);
             } else if (keycodes_cmp(eCmd, cmd_q) == 0) {
-                if (!psState->isDirty) {
+                if (!undo_is_dirty()) {
                     psState->doExit = true;
                 } else {
                     // TODO: Indicate can't quit while buffer dirty, or use q!
@@ -179,27 +180,36 @@ void edit(tsState *psState) {
                             switch (single_kar) {
                                 case VIM_KEY_BACKSPACE:
                                     if (psState->xPos > 0) {
+                                        // Store the character being deleted for undo
+                                        char deleted_char[2];
+                                        deleted_char[0] = line[psState->xPos - 1];
+                                        deleted_char[1] = '\0';
+                                        undo_store_action(UNDO_DELETE_TEXT, psState->lineY, psState->xPos - 1, deleted_char);
+                                        
                                         memmove(&line[psState->xPos - 1], &line[psState->xPos], lineLen - psState->xPos + 1);
                                         psState->xPos--;
-                                        psState->isDirty = true;
                                     }
                                     break;
                                 case VIM_KEY_CR: {
+                                    // Store the position for undo before splitting the line
+                                    undo_store_action(UNDO_SPLIT_LINE, psState->lineY, psState->xPos, NULL);
+
                                     allocLine(psState, psState->lineY, line);
                                     if (splitLine(psState, psState->lineY, psState->xPos)) {
                                         psState->lineY++;
                                         psState->xPos = 0;
-                                        psState->isDirty = true;
                                         loadLine(psState, psState->lineY);
                                     }
                                     break;
                                 }
                                 default:
                                     if (single_kar >= 32 && single_kar <= 126 && lineLen < MAX_LINE_LENGTH - 1) {
+                                        // Store the action for undo before inserting the character
+                                        undo_store_action(UNDO_INSERT_TEXT, psState->lineY, psState->xPos, NULL);
+
                                         memmove(&line[psState->xPos + 1], &line[psState->xPos], lineLen - psState->xPos + 1);
                                         line[psState->xPos] = (char)single_kar;
                                         psState->xPos++;
-                                        psState->isDirty = true;
                                     }
                                     break;
                             }

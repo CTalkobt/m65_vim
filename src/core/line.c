@@ -33,7 +33,6 @@ bool allocLine(tsState *psState, uint16_t lineIndex, const char* new_content) {
             free(psState->text[lineIndex]);
         }
         psState->text[lineIndex] = NULL;
-        psState->isDirty = true;
         return true;
     }
 
@@ -60,7 +59,6 @@ bool allocLine(tsState *psState, uint16_t lineIndex, const char* new_content) {
     }
 
     psState->text[lineIndex] = new_line;
-    psState->isDirty = true;
     return true;
 }
 
@@ -97,7 +95,6 @@ bool insertLine(tsState *psState, uint16_t index, const char* content) {
     }
 
     psState->lines++;
-    psState->isDirty = true;
     return true;
 }
 
@@ -118,7 +115,6 @@ bool deleteLine(tsState *psState, uint16_t index) {
     if (psState->lines > 0) {
         psState->lines--;
     }
-    psState->isDirty = true;
     return true;
 }
 
@@ -130,7 +126,6 @@ void freeAllLines(tsState *psState) {
         }
     }
     psState->lines = 0;
-    psState->isDirty = true;
 }
 
 const char* getLine(const tsState* psState, uint16_t index) {

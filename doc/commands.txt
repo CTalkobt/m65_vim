@@ -28,6 +28,7 @@ Normal Mode Commands
 - `I`:                 Enter Insert Mode at the start of the line
 - `a`:                 Enter Insert Mode after the current cursor position
 - `A`:                 Enter Insert Mode at the end of the line
+- `u`:                 Undo the last change (limit 1-c64, ?-m65, 128-ubuntu)
 
 ### Other
 - `:`:                 Enter Command Mode

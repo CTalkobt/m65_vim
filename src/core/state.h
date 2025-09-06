@@ -25,7 +25,6 @@ typedef struct sState {
 
     char zFilename[88+1]; // Filename of file being edited. 
     bool doExit;       // 0 = don't exit, !0 = exiting. 
-    bool isDirty;      // True if the file has been modified.
     bool isReadOnly;   // True if the file is read-only.
     tsXYPos screenStart;  // Start X,Y of render screen. 
     EditMode editMode;    // Current edit mode.

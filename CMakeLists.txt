@@ -46,6 +46,7 @@ set(CORE_SOURCES
     src/core/lib/itostr.c
     src/core/lib/keycodes.c
     src/core/debug.c
+    src/core/undo.c
 )
 
 if (${PLATFORM} STREQUAL "mega65" OR ${PLATFORM} STREQUAL "c64")

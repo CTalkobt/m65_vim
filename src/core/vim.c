@@ -10,6 +10,7 @@
 #include "editor.h"
 #include "state.h"
 #include "line.h"
+#include "undo.h"
 
 #define MEMORY_RESERVE 2048 // Reserve 2KB for stack and other needs
 
@@ -149,12 +150,13 @@ int main(void) {
     state->lineY=0;
     state->xPos=0;
     state->doExit = false;
-    state->isDirty = false;
     state->isReadOnly = false;
     state->screenStart.xPos = 0;
     state->screenStart.yPos = 0;
     state->editMode = Default;
     state->zFilename[0] = '\0';
+    
+    undo_init();
     
     #ifdef __UBUNTU__
     bool initialAlloc = allocLine(state, 0, "Vim3 Editor - V0.1");
@@ -163,7 +165,8 @@ int main(void) {
 #endif
     ASSERT(initialAlloc, "eRROR: iNITIAL ALLOCATION FAILED.");
 
-    state->isDirty = false;
+    // Set the initial state as the first save point.
+    undo_set_save_point();
     state->lines = 1;
 
     edit(state);
