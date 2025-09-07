@@ -15,6 +15,7 @@ This document outlines the coding conventions and style used in the VIM3 project
 
 | Prefix | Type                               | Example                     |
 | :----- | :--------------------------------- | :-------------------------- |
+| `c`    | Character                          | `char cKeyPressed;`         |
 | `z`    | Zero-terminated string (`char[]`)  | `char zFilename[81];`       |
 | `i`    | Integer (`int`, `uint16_t`, etc.)  | `int iCounter;`             |
 | `l`    | Long (`long`)                      | `long lTimestamp;`          |
