@@ -17,9 +17,10 @@
 teCmdResult cmdUndo(tsState *psState, tsEditState *psEditState);
 
 tsCmds cmds[] = {
+#ifndef __C64__
     {Default, {VIM_KEY_HELP, VIM_KEY_NULL}, cmdHelp},
     {Default, {VIM_KEY_QUESTION, VIM_KEY_NULL}, cmdHelp},
-
+#endif
     // Single increment navigation.
     {Default, {VIM_KEY_LEFT, VIM_KEY_NULL}, cmdCursorLeft},
     {Default, {VIM_KEY_H_LOWER, VIM_KEY_NULL}, cmdCursorLeft},
@@ -331,6 +332,7 @@ teCmdResult cmdModeCommand(tsState *psState, tsEditState *psEditState) {
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
+#ifndef __C64__
 teCmdResult cmdHelp(tsState *psState, tsEditState *psEditState) {
     plClearScreen();
     plPuts("VIM Help\n\n");
@@ -357,6 +359,7 @@ teCmdResult cmdHelp(tsState *psState, tsEditState *psEditState) {
     draw_screen(psState);
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
+#endif
 
 teCmdResult cmdUndo(tsState *psState, tsEditState *psEditState) {
     undo_perform(psState);

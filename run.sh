@@ -101,7 +101,7 @@ case "$1" in
         build_c64 && m65 -l $DEBUG_CONSOLE -4 -r bin/vim_c64
         ;; 
     m65)
-        build_m65 && m65 -l $DEBUG_CONSOLE -F -r bin/vim_m65
+        build_m65 && m65 -l $DEBUG_CONSOLE -F -r bin/vim_mega65
         ;; 
     ubuntu)
         build_ubuntu && ./bin/vim_ubuntu

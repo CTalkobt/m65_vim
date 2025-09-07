@@ -44,7 +44,7 @@ set(CORE_SOURCES
     src/core/editor.c
     src/core/render.c
     src/core/line.c
-    src/core/lib/itostr.c
+    src/core/itostr.c
     src/core/lib/keycodes.c
     src/core/debug.c
     src/core/undo.c
@@ -101,7 +101,7 @@ if (${PLATFORM} STREQUAL "c64")
     target_compile_definitions(vim PRIVATE __CBM__)
 endif()
 
-target_include_directories(vim PRIVATE src/core src/platform src/platform/cbm)
+target_include_directories(vim PRIVATE src src/core src/platform src/platform/cbm)
 target_link_libraries(vim PRIVATE ${PLATFORM_LIBRARIES})
 target_link_options(vim PRIVATE ${PLATFORM_LINK_FLAGS})
 
@@ -134,6 +134,7 @@ target_compile_options(vim PRIVATE
 
 if (${PLATFORM} STREQUAL "mega65" OR ${PLATFORM} STREQUAL "c64")
     target_compile_options(vim PRIVATE
+        -Os
         -fdiagnostics-show-option
         -fcolor-diagnostics
         -Wno-c23-extensions

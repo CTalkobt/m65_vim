@@ -32,7 +32,7 @@ Normal Mode Commands
 
 ### Other
 - `:`:                 Enter Command Mode
-- `?` / `Help Key`:    Display the help screen
+- `?` / `Help Key`:    Display the help screen (Not available on C64)
 
 Insert Mode Commands
 --------------------

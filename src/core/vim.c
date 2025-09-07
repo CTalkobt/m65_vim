@@ -12,6 +12,8 @@
 #include "state.h"
 #include "undo.h"
 
+
+
 #define MEMORY_RESERVE 2048 // Reserve 2KB for stack and other needs
 
 // Static buffers for temporary storage
@@ -132,6 +134,10 @@ int main(void) {
 
     plInitVideo();
     plInitScreen();
+
+
+
+
 
     tsState *psState = getInitialEditState();
 

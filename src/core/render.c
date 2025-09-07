@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include "debug.h"
-#include "lib/itostr.h"
+#include "itostr.h"
 #include "platform.h"
 #include "render.h"
 #include "state.h"
