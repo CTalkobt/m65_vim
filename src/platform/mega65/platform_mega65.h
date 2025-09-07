@@ -1,0 +1,12 @@
+#ifndef PLATFORM_MEGA65_H
+#define PLATFORM_MEGA65_H
+
+#include "../../../globals.h"
+
+#define PLATFORM_FILENAME_COL 20
+
+#define PLATFORM_MODE_NORMAL_STR "-- nORMAL --"
+#define PLATFORM_MODE_INSERT_STR "-- iNSERT --"
+#define PLATFORM_WELCOME_STRING "vIM3 eDITOR - " VERSION_STRING
+
+#endif // PLATFORM_MEGA65_H

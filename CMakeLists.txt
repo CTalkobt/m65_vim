@@ -14,7 +14,7 @@ message(STATUS "Building for platform: ${PLATFORM}")
 # --- Platform Specific Setup ---
 if (${PLATFORM} STREQUAL "mega65")
     set(__MEGA65__ 65)
-    # @buildIssue1 list(APPEND CORE_SOURCES src/core/lib/snprintf.c)
+    list(APPEND CORE_SOURCES src/core/lib/snprintf.c)
     set(CMAKE_C_COMPILER /home/duck/m65/c/llvm-mos/bin/mos-mega65-clang)
     set(CMAKE_PREFIX_PATH /home/duck/m65/c/llvm-mos)
     find_package(llvm-mos-sdk REQUIRED)
@@ -32,6 +32,7 @@ endif()
 # --- Basic Project Setup ---
 project(vim)
 option(ENABLE_DEBUG "Enable debug messages for the main vim executable" ON)
+option(ENABLE_NCURSES_MEM_DEBUG "Enable ncurses internal memory cleanup for Valgrind" OFF)
 
 # --- Common C Flags ---
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-signed-char")
@@ -58,7 +59,12 @@ if (${PLATFORM} STREQUAL "mega65")
     include(FetchContent)
     FetchContent_Declare(CPM GIT_REPOSITORY https://github.com/cpm-cmake/CPM.cmake GIT_TAG v0.42.0)
     FetchContent_MakeAvailable(CPM)
-    CPMAddPackage(NAME mega65libc GITHUB_REPOSITORY CTalkobt/mega65-libc GIT_TAG development)
+    CPMAddPackage(
+        NAME mega65libc
+        GITHUB_REPOSITORY CTalkobt/mega65-libc
+        GIT_TAG development
+        EXCLUDE_FROM_ALL TRUE
+    )
     include_directories(${mega65libc_SOURCE_DIR}/include)
 
     list(APPEND PLATFORM_SOURCES
@@ -81,6 +87,7 @@ endif()
 
 # --- Main Executable Target ---
 add_executable(vim ${CORE_SOURCES} ${PLATFORM_SOURCES})
+set_target_properties(vim PROPERTIES OUTPUT_NAME "vim_${PLATFORM}")
 
 if (${PLATFORM} STREQUAL "ubuntu")
     target_compile_definitions(vim PRIVATE __UBUNTU__)
@@ -105,6 +112,9 @@ endif()
 
 if(ENABLE_DEBUG)
     target_compile_definitions(vim PRIVATE DEBUG_ON)
+endif()
+if(ENABLE_NCURSES_MEM_DEBUG)
+    target_compile_definitions(vim PRIVATE NCURSES_MEM_DEBUG)
 endif()
 
 # --- Compiler Warnings ---
@@ -132,3 +142,8 @@ if (${PLATFORM} STREQUAL "mega65" OR ${PLATFORM} STREQUAL "c64")
         -fno-fixed-point
     )
 endif()
+
+# --- Install Target ---
+install(TARGETS vim
+    DESTINATION ${CMAKE_SOURCE_DIR}/bin
+)
