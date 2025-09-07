@@ -1,133 +1,156 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "undo.h"
-#include "line.h"
 #include "debug.h"
+#include "line.h"
 #include "render.h"
+#include "undo.h"
 
-// --- Static variables for the Undo Stack (Circular Buffer) ---
-// 'head' pointers refer to the *next available slot*. An empty buffer has head == tail.
+// --- Static variables for the Undo Stack ---
 static tsUndoAction undo_stack[MAX_UNDO_LEVELS];
-static int undo_head = 0; // Index for the next action to be written
-static int undo_tail = 0; // Index of the oldest action
-static int save_point = 0; // The 'head' position when the file was last saved
+static int iUndoHead = 0;
+static int iUndoCount = 0;
+static int iActionsSinceSave = 0;
 
 void undo_init(void) {
     for (int i = 0; i < MAX_UNDO_LEVELS; ++i) {
         undo_stack[i].type = UNDO_NONE;
-        undo_stack[i].data = NULL;
+        undo_stack[i].data.heap_data = NULL;
     }
-    undo_head = 0;
-    undo_tail = 0;
-    save_point = 0;
+    iUndoHead = 0;
+    iUndoCount = 0;
+    iActionsSinceSave = 0;
 }
 
 void undo_clear(void) {
     for (int i = 0; i < MAX_UNDO_LEVELS; ++i) {
-        if (undo_stack[i].data) {
-            free(undo_stack[i].data);
-            undo_stack[i].data = NULL;
+        if (undo_stack[i].type == UNDO_REPLACE_LINE && undo_stack[i].data.heap_data) {
+            free(undo_stack[i].data.heap_data);
         }
         undo_stack[i].type = UNDO_NONE;
+        undo_stack[i].data.heap_data = NULL;
     }
-    undo_head = 0;
-    undo_tail = 0;
-    save_point = 0;
+    iUndoHead = 0;
+    iUndoCount = 0;
+    iActionsSinceSave = 0;
 }
 
-void undo_store_action(UndoActionType type, uint16_t lineY, uint8_t xPos, const char* data) {
-    // If the buffer is full, we advance the tail, discarding the oldest action
-    if (undo_head == undo_tail && undo_stack[undo_head].type != UNDO_NONE) {
-        if (undo_stack[undo_tail].data) {
-            free(undo_stack[undo_tail].data);
-            undo_stack[undo_tail].data = NULL;
+void undo_store_action(UndoActionType eType, uint16_t iLineY, uint8_t iXPos, const char *pzData) {
+#ifdef __MEGA65__
+    DEBUGF3("UNDO STORE: type=%d, head=%d, count=%d", (int)eType, iUndoHead, iUndoCount + 1);
+#endif
+    // If the buffer is full, the oldest action is overwritten.
+    // We must free its heap_data if it was a heap-based action.
+    if (iUndoCount == MAX_UNDO_LEVELS) {
+        int iOldestActionIdx = (iUndoHead - iUndoCount + MAX_UNDO_LEVELS) % MAX_UNDO_LEVELS;
+        if (undo_stack[iOldestActionIdx].type == UNDO_REPLACE_LINE && undo_stack[iOldestActionIdx].data.heap_data) {
+            free(undo_stack[iOldestActionIdx].data.heap_data);
+            undo_stack[iOldestActionIdx].data.heap_data = NULL;
         }
-        undo_tail = (undo_tail + 1) % MAX_UNDO_LEVELS;
     }
 
     // Store the new action at the current head position
-    undo_stack[undo_head].type = type;
-    undo_stack[undo_head].lineY = lineY;
-    undo_stack[undo_head].xPos = xPos;
+    tsUndoAction *pAction = &undo_stack[iUndoHead];
+    pAction->type = eType;
+    pAction->lineY = iLineY;
+    pAction->xPos = iXPos;
+    pAction->data.heap_data = NULL; // Default to NULL
 
-    if (data) {
-        size_t len = strlen(data);
-        undo_stack[undo_head].data = malloc(len + 1);
-        if (undo_stack[undo_head].data) {
-            strcpy(undo_stack[undo_head].data, data);
-        } else {
-            DEBUG("ERROR: undo_store_action malloc failed!");
-            undo_stack[undo_head].type = UNDO_NONE;
-            return;
+    if (eType == UNDO_REPLACE_LINE) {
+        if (pzData) {
+            size_t iLen = strlen(pzData);
+            pAction->data.heap_data = malloc(iLen + 1);
+            if (pAction->data.heap_data) {
+                strcpy(pAction->data.heap_data, pzData);
+            } else {
+                DEBUG("ERROR: undo_store_action malloc failed!");
+                pAction->type = UNDO_NONE;
+                return;
+            }
         }
-    } else {
-        undo_stack[undo_head].data = NULL;
+    } else if (pzData) {
+        // For inline data, just copy it.
+        strncpy(pAction->data.inline_data, pzData, sizeof(pAction->data.inline_data) - 1);
+        pAction->data.inline_data[sizeof(pAction->data.inline_data) - 1] = '\0';
     }
 
-    // Increment the head to the next available slot
-    undo_head = (undo_head + 1) % MAX_UNDO_LEVELS;
+    iUndoHead = (iUndoHead + 1) % MAX_UNDO_LEVELS;
+    if (iUndoCount < MAX_UNDO_LEVELS) {
+        iUndoCount++;
+    }
+    iActionsSinceSave++;
 }
 
 void undo_perform(tsState *psState) {
-    if (undo_head == undo_tail) {
-        return; // Nothing to undo
+#ifdef __MEGA65__
+    DEBUGF2("UNDO PERFORM: count=%d, head=%d", iUndoCount, iUndoHead);
+#endif
+    if (iUndoCount == 0) {
+        return;
     }
 
-    // Decrement the head to point to the last valid action
-    undo_head = (undo_head - 1 + MAX_UNDO_LEVELS) % MAX_UNDO_LEVELS;
+    iUndoHead = (iUndoHead - 1 + MAX_UNDO_LEVELS) % MAX_UNDO_LEVELS;
+    iUndoCount--;
+    iActionsSinceSave--;
 
-    tsUndoAction* action = &undo_stack[undo_head];
+    tsUndoAction *pAction = &undo_stack[iUndoHead];
+#ifdef __MEGA65__
+    DEBUGF1("UNDO ACTION: type=%d", (int)pAction->type);
+#endif
 
-    psState->lineY = action->lineY;
-    psState->xPos = action->xPos;
-    loadLine(psState, psState->lineY);
+    psState->iLineY = pAction->lineY;
+    psState->iXPos = pAction->xPos;
+    loadLine(psState, psState->iLineY);
 
-    switch (action->type) {
-        case UNDO_DELETE_TEXT:
-            if (action->data) {
-                char* line = psState->editBuffer;
-                memmove(&line[psState->xPos + 1], &line[psState->xPos], strlen(line) - psState->xPos + 1);
-                line[psState->xPos] = action->data[0];
-                allocLine(psState, psState->lineY, line);
+    switch (pAction->type) {
+    case UNDO_DELETE_TEXT: {
+        char *pzLine = psState->pzEditBuffer;
+        memmove(&pzLine[psState->iXPos + 1], &pzLine[psState->iXPos], strlen(pzLine) - psState->iXPos + 1);
+        pzLine[psState->iXPos] = pAction->data.inline_data[0];
+        allocLine(psState, psState->iLineY, pzLine);
+    } break;
+    case UNDO_INSERT_TEXT: {
+        char *pzLine = psState->pzEditBuffer;
+        memmove(&pzLine[psState->iXPos], &pzLine[psState->iXPos + 1], strlen(pzLine) - psState->iXPos);
+        allocLine(psState, psState->iLineY, pzLine);
+    } break;
+    case UNDO_REPLACE_LINE:
+        insertLine(psState, psState->iLineY, pAction->data.heap_data);
+        break;
+    case UNDO_SPLIT_LINE:
+        if (psState->iLineY < psState->iLines - 1) {
+            char *pzCurrentLine = psState->p2zText[psState->iLineY];
+            char *pzNextLine = psState->p2zText[psState->iLineY + 1];
+            uint16_t iCurrentLen = strlen(pzCurrentLine);
+            if (iCurrentLen + strlen(pzNextLine) + 1 < MAX_LINE_LENGTH) {
+                pzCurrentLine[iCurrentLen] = ' ';
+                strcpy(&pzCurrentLine[iCurrentLen + 1], pzNextLine);
+                deleteLine(psState, psState->iLineY + 1);
             }
-            break;
-        case UNDO_INSERT_TEXT:
-            {
-                char* line = psState->editBuffer;
-                memmove(&line[psState->xPos], &line[psState->xPos + 1], strlen(line) - psState->xPos);
-                allocLine(psState, psState->lineY, line);
-            }
-            break;
-        case UNDO_REPLACE_LINE:
-            insertLine(psState, psState->lineY, action->data);
-            break;
-        case UNDO_SPLIT_LINE:
-            if (psState->lineY < psState->lines - 1) {
-                char *currentLine = psState->text[psState->lineY];
-                char *nextLine = psState->text[psState->lineY + 1];
-                uint16_t currentLen = strlen(currentLine);
-                if (currentLen + strlen(nextLine) + 1 < MAX_LINE_LENGTH) {
-                    currentLine[currentLen] = ' ';
-                    strcpy(&currentLine[currentLen + 1], nextLine);
-                    deleteLine(psState, psState->lineY + 1);
-                }
-            }
-            break;
-        case UNDO_JOIN_LINE:
-            splitLine(psState, psState->lineY, psState->xPos);
-            break;
-        default:
-            break;
+        }
+        break;
+    case UNDO_JOIN_LINE:
+        splitLine(psState, psState->iLineY, psState->iXPos);
+        break;
+    default:
+        break;
     }
-    
+
     draw_screen(psState);
 }
 
 void undo_set_save_point(void) {
-    save_point = undo_head;
+#ifdef __MEGA65__
+    DEBUGF1("UNDO SAVE POINT: actions_since_save was %d", iActionsSinceSave);
+#endif
+    iActionsSinceSave = 0;
 }
 
 bool undo_is_dirty(void) {
-    return undo_head != save_point;
+#ifdef __MEGA65__
+    DEBUGF2("UNDO IS_DIRTY?: actions=%d, result=%d", iActionsSinceSave, iActionsSinceSave != 0);
+#endif
+    return iActionsSinceSave != 0;
 }
+
+int undo_get_count(void) { return iUndoCount; }

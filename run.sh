@@ -78,6 +78,13 @@ dist_clean() {
 
 format_code() {
     echo "--- Formatting C source code ---"
+    if ! command -v clang-format &> /dev/null
+    then
+        echo "ERROR: clang-format is not installed or not in your PATH."
+        echo "Please install it to use the format command."
+        echo "On Debian/Ubuntu, you can use: sudo apt-get install clang-format"
+        exit 1
+    fi
     find src -name "*.c" -o -name "*.h" | xargs clang-format -i
     echo "--- Formatting complete. ---"
 }

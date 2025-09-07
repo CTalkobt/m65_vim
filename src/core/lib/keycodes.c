@@ -25,7 +25,7 @@ int keycodes_ncmp(const eVimKeyCode *kars1, const eVimKeyCode *kars2, size_t n) 
     return n == (size_t)-1 ? 0 : *kars1 - *kars2;
 }
 
-void keycodes_to_string(const eVimKeyCode* kars, char* str, size_t max_len) {
+void keycodes_to_string(const eVimKeyCode *kars, char *str, size_t max_len) {
     size_t i = 0;
     while (i < max_len - 1 && kars[i] != VIM_KEY_NULL) {
         str[i] = (char)kars[i];

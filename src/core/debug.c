@@ -4,6 +4,8 @@
 #include <string.h>
 
 #ifdef DEBUG_ON
+char debug_buffer[128];
+
 void dbg_psState(struct sState *psState, const char *message) {
     if (!psState) {
         DEBUG("dbg_psState: psState is NULL");
@@ -12,15 +14,13 @@ void dbg_psState(struct sState *psState, const char *message) {
 
     DEBUG("--- DEBUG STATE DUMP ---");
     DEBUGF1("Message: %s", message);
-    DEBUGF4("lines: %d/%d, cursor: (%d, %d)", psState->lines, psState->max_lines, psState->xPos, psState->lineY);
+    DEBUGF2("lines: %d/%d", psState->lines, psState->max_lines);
+    DEBUGF2("cursor: (%d, %d)", psState->xPos, psState->lineY);
     DEBUGF2("screenStart: (%d, %d)", psState->screenStart.xPos, psState->screenStart.yPos);
-    char zTemp[80+1];
-    sprintf(zTemp, "editBuffer:%c(%d) %c(%d) %c(%d) %c(%d)",
-        psState->editBuffer[0], psState->editBuffer[0],
-        psState->editBuffer[1], psState->editBuffer[1],
-        psState->editBuffer[2], psState->editBuffer[2],
-        psState->editBuffer[3], psState->editBuffer[3]
-        );
+    char zTemp[80 + 1];
+    sprintf(zTemp, "editBuffer:%c(%d) %c(%d) %c(%d) %c(%d)", psState->editBuffer[0], psState->editBuffer[0],
+            psState->editBuffer[1], psState->editBuffer[1], psState->editBuffer[2], psState->editBuffer[2],
+            psState->editBuffer[3], psState->editBuffer[3]);
     DEBUG(zTemp);
 
     DEBUG("First 5 lines of text buffer:");
@@ -32,10 +32,10 @@ void dbg_psState(struct sState *psState, const char *message) {
             // DEBUGF buffer is 81 chars. 81 - 8 = 73 chars for content.
             // Truncate line content to 70 chars to be safe.
             char line_buffer[71];
-            const char* line_content = psState->text[i] ? psState->text[i] : "<NULL>";
+            const char *line_content = psState->text[i] ? psState->text[i] : "<NULL>";
             strncpy(line_buffer, line_content, 70);
             line_buffer[70] = '\0';
-            
+
             DEBUGF2(" L%d: %s", i, line_buffer);
         }
     }

@@ -1,29 +1,35 @@
 #include "platform_c64.h"
 #include "platform.h"
-#include <stddef.h> // for NULL
-#include <string.h> // for strcpy, strcat
 #include <cbm.h>
-#include <stdlib.h>
 #include <peekpoke.h>
+#include <stddef.h> // for NULL
+#include <stdlib.h>
+#include <string.h> // for strcpy, strcat
 
 // Video/Rendering Functions
 void plInitVideo() {
     cbm_k_bsout(14); // Switch to lowercase character set
 }
 
-void plClearScreen() {
-    plPutChar(147);
+void plClearScreen() { plPutChar(147); }
+
+void plDrawChar(unsigned char iX, unsigned char iY, char c, unsigned char iColor) {
+    unsigned int iAddr = 0x0400 + (unsigned int)iY * 40 + iX;
+    POKE(iAddr, c);
+    POKE(0xd800 + iAddr, iColor);
 }
 
-void plDrawChar(unsigned char x, unsigned char y, char c, unsigned char color) {
-    unsigned int addr = 0x0400 + (unsigned int)y * 40 + x;
-    POKE(addr, c);
-    POKE(0xd800 + addr, color);
-}
-
-void plSetCursor(unsigned char x, unsigned char y) {
-    // @@TODO:
-    // cbm_k_plot_set(x, y);
+void plSetCursor(unsigned char iX, unsigned char iY) {
+    // Use GCC-style inline assembly to call the KERNAL PLOT routine ($FFF0).
+    // NOTE: The KERNAL PLOT routine has non-standard register usage:
+    // - X-Register holds the ROW (our Y coordinate).
+    // - Y-Register holds the COLUMN (our X coordinate).
+    __asm__ volatile("clc\n\t"
+                     "jsr $fff0"
+                     :                  /* no outputs */
+                     : "x"(iY), "y"(iX) /* inputs: y in X, x in Y */
+                     : "p"              /* clobbers: processor status flags */
+    );
 }
 
 void plHideCursor() {
@@ -35,8 +41,8 @@ void plShowCursor() {
 }
 
 void plInitScreen() {
-    // Same as plInitVideo for C64
     plInitVideo();
+    plClearScreen();
 }
 
 void plScreenShutdown() {
@@ -48,63 +54,65 @@ unsigned char plGetScreenWidth() { return 40; }
 unsigned char plGetScreenHeight() { return 25; }
 
 // High-level output
-void plPuts(const char* s) {
-    while (*s) {
-        cbm_k_bsout(*s++);
+void plPuts(const char *pzStr) {
+    while (*pzStr) {
+        cbm_k_bsout(*pzStr++);
     }
 }
 
-void plPutChar(char c) {
-    cbm_k_bsout(c);
-}
+void plPutChar(char c) { cbm_k_bsout(c); }
 
 void plClearEOL() {
-    // @@TODO
+    // Get cursor position from zeropage
+    unsigned char iX = PEEK(211);
+    unsigned char iY = PEEK(214);
+
+    // Calculate screen RAM address
+    unsigned int iAddr = 0x0400 + (iY * 40) + iX;
+
+    // Fill rest of the line with spaces
+    for (unsigned char i = iX; i < 40; i++) {
+        POKE(iAddr++, ' ');
+    }
 }
 
-void plSetColor(unsigned char color) {
+void plSetColor(unsigned char iColor) {
     // This is a simplified implementation.
     // It sets the color for subsequent characters printed via KERNAL.
-    POKE(646, color);
+    POKE(646, iColor);
 }
 
 // Debugging
-void plDebugMsg(const char* msg) {
+void plDebugMsg(const char *pzMsg) {
     // No easy way to display debug messages on C64 without disrupting the screen.
     // This could be changed to write to a specific memory location or a serial port.
 }
 
 // Keyboard Input Functions
-eVimKeyCode plGetKey() {
-    return (eVimKeyCode)cbm_k_getin();
-}
+eVimKeyCode plGetKey() { return (eVimKeyCode)cbm_k_getin(); }
 
-unsigned char plKbHit(void) {
-    return PEEK(197);
-}
+unsigned char plKbHit(void) { return PEEK(197); }
 
 void plKbdBufferClear(void) {
     // @@TODO: Implement if possible
 }
 
-int plIsKeyPressed() {
-    return PEEK(197);
-}
+int plIsKeyPressed() { return PEEK(197); }
 
 // File I/O Functions
-PlFileHandle plOpenFile(const char* filename, const char* mode) {
-    unsigned char lfn = 8; // Logical file number
-    unsigned char device = 8; // Device number (8 for disk drive)
-    unsigned char sec_addr = 0; // Secondary address
+PlFileHandle plOpenFile(const char *pzFilename, const char *pzMode) {
+    unsigned char iLFN = 8;     // Logical file number
+    unsigned char iDevice = 8;  // Device number (8 for disk drive)
+    unsigned char iSecAddr = 0; // Secondary address
 
-    if (mode[0] == 'w') {
-        sec_addr = 1; // Write mode
-    } else if (mode[0] == 'r') {
-        sec_addr = 0; // Read mode
+    if (pzMode[0] == 'w') {
+        iSecAddr = 1; // Write mode
+    } else if (pzMode[0] == 'r') {
+        iSecAddr = 0; // Read mode
     }
 
-    cbm_k_setlfs(lfn, device, sec_addr);
-    cbm_k_setnam(filename);
+    cbm_k_setlfs(iLFN, iDevice, iSecAddr);
+    cbm_k_setnam(pzFilename);
     cbm_k_open();
 
     // Check for errors
@@ -112,83 +120,82 @@ PlFileHandle plOpenFile(const char* filename, const char* mode) {
         return NULL;
     }
 
-    return (PlFileHandle)(unsigned long)lfn;
+    return (PlFileHandle)(unsigned long)iLFN;
 }
 
-int plReadFile(PlFileHandle handle, void* buffer, unsigned int size) {
-    unsigned char lfn = (unsigned char)(unsigned long)handle;
-    unsigned int bytes_read = 0;
-    char* p = (char*)buffer;
+int plReadFile(PlFileHandle pHandle, void *pBuffer, unsigned int iSize) {
+    unsigned char iLFN = (unsigned char)(unsigned long)pHandle;
+    unsigned int iBytesRead = 0;
+    char *p = (char *)pBuffer;
 
-    cbm_k_chkin(lfn);
+    cbm_k_chkin(iLFN);
 
-    while (bytes_read < size) {
+    while (iBytesRead < iSize) {
         *p = cbm_k_basin();
         if (PEEK(0x90) != 0) { // Check for end of file
             break;
         }
         p++;
-        bytes_read++;
+        iBytesRead++;
     }
 
     cbm_k_clrch();
-    return bytes_read;
+    return iBytesRead;
 }
 
-int plWriteFile(PlFileHandle handle, const void* buffer, unsigned int size) {
-    unsigned char lfn = (unsigned char)(unsigned long)handle;
-    unsigned int bytes_written = 0;
-    const char* p = (const char*)buffer;
+int plWriteFile(PlFileHandle pHandle, const void *pBuffer, unsigned int iSize) {
+    unsigned char iLFN = (unsigned char)(unsigned long)pHandle;
+    unsigned int iBytesWritten = 0;
+    const char *p = (const char *)pBuffer;
 
-    cbm_k_ckout(lfn);
+    cbm_k_ckout(iLFN);
 
-    while (bytes_written < size) {
+    while (iBytesWritten < iSize) {
         cbm_k_bsout(*p++);
-        bytes_written++;
+        iBytesWritten++;
     }
 
     cbm_k_clrch();
-    return bytes_written;
+    return iBytesWritten;
 }
 
-void plCloseFile(PlFileHandle handle) {
-    unsigned char lfn = (unsigned char)(unsigned long)handle;
-    cbm_k_close(lfn);
+void plCloseFile(PlFileHandle pHandle) {
+    unsigned char iLFN = (unsigned char)(unsigned long)pHandle;
+    cbm_k_close(iLFN);
 }
 
-int plRemoveFile(const char* filename) {
-    char cmd[40];
-    strcpy(cmd, "S0:");
-    strcat(cmd, filename);
+int plRemoveFile(const char *pzFilename) {
+    char zCmd[40];
+    strcpy(zCmd, "S0:");
+    strcat(zCmd, pzFilename);
 
     cbm_k_setlfs(15, 8, 15);
-    cbm_k_setnam(cmd);
+    cbm_k_setnam(zCmd);
     cbm_k_open();
     // TODO: check error channel
     cbm_k_close(15);
     return 0;
 }
 
-int plRenameFile(const char* old_filename, const char* new_filename) {
-    char cmd[80];
-    strcpy(cmd, "R0:");
-    strcat(cmd, new_filename);
-    strcat(cmd, "=");
-    strcat(cmd, old_filename);
+int plRenameFile(const char *pzOldFilename, const char *pzNewFilename) {
+    char zCmd[80];
+    strcpy(zCmd, "R0:");
+    strcat(zCmd, pzNewFilename);
+    strcat(zCmd, "=");
+    strcat(zCmd, pzOldFilename);
 
     cbm_k_setlfs(15, 8, 15);
-    cbm_k_setnam(cmd);
+    cbm_k_setnam(zCmd);
     cbm_k_open();
     // TODO: check error channel
     cbm_k_close(15);
     return 0;
 }
-
 
 // Memory Management Functions
-void* plAlloc(unsigned int size) { return malloc(sizeof(char)*size); }
-void plFree(void* ptr) { free(ptr);}
+void *plAlloc(unsigned int iSize) { return malloc(sizeof(char) * iSize); }
+void plFree(void *pPtr) { free(pPtr); }
 
 // System Functions
-void plExit(int code) { exit(code); }
+void plExit(int iCode) { exit(iCode); }
 long plGetTime() { return 0; }

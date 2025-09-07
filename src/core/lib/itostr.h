@@ -9,5 +9,4 @@
  * @param value The integer to convert.
  * @param buffer A pointer to store the resulting string.
  */
-void itostr(uint16_t value, char* buffer);
-
+void itostr(uint16_t value, char *buffer);

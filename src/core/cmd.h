@@ -13,17 +13,13 @@ typedef struct {
 } tsEditState;
 
 typedef enum {
-    CMD_RESULT_SINGLE_CHAR_ACK = 0,     // Single character acknowledgement (clears lastKar)
-    CMD_RESULT_MULTI_CHAR_ACK = 1,      // Multi-character acknowledgement (clears lastKar)
+    CMD_RESULT_SINGLE_CHAR_ACK = 0, // Single character acknowledgement (clears lastKar)
+    CMD_RESULT_MULTI_CHAR_ACK = 1,  // Multi-character acknowledgement (clears lastKar)
 } teCmdResult;
 
 typedef teCmdResult (*tpfnCmd)(tsState *psState, tsEditState *psEditState);
 
-typedef enum {
-    CMD_LOOKUP_NOT_FOUND,
-    CMD_LOOKUP_PARTIAL_MATCH,
-    CMD_LOOKUP_EXACT_MATCH
-} teCmdLookupStatus;
+typedef enum { CMD_LOOKUP_NOT_FOUND, CMD_LOOKUP_PARTIAL_MATCH, CMD_LOOKUP_EXACT_MATCH } teCmdLookupStatus;
 
 typedef struct {
     tpfnCmd cmd;

@@ -4,18 +4,14 @@
 extern unsigned char _curScreenW;
 extern unsigned char _curScreenH;
 
-enum ScreenMode {
-    _80x25,
-    _80x50,
-    _40x25
-};
+enum ScreenMode { _80x25, _80x50, _40x25 };
 
 void scrScreenMode(enum ScreenMode mode);
 
 void scrDupeChar(unsigned char n, unsigned char kar);
 
 void inline scrDupeCharXY(unsigned char x, unsigned char y, unsigned char n, unsigned char kar) {
-    kPlotXY(x,y);
+    kPlotXY(x, y);
     scrDupeChar(n, kar);
 }
 
@@ -39,16 +35,12 @@ void inline scrPuts(const char *s) {
     }
 }
 
-inline void scrClear(void) {
-    kBsout(147);
-}
+inline void scrClear(void) { kBsout(147); }
 
-void inline scrPlotXY(unsigned char x, unsigned char y) {
-    kPlotXY(x,y);
-}
+void inline scrPlotXY(unsigned char x, unsigned char y) { kPlotXY(x, y); }
 
 void inline scrPutsXY(unsigned char x, unsigned char y, const char *pzString) {
-    kPlotXY(x,y);
+    kPlotXY(x, y);
     scrPuts(pzString);
 }
 

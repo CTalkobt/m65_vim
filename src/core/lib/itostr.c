@@ -1,9 +1,9 @@
 #include "itostr.h"
 #include "debug.h"
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 
-void itostr(uint16_t value, char* buffer) {
+void itostr(uint16_t value, char *buffer) {
     if (buffer == NULL) {
         DEBUG("ERROR: itostr: Buffer is NULL\n");
         return;

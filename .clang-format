@@ -1,8 +1,7 @@
 # .clang-format
 # Style configuration for the VIM3 project
 
-Language: C
-BasedOnStyle: K&R
+BreakBeforeBraces: Attach
 IndentWidth: 4
 UseTab: Never
 ColumnLimit: 120

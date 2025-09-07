@@ -1,15 +1,15 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include <string.h>
 
-#include "platform.h"
 #include "debug.h"
 #include "editor.h"
-#include "state.h"
 #include "line.h"
+#include "platform.h"
+#include "state.h"
 #include "undo.h"
 
 #define MEMORY_RESERVE 2048 // Reserve 2KB for stack and other needs
@@ -17,7 +17,6 @@
 // Static buffers for temporary storage
 char zTemp1[MAX_LINE_LENGTH];
 char zTemp2[MAX_LINE_LENGTH];
-
 
 unsigned int getFreeMemory(void) {
 #ifdef __UBUNTU__
@@ -28,109 +27,104 @@ unsigned int getFreeMemory(void) {
     // On CBM targets, probe memory to find a more accurate free memory amount.
     // Use a combination of exponential probing and binary search for efficiency and safety.
     void *p = NULL;
-    unsigned int low = 0;
-    unsigned int high = 0;
-    unsigned int probe_size = 1024;
+    unsigned int iLow = 0;
+    unsigned int iHigh = 0;
+    unsigned int iProbeSize = 1024;
 
     // 1. Find a rough upper bound using exponential probing.
-    while (probe_size < 65535) {
-        p = malloc(probe_size);
+    while (iProbeSize < 65535) {
+        p = malloc(iProbeSize);
         if (p) {
             free(p);
-            low = probe_size; // `low` is the last known good size
-            if (probe_size > 65535 / 2) {
-                probe_size = 65535;
+            iLow = iProbeSize; // `low` is the last known good size
+            if (iProbeSize > 65535 / 2) {
+                iProbeSize = 65535;
             } else {
-                probe_size *= 2;
+                iProbeSize *= 2;
             }
         } else {
-            high = probe_size; // `high` is the first known bad size
+            iHigh = iProbeSize; // `high` is the first known bad size
             break;
         }
     }
-    
+
     // If we exited the loop because probe_size got too big, check 65535 itself
-    if (high == 0) {
+    if (iHigh == 0) {
         p = malloc(65535);
         if (p) {
             free(p);
             return 65535 - MEMORY_RESERVE; // We can allocate the max, no need to search
         } else {
-            high = 65535;
+            iHigh = 65535;
         }
     }
 
     // 2. Binary search between low and high
-    unsigned int best_fit = low;
-    while (low <= high) {
-        unsigned int mid = low + (high - low) / 2;
-        if (mid == 0 || mid > 65535) { // Safeguard
-             break;
+    unsigned int iBestFit = iLow;
+    while (iLow <= iHigh) {
+        unsigned int iMid = iLow + (iHigh - iLow) / 2;
+        if (iMid == 0 || iMid > 65535) { // Safeguard
+            break;
         }
-        p = malloc(mid);
+        p = malloc(iMid);
         if (p) {
             free(p);
-            best_fit = mid;
-            low = mid + 1;
+            iBestFit = iMid;
+            iLow = iMid + 1;
         } else {
-            if (mid == 0) break;
-            high = mid - 1;
+            if (iMid == 0)
+                break;
+            iHigh = iMid - 1;
         }
     }
-    
-    return (best_fit > MEMORY_RESERVE) ? (best_fit - MEMORY_RESERVE) : 0;
+
+    return (iBestFit > MEMORY_RESERVE) ? (iBestFit - MEMORY_RESERVE) : 0;
 #endif
 }
 
-
-void freeTextBuffer(const tsState *state) {
-    if (state->text) {
-        for (int i = 0; i < state->max_lines; i++) {
-            if (state->text[i]) {
-                free(state->text[i]);
+void freeTextBuffer(const tsState *psState) {
+    if (psState->p2zText) {
+        for (int i = 0; i < psState->iMaxLines; i++) {
+            if (psState->p2zText[i]) {
+                free(psState->p2zText[i]);
             }
         }
-        free(state->text);
+        free(psState->p2zText);
     }
 }
 
-uint16_t initTextBuffer(tsState *state) {
+uint16_t initTextBuffer(tsState *psState) {
     // Dynamically determine the size of the text buffer based on max_lines
-    state->text = malloc(state->max_lines * sizeof(char*));
-    if (!state->text) {
+    psState->p2zText = malloc(psState->iMaxLines * sizeof(char *));
+    if (!psState->p2zText) {
         return 0;
     }
 
-    for (int i = 0; i < state->max_lines; i++) {
-        state->text[i] = NULL; // Initialize all lines to NULL
+    for (int i = 0; i < psState->iMaxLines; i++) {
+        psState->p2zText[i] = NULL; // Initialize all lines to NULL
     }
 
-//    {
-//        char msg[80+1];
-//        sprintf(msg, "INFO: Initialized text buffer with max_lines: %d", state->max_lines);
-//      DEBUG(msg);
-//    }
-    return state->max_lines;
+    return psState->iMaxLines;
 }
 
 tsState _INLINE_ *getInitialEditState() {
-    tsState *state = calloc(1, sizeof(tsState));
-    #ifdef MALLOC_CHECKS
-    if (!state) {
+    tsState *psState = calloc(1, sizeof(tsState));
+#ifdef MALLOC_CHECKS
+    if (!psState) {
         DEBUG("ERROR: malloc for state failed!");
         return NULL;
     }
-    #endif
+#endif
 
-    state->editBuffer = malloc(MAX_LINE_LENGTH);
-    #ifdef MALLOC_CHECKS
-    if (!state->editBuffer) {
+    psState->pzEditBuffer = malloc(MAX_LINE_LENGTH);
+#ifdef MALLOC_CHECKS
+    if (!psState->pzEditBuffer) {
         DEBUG("ERROR: malloc for editBuffer failed!");
-        free(state);
+        free(psState);
         return NULL;
     }
-    #endif
-    return state;
+#endif
+    return psState;
 }
 
 int main(void) {
@@ -139,43 +133,40 @@ int main(void) {
     plInitVideo();
     plInitScreen();
 
-    tsState *state = getInitialEditState();
+    tsState *psState = getInitialEditState();
 
     // Determine the maximum number of lines allowed in the text buffer
-    const int max_lines = 50; // This should be set based on available memory or other criteria
-    state->max_lines = max_lines;
-    initTextBuffer(state);
+    const int iMaxLines = 50; // This should be set based on available memory or other criteria
+    psState->iMaxLines = iMaxLines;
+    initTextBuffer(psState);
 
-    state->lines=1;
-    state->lineY=0;
-    state->xPos=0;
-    state->doExit = false;
-    state->isReadOnly = false;
-    state->screenStart.xPos = 0;
-    state->screenStart.yPos = 0;
-    state->editMode = Default;
-    state->zFilename[0] = '\0';
-    
+    psState->iLines = 1;
+    psState->iLineY = 0;
+    psState->iXPos = 0;
+    psState->doExit = false;
+    psState->isReadOnly = false;
+    psState->screenStart.xPos = 0;
+    psState->screenStart.yPos = 0;
+    psState->eEditMode = Default;
+    psState->zFilename[0] = '\0';
+
     undo_init();
-    
-    #ifdef __UBUNTU__
-    bool initialAlloc = allocLine(state, 0, "Vim3 Editor - V0.1");
-#else
-    bool initialAlloc = allocLine(state, 0, "vIM3 eDITOR - v0.1");
-#endif
+
+    bool initialAlloc = allocLine(psState, 0, PLATFORM_WELCOME_STRING);
     ASSERT(initialAlloc, "eRROR: iNITIAL ALLOCATION FAILED.");
 
     // Set the initial state as the first save point.
     undo_set_save_point();
-    state->lines = 1;
+    psState->iLines = 1;
 
-    edit(state);
-
-    freeTextBuffer(state);
-    free(state->editBuffer);
-    free(state);
+    edit(psState);
 
     plScreenShutdown();
+    undo_clear(); // Free any remaining undo data
+    freeTextBuffer(psState);
+    free(psState->pzEditBuffer);
+    free(psState);
+
     plExit(0);
     return 0;
 }

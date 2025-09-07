@@ -2,189 +2,187 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "platform.h"
 #include "debug.h"
 #include "line.h"
+#include "platform.h"
 #include "state.h"
 
 // --- Private Helper Functions ---
 
 // Checks if a given line index is within the maximum allocated buffer size.
-static bool isIndexWithinMax(const tsState* s, uint16_t idx) {
-    return s && idx < s->max_lines;
-}
+static bool isIndexWithinMax(const tsState *psState, uint16_t iIdx) { return psState && iIdx < psState->iMaxLines; }
 
 // Checks if a given line index is within the current number of active lines.
-static bool isIndexWithinCount(const tsState* s, uint16_t idx) {
-    return idx < s->lines;
-}
+static bool isIndexWithinCount(const tsState *psState, uint16_t iIdx) { return iIdx < psState->iLines; }
 
 // --- Public API Functions ---
 
-bool allocLine(tsState *psState, uint16_t lineIndex, const char* new_content) {
-    if (!isIndexWithinMax(psState, lineIndex)) {
+bool allocLine(tsState *psState, uint16_t iLineIndex, const char *pzNewContent) {
+    if (!isIndexWithinMax(psState, iLineIndex)) {
         DEBUG("ERROR: allocLine: lineIndex out of range");
         return false;
     }
 
     // If new_content is NULL, we are freeing the line.
-    if (new_content == NULL) {
-        if (psState->text[lineIndex]) {
-            free(psState->text[lineIndex]);
+    if (pzNewContent == NULL) {
+        if (psState->p2zText[iLineIndex]) {
+            free(psState->p2zText[iLineIndex]);
         }
-        psState->text[lineIndex] = NULL;
+        psState->p2zText[iLineIndex] = NULL;
         return true;
     }
 
-    unsigned int len = strlen(new_content);
-    if (len >= MAX_LINE_LENGTH) {
+    unsigned int iLen = strlen(pzNewContent);
+    if (iLen >= MAX_LINE_LENGTH) {
         DEBUG("ERROR: allocLine: Attempting to update past MAX_LINE_LENGTH");
         return false;
     }
 
     // Allocate a new buffer for the line content.
-    char* new_line = malloc(len + 1);
-    if (!new_line) {
+    char *pzNewLine = malloc(iLen + 1);
+    if (!pzNewLine) {
         DEBUG("ERROR: allocLine: Memory allocation failed.");
         plSetCursor(0, plGetScreenHeight() - 1);
         plPuts("Memory allocation failed!");
         return false;
     }
 
-    memmove(new_line, new_content, len + 1);
+    memmove(pzNewLine, pzNewContent, iLen + 1);
 
     // Free the old line buffer if it exists.
-    if (psState->text[lineIndex]) {
-        free(psState->text[lineIndex]);
+    if (psState->p2zText[iLineIndex]) {
+        free(psState->p2zText[iLineIndex]);
     }
 
-    psState->text[lineIndex] = new_line;
+    psState->p2zText[iLineIndex] = pzNewLine;
     return true;
 }
 
-bool insertLine(tsState *psState, uint16_t index, const char* content) {
-    if (index > psState->lines) {
+bool insertLine(tsState *psState, uint16_t iIndex, const char *pzContent) {
+    if (iIndex > psState->iLines) {
         DEBUG("ERROR:Can't insert past lines.");
         return false;
     }
-    if (psState->lines >= psState->max_lines) {
+    if (psState->iLines >= psState->iMaxLines) {
         DEBUG("ERROR:Can't insert past max_lines.");
         return false;
     }
     // This check prevents writing into an un-freed buffer slot.
-    if (psState->text[psState->lines] != NULL) {
+    if (psState->p2zText[psState->iLines] != NULL) {
         DEBUG("ERROR:Can't insert past last line.");
         return false;
     }
 
     // Shift all line pointers from the insertion point to the end down by one.
-    for (uint16_t i = psState->lines; i > index; i--) {
-        psState->text[i] = psState->text[i-1];
+    for (uint16_t i = psState->iLines; i > iIndex; i--) {
+        psState->p2zText[i] = psState->p2zText[i - 1];
     }
-    psState->text[index] = NULL; // Clear the pointer at the insertion point.
+    psState->p2zText[iIndex] = NULL; // Clear the pointer at the insertion point.
 
     // Allocate the new line.
-    if (!allocLine(psState, index, content)) {
+    if (!allocLine(psState, iIndex, pzContent)) {
         DEBUG("ERROR: insertLine.allocLine: Memory allocation failed.");
         // If allocation fails, we need to undo the shift to maintain a consistent state.
-        for (uint16_t i = index; i < psState->lines; i++) {
-            psState->text[i] = psState->text[i+1];
+        for (uint16_t i = iIndex; i < psState->iLines; i++) {
+            psState->p2zText[i] = psState->p2zText[i + 1];
         }
-        psState->text[psState->lines] = NULL;
+        psState->p2zText[psState->iLines] = NULL;
         return false;
     }
 
-    psState->lines++;
+    psState->iLines++;
     return true;
 }
 
-bool deleteLine(tsState *psState, uint16_t index) {
-    if (!psState || !isIndexWithinCount(psState, index)) return false;
+bool deleteLine(tsState *psState, uint16_t iIndex) {
+    if (!psState || !isIndexWithinCount(psState, iIndex))
+        return false;
 
     // Free the memory for the line being deleted.
-    if (psState->text[index]) {
-        free(psState->text[index]);
+    if (psState->p2zText[iIndex]) {
+        free(psState->p2zText[iIndex]);
     }
 
     // Shift all line pointers from the deletion point to the end up by one.
-    for (uint16_t i = index; i + 1 < psState->lines; i++) {
-        psState->text[i] = psState->text[i+1];
+    for (uint16_t i = iIndex; i + 1 < psState->iLines; i++) {
+        psState->p2zText[i] = psState->p2zText[i + 1];
     }
-    psState->text[psState->lines - 1] = NULL; // Clear the last pointer.
+    psState->p2zText[psState->iLines - 1] = NULL; // Clear the last pointer.
 
-    if (psState->lines > 0) {
-        psState->lines--;
+    if (psState->iLines > 0) {
+        psState->iLines--;
     }
     return true;
 }
 
 void freeAllLines(tsState *psState) {
-    for (uint16_t i = 0; i < psState->max_lines; i++) {
-        if (psState->text[i]) {
-            free(psState->text[i]);
-            psState->text[i] = NULL;
+    for (uint16_t i = 0; i < psState->iMaxLines; i++) {
+        if (psState->p2zText[i]) {
+            free(psState->p2zText[i]);
+            psState->p2zText[i] = NULL;
         }
     }
-    psState->lines = 0;
+    psState->iLines = 0;
 }
 
-const char* getLine(const tsState* psState, uint16_t index) {
-    if (!isIndexWithinCount(psState, index)) return NULL;
-    return psState->text[index];
+const char *getLine(const tsState *psState, uint16_t iIndex) {
+    if (!isIndexWithinCount(psState, iIndex))
+        return NULL;
+    return psState->p2zText[iIndex];
 }
 
-void loadLine(tsState *psState, uint16_t lineIndex) {
-    if (psState->text[lineIndex]) {
-        strcpy(psState->editBuffer, psState->text[lineIndex]);
+void loadLine(tsState *psState, uint16_t iLineIndex) {
+    if (psState->p2zText[iLineIndex]) {
+        size_t iLen = strlen(psState->p2zText[iLineIndex]);
+        memmove(psState->pzEditBuffer, psState->p2zText[iLineIndex], iLen);
+        psState->pzEditBuffer[iLen] = '\0';
     } else {
-        psState->editBuffer[0] = '\0';
+        psState->pzEditBuffer[0] = '\0';
     }
-    psState->lineY = lineIndex;
+    psState->iLineY = iLineIndex;
 }
 
-bool splitLine(tsState *psState, uint16_t lineIndex, uint16_t xPos) {
-    if (!isIndexWithinCount(psState, lineIndex)) {
+bool splitLine(tsState *psState, uint16_t iLineIndex, uint16_t iXPos) {
+    if (!isIndexWithinCount(psState, iLineIndex)) {
         return false;
     }
 
-    const char* currentLine = getLine(psState, lineIndex);
-    uint16_t currentLength = strlen(currentLine);
+    const char *pzCurrentLine = getLine(psState, iLineIndex);
+    uint16_t iCurrentLength = strlen(pzCurrentLine);
 
-    if (xPos > currentLength) {
+    if (iXPos > iCurrentLength) {
         return false;
     }
 
     // Use temporary buffers to hold the two parts of the split line.
-    char zTemp1[MAX_LINE_LENGTH];
-    char zTemp2[MAX_LINE_LENGTH];
+    char zLocalTemp1[MAX_LINE_LENGTH];
+    char zLocalTemp2[MAX_LINE_LENGTH];
 
     // Copy the first part of the line.
-    strncpy(zTemp1, currentLine, xPos);
-    zTemp1[xPos] = '\0';
+    strncpy(zLocalTemp1, pzCurrentLine, iXPos);
+    zLocalTemp1[iXPos] = '\0';
 
     // Copy the second part of the line.
-    strcpy(zTemp2, currentLine + xPos);
+    strcpy(zLocalTemp2, pzCurrentLine + iXPos);
 
     // Update the original line with the first part.
-    if (!allocLine(psState, lineIndex, zTemp1)) {
+    if (!allocLine(psState, iLineIndex, zLocalTemp1)) {
         return false;
     }
 
     // Insert the second part as a new line.
-    if (!insertLine(psState, lineIndex + 1, zTemp2)) {
+    if (!insertLine(psState, iLineIndex + 1, zLocalTemp2)) {
         // If insertion fails, we must restore the original line to avoid data loss.
-        strncat(zTemp1, zTemp2, MAX_LINE_LENGTH - strlen(zTemp1) - 1);
-        allocLine(psState, lineIndex, zTemp1);
+        strncat(zLocalTemp1, zLocalTemp2, MAX_LINE_LENGTH - strlen(zLocalTemp1) - 1);
+        allocLine(psState, iLineIndex, zLocalTemp1);
         return false;
     }
 
     return true;
 }
 
-bool replaceLine(tsState *psState, uint16_t index, const char* content) {
-    return allocLine(psState, index, content);
+bool replaceLine(tsState *psState, uint16_t iIndex, const char *pzContent) {
+    return allocLine(psState, iIndex, pzContent);
 }
 
-bool appendLine(tsState *psState, const char* content) {
-    return insertLine(psState, psState->lines, content);
-}
+bool appendLine(tsState *psState, const char *pzContent) { return insertLine(psState, psState->iLines, pzContent); }

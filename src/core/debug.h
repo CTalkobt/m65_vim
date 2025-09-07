@@ -2,66 +2,42 @@
 #define DEBUG_H
 
 #include "platform.h"
-#include <stdlib.h>
-#include <stddef.h>
 
-// @buildIssue1 #ifdef __MEGA65__
-// @buildIssue1 #include "lib/snprintf.h"
-// @buildIssue1 #else
-// @buildIssue1 #include <stdio.h>
-// @buildIssue1 #endif
-
-#ifdef DEBUG_ON
-#define DEBUG(X) do { plDebugMsg(X); } while (0);
-
-#define DEBUGF1(M, Y1) do {  \
-    char debug_buffer[81];          \
-    snprintf(debug_buffer, sizeof(debug_buffer), M, Y1);  \
-    plDebugMsg(debug_buffer);  \
-} while (0);
-
-#define DEBUGF2(M, Y1, Y2) do {  \
-    char debug_buffer[81];          \
-    snprintf(debug_buffer, sizeof(debug_buffer), M, Y1, Y2);  \
-    plDebugMsg(debug_buffer);  \
-} while (0);
-
-#define DEBUGF3(M, Y1, Y2, Y3) do {  \
-    char debug_buffer[81];          \
-    snprintf(debug_buffer, sizeof(debug_buffer), M, Y1, Y2, Y3);  \
-    plDebugMsg(debug_buffer);  \
-} while (0);
-
-#define DEBUGF4(M, Y1, Y2, Y3, Y4) do {  \
-    char debug_buffer[121];         \
-    snprintf(debug_buffer, sizeof(debug_buffer), M, Y1, Y2, Y3, Y4);  \
-    plDebugMsg(debug_buffer);  \
-} while (0);
-
-#define ASSERT(C, X) do { \
-    if (!(C)) {           \
-        plDebugMsg("Assertion Error: " X "\n");  \
-        exit(1);          \
-    }  \
-} while (0);
+#if defined(__MEGA65__) || defined(__C64__)
+#include "lib/snprintf.h"
 #else
-#define DEBUG(X) do {} while (0);
-#define DEBUGF1(M, Y1) do {} while (0);
-#define DEBUGF2(M, Y1, Y2) do {} while (0);
-#define DEBUGF3(M, Y1, Y2, Y3) do {} while (0);
-#define DEBUGF4(M, Y1, Y2, Y3, Y4) do {} while (0);
-#define ASSERT(C, X) do {} while (0);
+#include <stdio.h>
 #endif
 
-// Forward declaration to avoid circular dependency with state.h
-struct sState;
+#include "state.h"
 
-/**
- * @brief Dumps the contents of the tsState struct to the debug output.
- * 
- * @param psState A pointer to the editor state to dump.
- * @param message A descriptive message to print with the dump.
- */
-void dbg_psState(struct sState *psState, const char *message);
+// --- Debug Macros ---
+
+#ifdef DEBUG_ON
+void dbg_psState(tsState *psState, const char *message);
+extern char debug_buffer[128];
+#define DEBUG(M) plDebugMsg(M)
+#define DEBUGF1(M, Y1)                                                                                                 \
+    snprintf(debug_buffer, sizeof(debug_buffer), M, Y1);                                                               \
+    plDebugMsg(debug_buffer)
+#define DEBUGF2(M, Y1, Y2)                                                                                             \
+    snprintf(debug_buffer, sizeof(debug_buffer), M, Y1, Y2);                                                           \
+    plDebugMsg(debug_buffer)
+#define DEBUGF3(M, Y1, Y2, Y3)                                                                                         \
+    snprintf(debug_buffer, sizeof(debug_buffer), M, Y1, Y2, Y3);                                                       \
+    plDebugMsg(debug_buffer)
+#define ASSERT(C, M)                                                                                                   \
+    if (!(C)) {                                                                                                        \
+        plDebugMsg("ASSERT FAIL: " M);                                                                                 \
+        while (1)                                                                                                      \
+            ;                                                                                                          \
+    }
+#else
+#define DEBUG(M)
+#define DEBUGF1(M, Y1)
+#define DEBUGF2(M, Y1, Y2)
+#define DEBUGF3(M, Y1, Y2, Y3)
+#define ASSERT(C, M)
+#endif
 
 #endif // DEBUG_H

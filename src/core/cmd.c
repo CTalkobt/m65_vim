@@ -1,17 +1,17 @@
-#include <stdio.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <string.h>
 
-#include "platform.h"
-#include "debug.h"
-#include "state.h"
 #include "cmd.h"
+#include "debug.h"
 #include "editMode.h"
-#include "render.h"
-#include "line.h"
-#include "lib/keycodes.h"
 #include "editor.h"
+#include "lib/keycodes.h"
+#include "line.h"
+#include "platform.h"
+#include "render.h"
+#include "state.h"
 #include "undo.h"
 
 teCmdResult cmdUndo(tsState *psState, tsEditState *psEditState);
@@ -58,41 +58,40 @@ tsCmds cmds[] = {
     {Insert, {VIM_KEY_NULL}, NULL} // End of the list.
 };
 
-tsCmdLookupResult getCmd(const EditMode mode, eVimKeyCode *kars) {
-    size_t len = keycodes_len(kars);
+tsCmdLookupResult getCmd(const EditMode eMode, eVimKeyCode *eKars) {
+    size_t iLen = keycodes_len(eKars);
     tsCmdLookupResult result = {NULL, CMD_LOOKUP_NOT_FOUND};
-    tsCmds *exactMatchCmd = NULL;
+    tsCmds *pExactMatchCmd = NULL;
     bool partialMatchPossible = false;
 
-    for (tsCmds *cmd = &cmds[0]; cmd->cmd != NULL; cmd++) {
-        if (cmd->mode == mode) {
+    for (tsCmds *pCmd = &cmds[0]; pCmd->cmd != NULL; pCmd++) {
+        if (pCmd->mode == eMode) {
             // Check for an exact match
-            if (keycodes_cmp(cmd->kars, kars) == 0) {
-                exactMatchCmd = cmd;
+            if (keycodes_cmp(pCmd->kars, eKars) == 0) {
+                pExactMatchCmd = pCmd;
             }
-                // Check if a longer command is possible (partial match)
-            else if (keycodes_len(cmd->kars) > len && keycodes_ncmp(cmd->kars, kars, len) == 0) {
+            // Check if a longer command is possible (partial match)
+            else if (keycodes_len(pCmd->kars) > iLen && keycodes_ncmp(pCmd->kars, eKars, iLen) == 0) {
                 partialMatchPossible = true;
             }
         }
     }
 
-    if (exactMatchCmd && !partialMatchPossible) {
+    if (pExactMatchCmd && !partialMatchPossible) {
         // We have an exact match and no longer command is possible.
-        result.cmd = exactMatchCmd->cmd;
+        result.cmd = pExactMatchCmd->cmd;
         result.status = CMD_LOOKUP_EXACT_MATCH;
     } else if (partialMatchPossible) {
         // A longer command is possible, so we wait for more input.
         // This also covers the case where we have an exact match but a longer one is also possible (e.g. 'D' vs 'DD')
         result.status = CMD_LOOKUP_PARTIAL_MATCH;
-    } else if (exactMatchCmd) {
+    } else if (pExactMatchCmd) {
         // This case is for when an exact match is found, and no partials are possible.
-        result.cmd = exactMatchCmd->cmd;
+        result.cmd = pExactMatchCmd->cmd;
         result.status = CMD_LOOKUP_EXACT_MATCH;
     }
     // If neither, the result remains CMD_LOOKUP_NOT_FOUND
 
-    // DEBUGF3("DEBUG: Final match status for cmd '%s' in mode %d: %d", kars, mode, result.status);
     return result;
 }
 
@@ -105,26 +104,26 @@ teCmdResult cmdDelete(tsState *psState, tsEditState *psEditState) {
 
 teCmdResult cmdDeleteLine(tsState *psState, tsEditState *psEditState) {
     dbg_psState(psState, "cmdDeleteLine");
-    if (psState->lines > 0) {
+    if (psState->iLines > 0) {
         // Store the line content for undo before deleting it.
-        const char* line_content = getLine(psState, psState->lineY);
-        undo_store_action(UNDO_REPLACE_LINE, psState->lineY, 0, line_content);
+        const char *pzLineContent = getLine(psState, psState->iLineY);
+        undo_store_action(UNDO_REPLACE_LINE, psState->iLineY, 0, pzLineContent);
 
-        deleteLine(psState, psState->lineY);
+        deleteLine(psState, psState->iLineY);
 
-        if (psState->lines == 0) {
+        if (psState->iLines == 0) {
             // we deleted the only line in the file.
             // create a new empty one.
             insertLine(psState, 0, "");
         } else {
-            if (psState->lineY >= psState->lines) {
-                psState->lineY = psState->lines - 1;
+            if (psState->iLineY >= psState->iLines) {
+                psState->iLineY = psState->iLines - 1;
             }
         }
 
         // after deleting a line, cursor should be at the beginning of the current line
-        psState->xPos = 0;
-        loadLine(psState, psState->lineY);
+        psState->iXPos = 0;
+        loadLine(psState, psState->iLineY);
         draw_screen(psState);
     }
 
@@ -132,105 +131,105 @@ teCmdResult cmdDeleteLine(tsState *psState, tsEditState *psEditState) {
 }
 
 teCmdResult cmdGotoLine(tsState *psState, tsEditState *psEditState) {
-    allocLine(psState, psState->lineY, psState->editBuffer);
-    if (psState->lines > 0) {
-        psState->lineY = psState->lines - 1;
-        psState->xPos = 0;
+    allocLine(psState, psState->iLineY, psState->pzEditBuffer);
+    if (psState->iLines > 0) {
+        psState->iLineY = psState->iLines - 1;
+        psState->iXPos = 0;
 
         // Adjust screen viewport if necessary
-        unsigned char screen_height = plGetScreenHeight();
-        unsigned char text_height = screen_height > 2 ? screen_height - 2 : 0;
-        if (psState->lineY >= psState->screenStart.yPos + text_height) {
-            psState->screenStart.yPos = psState->lineY - text_height + 1;
+        unsigned char iScreenHeight = plGetScreenHeight();
+        unsigned char iTextHeight = iScreenHeight > 2 ? iScreenHeight - 2 : 0;
+        if (psState->iLineY >= psState->screenStart.yPos + iTextHeight) {
+            psState->screenStart.yPos = psState->iLineY - iTextHeight + 1;
         }
-        
-        loadLine(psState, psState->lineY);
+
+        loadLine(psState, psState->iLineY);
         draw_screen(psState);
     }
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
 teCmdResult cmdCursorLeft(tsState *psState, tsEditState *psEditState) {
-    if (psState->xPos > 0) { 
-        psState->xPos--; 
-        drawStatus(psState); 
+    if (psState->iXPos > 0) {
+        psState->iXPos--;
+        drawStatus(psState);
     }
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
 teCmdResult cmdCursorUp(tsState *psState, tsEditState *psEditState) {
-    allocLine(psState, psState->lineY, psState->editBuffer);
-    if (psState->lineY > 0) {
-        psState->lineY--;
+    allocLine(psState, psState->iLineY, psState->pzEditBuffer);
+    if (psState->iLineY > 0) {
+        psState->iLineY--;
 
         // Check if we need to scroll up
-        if (psState->lineY < psState->screenStart.yPos) {
+        if (psState->iLineY < psState->screenStart.yPos) {
             psState->screenStart.yPos--;
         }
 
-        loadLine(psState, psState->lineY);
+        loadLine(psState, psState->iLineY);
         draw_screen(psState);
     }
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
 teCmdResult cmdCursorDown(tsState *psState, tsEditState *psEditState) {
-    allocLine(psState, psState->lineY, psState->editBuffer);
-    if (psState->lineY < psState->lines - 1) {
-        psState->lineY++;
-        
+    allocLine(psState, psState->iLineY, psState->pzEditBuffer);
+    if (psState->iLineY < psState->iLines - 1) {
+        psState->iLineY++;
+
         // Check if we need to scroll down
-        unsigned char screen_height = plGetScreenHeight();
-        unsigned char text_height = screen_height > 2 ? screen_height - 2 : 0;
-        if ((psState->lineY - psState->screenStart.yPos) >= text_height) {
+        unsigned char iScreenHeight = plGetScreenHeight();
+        unsigned char iTextHeight = iScreenHeight > 2 ? iScreenHeight - 2 : 0;
+        if ((psState->iLineY - psState->screenStart.yPos) >= iTextHeight) {
             psState->screenStart.yPos++;
         }
-        
-        loadLine(psState, psState->lineY);
+
+        loadLine(psState, psState->iLineY);
         draw_screen(psState);
     }
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
 teCmdResult cmdCursorRight(tsState *psState, tsEditState *psEditState) {
-    if (psState->xPos < strlen(psState->editBuffer)) {
-        psState->xPos++;
+    if (psState->iXPos < strlen(psState->pzEditBuffer)) {
+        psState->iXPos++;
         drawStatus(psState);
     }
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
 teCmdResult cmdCursorScreenTop(tsState *psState, tsEditState *psEditState) {
-    allocLine(psState, psState->lineY, psState->editBuffer);
+    allocLine(psState, psState->iLineY, psState->pzEditBuffer);
     loadLine(psState, psState->screenStart.yPos);
-    psState->xPos = 0;
+    psState->iXPos = 0;
     drawStatus(psState);
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
 teCmdResult cmdCursorScreenBottom(tsState *psState, tsEditState *psEditState) {
-    allocLine(psState, psState->lineY, psState->editBuffer);
+    allocLine(psState, psState->iLineY, psState->pzEditBuffer);
     loadLine(psState, plGetScreenHeight() - 2);
-    psState->xPos = 0;
+    psState->iXPos = 0;
     drawStatus(psState);
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
 teCmdResult cmdLineJoin(tsState *psState, tsEditState *psEditState) {
-    allocLine(psState, psState->lineY, psState->editBuffer);
-    if (psState->lineY < psState->lines - 1) {
-        char *currentLine = psState->text[psState->lineY];
-        char *nextLine = psState->text[psState->lineY + 1];
-        uint16_t currentLen = strlen(currentLine);
-        uint16_t nextLen = strlen(nextLine);
+    allocLine(psState, psState->iLineY, psState->pzEditBuffer);
+    if (psState->iLineY < psState->iLines - 1) {
+        char *pzCurrentLine = psState->p2zText[psState->iLineY];
+        char *pzNextLine = psState->p2zText[psState->iLineY + 1];
+        uint16_t iCurrentLen = strlen(pzCurrentLine);
+        uint16_t iNextLen = strlen(pzNextLine);
 
-        if (currentLen + nextLen + 1 < MAX_LINE_LENGTH) {
+        if (iCurrentLen + iNextLen + 1 < MAX_LINE_LENGTH) {
             // Store the position for undo before joining the lines
-            undo_store_action(UNDO_JOIN_LINE, psState->lineY, currentLen, NULL);
+            undo_store_action(UNDO_JOIN_LINE, psState->iLineY, iCurrentLen, NULL);
 
-            currentLine[currentLen] = ' ';
-            strcpy(&currentLine[currentLen + 1], nextLine);
-            deleteLine(psState, psState->lineY + 1);
+            pzCurrentLine[iCurrentLen] = ' ';
+            strcpy(&pzCurrentLine[iCurrentLen + 1], pzNextLine);
+            deleteLine(psState, psState->iLineY + 1);
             draw_screen(psState);
         }
     }
@@ -238,71 +237,71 @@ teCmdResult cmdLineJoin(tsState *psState, tsEditState *psEditState) {
 }
 
 teCmdResult cmdCursorNextWord(tsState *psState, tsEditState *psEditState) {
-    char *line = psState->editBuffer;
-    int newX = psState->xPos;
-    while (line[newX] != ' ' && line[newX] != '\0') {
-        newX++;
+    char *pzLine = psState->pzEditBuffer;
+    int iNewX = psState->iXPos;
+    while (pzLine[iNewX] != ' ' && pzLine[iNewX] != '\0') {
+        iNewX++;
     }
-    while (line[newX] == ' ') {
-        newX++;
+    while (pzLine[iNewX] == ' ') {
+        iNewX++;
     }
-    if (line[newX] != '\0') {
-        psState->xPos = newX;
+    if (pzLine[iNewX] != '\0') {
+        psState->iXPos = iNewX;
         drawStatus(psState);
     }
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
 teCmdResult cmdCursorLineEnd(tsState *psState, tsEditState *psEditState) {
-    psState->xPos = strlen(psState->editBuffer);
-    if (psState->xPos > 0) {
-        psState->xPos--;
+    psState->iXPos = strlen(psState->pzEditBuffer);
+    if (psState->iXPos > 0) {
+        psState->iXPos--;
     }
     drawStatus(psState);
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
 teCmdResult cmdCursorLineStart(tsState *psState, tsEditState *psEditState) {
-    psState->xPos = 0;
+    psState->iXPos = 0;
     drawStatus(psState);
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
 teCmdResult cmdModeInsert(tsState *psState, tsEditState *psEditState) {
-    loadLine(psState, psState->lineY);
+    loadLine(psState, psState->iLineY);
     setEditMode(psState, Insert);
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
 teCmdResult cmdModeInsertLineStart(tsState *psState, tsEditState *psEditState) {
-    loadLine(psState, psState->lineY);
-    psState->xPos = 0;
+    loadLine(psState, psState->iLineY);
+    psState->iXPos = 0;
     setEditMode(psState, Insert);
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
 teCmdResult cmdModeAppend(tsState *psState, tsEditState *psEditState) {
-    loadLine(psState, psState->lineY);
-    if (psState->xPos < strlen(psState->editBuffer)) {
-        psState->xPos++;
+    loadLine(psState, psState->iLineY);
+    if (psState->iXPos < strlen(psState->pzEditBuffer)) {
+        psState->iXPos++;
     }
     setEditMode(psState, Insert);
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
 teCmdResult cmdModeAppendEnd(tsState *psState, tsEditState *psEditState) {
-    loadLine(psState, psState->lineY);
-    psState->xPos = strlen(psState->editBuffer);
+    loadLine(psState, psState->iLineY);
+    psState->iXPos = strlen(psState->pzEditBuffer);
     setEditMode(psState, Insert);
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 
 teCmdResult cmdPageForward(tsState *psState, tsEditState *psEditState) {
-    allocLine(psState, psState->lineY, psState->editBuffer);
-    int pageHeight = plGetScreenHeight() - 2;
-    psState->screenStart.yPos += pageHeight;
-    if (psState->screenStart.yPos > psState->lines - 1) {
-        psState->screenStart.yPos = psState->lines - 1;
+    allocLine(psState, psState->iLineY, psState->pzEditBuffer);
+    int iPageHeight = plGetScreenHeight() - 2;
+    psState->screenStart.yPos += iPageHeight;
+    if (psState->screenStart.yPos > psState->iLines - 1) {
+        psState->screenStart.yPos = psState->iLines - 1;
     }
     loadLine(psState, psState->screenStart.yPos);
     draw_screen(psState);
@@ -310,10 +309,10 @@ teCmdResult cmdPageForward(tsState *psState, tsEditState *psEditState) {
 }
 
 teCmdResult cmdPageBack(tsState *psState, tsEditState *psEditState) {
-    allocLine(psState, psState->lineY, psState->editBuffer);
-    int pageHeight = plGetScreenHeight() - 2;
-    if (psState->screenStart.yPos > pageHeight) {
-        psState->screenStart.yPos -= pageHeight;
+    allocLine(psState, psState->iLineY, psState->pzEditBuffer);
+    int iPageHeight = plGetScreenHeight() - 2;
+    if (psState->screenStart.yPos > iPageHeight) {
+        psState->screenStart.yPos -= iPageHeight;
     } else {
         psState->screenStart.yPos = 0;
     }
@@ -367,49 +366,49 @@ teCmdResult cmdUndo(tsState *psState, tsEditState *psEditState) {
 
 teCmdResult cmdRead(tsState *psState, char *pzCmdRemainder) {
     // 1. Get filename, skipping leading space
-    char* filename = pzCmdRemainder;
-    while (*filename == ' ') {
-        filename++;
+    char *pzFilename = pzCmdRemainder;
+    while (*pzFilename == ' ') {
+        pzFilename++;
     }
 
     // Clear any previous undo history when reading a new file.
     undo_clear();
 
-    if (*filename == '\0') {
+    if (*pzFilename == '\0') {
         // TODO: Show "E32: No file name" error
         return CMD_RESULT_SINGLE_CHAR_ACK;
     }
 
     // 2. Open file
-    PlFileHandle handle = plOpenFile(filename, "r");
-    if (!handle) {
+    PlFileHandle pFileHandle = plOpenFile(pzFilename, "r");
+    if (!pFileHandle) {
         // TODO: Show "E484: Can't open file" error
         return CMD_RESULT_SINGLE_CHAR_ACK;
     }
 
     // 3. Read the file in chunks and insert lines
-    char read_buf[256];
-    char line_buf[MAX_LINE_LENGTH] = {0};
-    int line_len = 0;
-    int bytes_read;
-    unsigned int lines_read = 0;
-    uint16_t insert_pos = psState->lineY;
+    char zReadBuf[256];
+    char zLineBuf[MAX_LINE_LENGTH] = {0};
+    int iLineLen = 0;
+    int iBytesRead;
+    unsigned int iLinesRead = 0;
+    uint16_t iInsertPos = psState->iLineY;
 
-    while ((bytes_read = plReadFile(handle, read_buf, sizeof(read_buf))) > 0) {
-        for (int i = 0; i < bytes_read; i++) {
-            char c = read_buf[i];
+    while ((iBytesRead = plReadFile(pFileHandle, zReadBuf, sizeof(zReadBuf))) > 0) {
+        for (int i = 0; i < iBytesRead; i++) {
+            char c = zReadBuf[i];
             if (c == '\n') {
-                line_buf[line_len] = '\0';
-                if (!insertLine(psState, insert_pos + 1, line_buf)) {
+                zLineBuf[iLineLen] = '\0';
+                if (!insertLine(psState, iInsertPos + 1, zLineBuf)) {
                     // TODO: Show error, buffer full
                     goto end_read;
                 }
-                insert_pos++;
-                lines_read++;
-                line_len = 0; // Reset for the next line
+                iInsertPos++;
+                iLinesRead++;
+                iLineLen = 0;       // Reset for the next line
             } else if (c != '\r') { // Ignore carriage returns
-                if (line_len < MAX_LINE_LENGTH - 1) {
-                    line_buf[line_len++] = c;
+                if (iLineLen < MAX_LINE_LENGTH - 1) {
+                    zLineBuf[iLineLen++] = c;
                 }
             }
         }
@@ -417,18 +416,18 @@ teCmdResult cmdRead(tsState *psState, char *pzCmdRemainder) {
 
 end_read:
     // If the file doesn't end with a newline, insert the last partial line.
-    if (line_len > 0) {
-        line_buf[line_len] = '\0';
-        if (insertLine(psState, insert_pos + 1, line_buf)) {
-            lines_read++;
+    if (iLineLen > 0) {
+        zLineBuf[iLineLen] = '\0';
+        if (insertLine(psState, iInsertPos + 1, zLineBuf)) {
+            iLinesRead++;
         }
     }
 
     // 4. Close file
-    plCloseFile(handle);
+    plCloseFile(pFileHandle);
 
     // 5. Redraw and show status
-    if (lines_read > 0) {
+    if (iLinesRead > 0) {
         draw_screen(psState);
         // TODO: show status message: "%s" %dL read", filename, lines_read
     }
@@ -437,44 +436,41 @@ end_read:
 }
 
 teCmdResult cmdWrite(tsState *psState, char *pzCmdRemainder, bool force) {
-    char* filename = pzCmdRemainder;
-    while (*filename == ' ') {
-        filename++;
+    char *pzFilename = pzCmdRemainder;
+    while (*pzFilename == ' ') {
+        pzFilename++;
     }
 
     // If no filename is provided, use the one from the state.
-    if (*filename == '\0') {
-        filename = psState->zFilename;
+    if (*pzFilename == '\0') {
+        pzFilename = psState->zFilename;
     }
-    
-    if (*filename == '\0') {
+
+    if (*pzFilename == '\0') {
         // TODO: Show "E32: No file name" error
         return CMD_RESULT_SINGLE_CHAR_ACK;
     }
 
-    PlFileHandle handle = plOpenFile(filename, "w");
-    if (!handle) {
+    PlFileHandle pFileHandle = plOpenFile(pzFilename, "w");
+    if (!pFileHandle) {
         // TODO: Show "E509: Can't open file for writing"
         return CMD_RESULT_SINGLE_CHAR_ACK;
     }
 
-    unsigned int bytes_written = 0;
-    for (uint16_t i = 0; i < psState->lines; i++) {
-        const char* line = getLine(psState, i);
-        int len = strlen(line);
-        if (plWriteFile(handle, line, len) != len) {
+    for (uint16_t i = 0; i < psState->iLines; i++) {
+        const char *pzLine = getLine(psState, i);
+        int iLen = strlen(pzLine);
+        if (plWriteFile(pFileHandle, pzLine, iLen) != iLen) {
             // TODO: Show write error
             goto end_write;
         }
-        bytes_written += len;
 
         // Write newline, except for the last line if it's empty
-        if (i < psState->lines - 1) {
-            if (plWriteFile(handle, "\n", 1) != 1) {
+        if (i < psState->iLines - 1) {
+            if (plWriteFile(pFileHandle, "\n", 1) != 1) {
                 // TODO: Show write error
                 goto end_write;
             }
-            bytes_written++;
         }
     }
 
@@ -483,7 +479,7 @@ teCmdResult cmdWrite(tsState *psState, char *pzCmdRemainder, bool force) {
     // TODO: Show status: "%s" %dL, %dB written", filename, psState->lines, bytes_written
 
 end_write:
-    plCloseFile(handle);
+    plCloseFile(pFileHandle);
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
 

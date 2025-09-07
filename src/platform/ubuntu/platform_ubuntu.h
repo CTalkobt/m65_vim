@@ -1,7 +1,7 @@
 #ifndef PLATFORM_UBUNTU_H
 #define PLATFORM_UBUNTU_H
 
-#include "../../../globals.h"
+#include "../core/globals.h"
 
 #define PLATFORM_FILENAME_COL 20
 

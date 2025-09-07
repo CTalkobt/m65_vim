@@ -15,7 +15,7 @@
  * @param new_content The new text content for the line. If NULL, the line is deallocated.
  * @return Returns true on success, false on failure (e.g., memory allocation error).
  */
-bool allocLine(tsState *psState, uint16_t lineIndex, const char* new_content);
+bool allocLine(tsState *psState, uint16_t lineIndex, const char *new_content);
 
 /**
  * Inserts a new line with specified content at a given index, shifting subsequent lines down.
@@ -25,7 +25,7 @@ bool allocLine(tsState *psState, uint16_t lineIndex, const char* new_content);
  * @param content The text content for the new line.
  * @return Returns true on success, false on failure.
  */
-bool insertLine(tsState *psState, uint16_t index, const char* content);
+bool insertLine(tsState *psState, uint16_t index, const char *content);
 
 /**
  * Replaces an existing line with new content.
@@ -35,7 +35,7 @@ bool insertLine(tsState *psState, uint16_t index, const char* content);
  * @param content The new text content for the line.
  * @return Returns true on success, false on failure.
  */
-bool replaceLine(tsState *psState, uint16_t index, const char* content);
+bool replaceLine(tsState *psState, uint16_t index, const char *content);
 
 /**
  * Appends a new line at the end of the text buffer.
@@ -44,7 +44,7 @@ bool replaceLine(tsState *psState, uint16_t index, const char* content);
  * @param content The text content for the new line.
  * @return Returns true on success, false on failure.
  */
-bool appendLine(tsState *psState, const char* content);
+bool appendLine(tsState *psState, const char *content);
 
 /**
  * Deletes a line at a specified index, shifting subsequent lines up.
@@ -69,7 +69,7 @@ void freeAllLines(tsState *psState);
  * @param index The index of the line to retrieve.
  * @return A const char* pointer to the line's content, or NULL if the index is out of bounds.
  */
-const char* getLine(const tsState* psState, uint16_t index);
+const char *getLine(const tsState *psState, uint16_t index);
 
 /**
  * Copies the content of a specified line from the main text buffer into the shared edit buffer.

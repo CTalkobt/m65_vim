@@ -1,7 +1,7 @@
 #ifndef PLATFORM_MEGA65_H
 #define PLATFORM_MEGA65_H
 
-#include "../../../globals.h"
+#include "../core/globals.h"
 
 #define PLATFORM_FILENAME_COL 20
 

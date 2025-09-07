@@ -1,10 +1,10 @@
 #include "screen.h"
 
 #include <cbm.h>
+#include <peekpoke.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <peekpoke.h>
 
 #define SCREEN_WIDTH 40
 #define SCREEN_HEIGHT 25
@@ -15,7 +15,7 @@ void scrScreenMode(enum ScreenMode mode) {
 }
 
 void scrDupeChar(unsigned char n, unsigned char kar) {
-    for (unsigned char i = 0; i<n; i++) {
+    for (unsigned char i = 0; i < n; i++) {
         putchar(kar);
     }
 }
@@ -32,9 +32,7 @@ void scrColor(unsigned char screenColor, unsigned char brdrColor) {
     POKE(53280, brdrColor);
 }
 
-void scrTextColor(char textColor) {
-    POKE(646, textColor);
-}
+void scrTextColor(char textColor) { POKE(646, textColor); }
 
 void scrCursorOn(void) {
     // Not directly supported by C64 KERNAL, would require custom cursor handling.
@@ -44,8 +42,8 @@ void scrCursorOff(void) {
     // Not directly supported by C64 KERNAL, would require custom cursor handling.
 }
 
-static const unsigned char hexDigits[] = { '0', '1', '2', '3', '4', '5', '6',
-    '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+static const unsigned char hexDigits[] = {'0', '1', '2', '3', '4', '5', '6', '7',
+                                          '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
 void scrPutDec(unsigned long n, unsigned char leadingZeros) {
     char buffer[11];
