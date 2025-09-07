@@ -1,0 +1,49 @@
+Initial Target Release (0.5)
+=============================
+- Minimal command set to implement basic movement, navigation within a file, basic viewing and reading (:r) of a file. 
+- There will initially not be : 
+  - No support for insertion or modification of text. 
+  - Numeric default mode command support.  (eg, 5dd to delete 5 lines). 
+  - No Command mode commands other than :r and :w to read and write the file. 
+  
+To-Do:
+-------------------
+These items are intended for the next release. 
+
+- Determine internal storage for file contents.
+  - C alloc via lines. 
+  - C allow via block memory. 
+  - C alloc via memory segments. 
+  - Line pointer references into memory block. 
+  - Should files be "padded" to allow for changes to not force reallocation constantly? 
+
+- Line movement 
+
+- Initial file load and display (perhaps hardcoded filename for testing)
+I Status Line
+  C Reflect filename
+  C Current X,y position
+  - Mode
+
+- Command mode support
+  - Read/Write filename.
+
+Future Todo:
+-------------
+These items are highly desired and will be in a future release.
+
+- Character Insert mode. 
+- Line maniuplation 
+
+- Numeric prefix on defult mode commands. 
+
+I Find usage/implementatioin for "Special Keys"
+  C Clr/Home 
+    - Proposed: Goto top/bottom of screen. 
+  C Arrow keys - Mirror h,j,k,l.
+  - F-keys - ?
+  - Mega-Key 
+  - Ctrl-Key 
+  - Alt-Key
+  - NoScroll
+

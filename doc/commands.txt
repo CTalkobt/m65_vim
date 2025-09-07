@@ -1,0 +1,49 @@
+VIM3 Command Reference
+=======================
+
+This document lists the VIM commands currently implemented in this editor.
+
+Normal Mode Commands
+--------------------
+
+### Navigation
+- `h` / `Left Arrow`:  Move cursor left
+- `k` / `Up Arrow`:    Move cursor up
+- `j` / `Down Arrow`:  Move cursor down
+- `l` / `Right Arrow`: Move cursor right
+- `H` / `Home`:        Move to the top of the screen
+- `L` / `Shift-Home`:  Move to the bottom of the screen
+- `$` :                Move to the end of the current line
+- `0` :                Move to the start of the current line
+- `w` :                Move to the start of the next word
+- `g` :                Go to the last line of the file
+- `Ctrl-F`:            Page forward
+- `Ctrl-B`:            Page back
+
+### Editing
+- `dd`:                Delete the current line
+- `d`:                 Delete (currently a placeholder)
+- `J`:                 Join the current line with the next one
+- `i`:                 Enter Insert Mode at the current cursor position
+- `I`:                 Enter Insert Mode at the start of the line
+- `a`:                 Enter Insert Mode after the current cursor position
+- `A`:                 Enter Insert Mode at the end of the line
+- `u`:                 Undo the last change (limit 1-c64, ?-m65, 128-ubuntu)
+
+### Other
+- `:`:                 Enter Command Mode
+- `?` / `Help Key`:    Display the help screen
+
+Insert Mode Commands
+--------------------
+- `Esc` / `Ctrl-C`:    Return to Normal Mode
+
+Command Mode Commands
+---------------------
+- `:q`:                Quit (if no changes have been made)
+- `:q!`:               Quit and discard any changes
+- `:w`:                Write the file
+- `:w!`:               Force write the file
+- `:wq`:               Write the file and quit
+- `:r <filename>`:     Read a file into the buffer (placeholder)
+- `:!$`:               Directory listing (placeholder)

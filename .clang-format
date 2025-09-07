@@ -1,0 +1,8 @@
+# .clang-format
+# Style configuration for the VIM3 project
+
+BreakBeforeBraces: Attach
+IndentWidth: 4
+UseTab: Never
+ColumnLimit: 120
+PointerAlignment: Right

@@ -1,94 +1,149 @@
 cmake_minimum_required(VERSION 3.18)
 
-## My Environment settings.
-set(CMAKE_C_COMPILER /home/duck/m65/c/llvm-mos/bin/mos-mega65-clang)
-set(CMAKE_CXX_COMPILER /home/duck/m65/c/llvm-mos/bin/mos-mega65-clang++)
-set(CMAKE_PREFIX_PATH /home/duck/m65/c/llvm-mos)
+# --- Platform Selection ---
+set(SUPPORTED_PLATFORMS "mega65" "c64" "ubuntu")
+if(NOT PLATFORM)
+    message(FATAL_ERROR "PLATFORM not set. Please specify a platform with -DPLATFORM=<platform>. Supported platforms are: ${SUPPORTED_PLATFORMS}")
+endif()
+list(FIND SUPPORTED_PLATFORMS "${PLATFORM}" IS_SUPPORTED)
+if(${IS_SUPPORTED} EQUAL -1)
+    message(FATAL_ERROR "Unsupported platform: ${PLATFORM}. Supported platforms are: ${SUPPORTED_PLATFORMS}")
+endif()
+message(STATUS "Building for platform: ${PLATFORM}")
 
+# --- Platform Specific Setup ---
+if (${PLATFORM} STREQUAL "mega65")
+    set(__MEGA65__ 65)
+    list(APPEND CORE_SOURCES src/core/lib/snprintf.c)
+    set(CMAKE_C_COMPILER /home/duck/m65/c/llvm-mos/bin/mos-mega65-clang)
+    set(CMAKE_PREFIX_PATH /home/duck/m65/c/llvm-mos)
+    find_package(llvm-mos-sdk REQUIRED)
+    set(LLVM_MOS_PLATFORM mega65)
+elseif (${PLATFORM} STREQUAL "c64")
+    set(CMAKE_C_COMPILER /home/duck/m65/c/llvm-mos/bin/mos-c64-clang)
+    set(CMAKE_PREFIX_PATH /home/duck/m65/c/llvm-mos)
+    find_package(llvm-mos-sdk REQUIRED)
+    set(LLVM_MOS_PLATFORM c64)
+elseif (${PLATFORM} STREQUAL "ubuntu")
+    set(CMAKE_C_COMPILER /usr/bin/cc)
+    set(CMAKE_CXX_COMPILER /usr/bin/c++)
+endif()
 
-## set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --extra-warnings -fno-signed-char -fdiagnostics-show-option -fcolor-diagnostics")
-## End my environment settings.
-
-find_package(llvm-mos-sdk REQUIRED)
-set(LLVM_MOS_PLATFORM mega65)
-
+# --- Basic Project Setup ---
 project(vim)
+option(ENABLE_DEBUG "Enable debug messages for the main vim executable" ON)
+option(ENABLE_NCURSES_MEM_DEBUG "Enable ncurses internal memory cleanup for Valgrind" OFF)
 
-#include(CPM.cmake)
-include(FetchContent)
-FetchContent_Declare(
-        CPM
-        GIT_REPOSITORY https://github.com/cpm-cmake/CPM.cmake
-        GIT_TAG        v0.42.0 # Replace with the desired version
+# --- Common C Flags ---
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-signed-char")
+
+# --- Core Source Files (Platform Independent) ---
+set(CORE_SOURCES
+    src/core/vim.c
+    src/core/cmd.c
+    src/core/editor.c
+    src/core/render.c
+    src/core/line.c
+    src/core/lib/itostr.c
+    src/core/lib/keycodes.c
+    src/core/debug.c
+    src/core/undo.c
 )
-FetchContent_MakeAvailable(CPM)
-#
-# Use my mega65-libc fork for now.
-# - PRs may still be pending. At some future point, we'll use:
-#CPMAddPackage(NAME mega65libc GITHUB_REPOSITORY mega65/mega65-libc GIT_TAG development)
-CPMAddPackage(NAME mega65libc GITHUB_REPOSITORY CTalkobt/mega65-libc GIT_TAG development)
 
-## @@TODO:Use add_compile_options instead.
-set(CMAKE_C_FLAGS "\
-    ${CMAKE_C_FLAGS}\
-    -fno-signed-char\
-    -fdiagnostics-show-option\
-    -fcolor-diagnostics\
-    -fno-signed-zeros\
-    -fapprox-func\
-    -ffast-math\
-    -finline-functions\
-    -fjump-tables\
-    -fverbose-asm\
-")
-#add_compile_options(
-#        -S    ## Generate intermediate language. source.
-#        --verbose-asm
-#)
+if (${PLATFORM} STREQUAL "mega65" OR ${PLATFORM} STREQUAL "c64")
+    list(APPEND CORE_SOURCES src/platform/cbm/kernal.c)
+endif()
+
+# --- Add packages and sources based on platform ---
+if (${PLATFORM} STREQUAL "mega65")
+    include(FetchContent)
+    FetchContent_Declare(CPM GIT_REPOSITORY https://github.com/cpm-cmake/CPM.cmake GIT_TAG v0.42.0)
+    FetchContent_MakeAvailable(CPM)
+    CPMAddPackage(
+        NAME mega65libc
+        GITHUB_REPOSITORY CTalkobt/mega65-libc
+        GIT_TAG development
+        EXCLUDE_FROM_ALL TRUE
+    )
+    include_directories(${mega65libc_SOURCE_DIR}/include)
+
+    list(APPEND PLATFORM_SOURCES
+        src/platform/mega65/platform_mega65.c
+        src/platform/mega65/screen.c
+    )
+    set(PLATFORM_LIBRARIES mega65libc)
+    set(PLATFORM_LINK_FLAGS "-Wl,-z,stack-size=8192" "-Wl,-Map=vim.map")
+
+elseif (${PLATFORM} STREQUAL "c64")
+    list(APPEND PLATFORM_SOURCES src/platform/c64/platform_c64.c)
+    # Add C64 libraries here
+
+elseif (${PLATFORM} STREQUAL "ubuntu")
+    find_package(Curses REQUIRED)
+    list(APPEND PLATFORM_SOURCES src/platform/ubuntu/platform_ubuntu.c)
+    set(PLATFORM_LIBRARIES ${CURSES_LIBRARIES})
+endif()
 
 
-# Let's set a rather loud warning level
-set(CLANG_WARNINGS
-        -Wall
-        -Wextra # reasonable and standard
-        -Wshadow # warn the user if a variable declaration shadows one from a parent context
-        -Wcast-align # warn for potential performance problem casts
-        -Wunused # warn on anything being unused
-        -Wconversion # warn on type conversions that may lose data
-#        -Wsign-conversion # warn on sign conversions
-        -Wnull-dereference # warn if a null dereference is detected
-        -Wformat=2 # warn on security issues around functions that format output (ie printf)
-        -Wimplicit-fallthrough # warn on statements that fallthrough without an explicit annotation
-        -Wpedantic # warn if non-standard C/C++ is used
+# --- Main Executable Target ---
+add_executable(vim ${CORE_SOURCES} ${PLATFORM_SOURCES})
+set_target_properties(vim PROPERTIES OUTPUT_NAME "vim_${PLATFORM}")
+
+if (${PLATFORM} STREQUAL "ubuntu")
+    target_compile_definitions(vim PRIVATE __UBUNTU__)
+endif()
+if (${PLATFORM} STREQUAL "mega65")
+    target_compile_definitions(vim PRIVATE __MEGA65__)
+    target_compile_definitions(vim PRIVATE __CBM__)
+endif()
+if (${PLATFORM} STREQUAL "c64")
+    target_compile_definitions(vim PRIVATE __C64__)
+    target_compile_definitions(vim PRIVATE __CBM__)
+endif()
+
+target_include_directories(vim PRIVATE src/core src/platform src/platform/cbm)
+target_link_libraries(vim PRIVATE ${PLATFORM_LIBRARIES})
+target_link_options(vim PRIVATE ${PLATFORM_LINK_FLAGS})
+
+if (${PLATFORM} STREQUAL "mega65")
+    target_compile_definitions(vim PRIVATE __MEGA65__)
+    target_include_directories(vim PRIVATE ${mega65libc_SOURCE_DIR}/include)
+endif()
+
+if(ENABLE_DEBUG)
+    target_compile_definitions(vim PRIVATE DEBUG_ON)
+endif()
+if(ENABLE_NCURSES_MEM_DEBUG)
+    target_compile_definitions(vim PRIVATE NCURSES_MEM_DEBUG)
+endif()
+
+# --- Compiler Warnings ---
+target_compile_options(vim PRIVATE
+    -Wshadow
+    -Wcast-align
+    -Wunused
+    -Wnull-dereference
+    -Wformat=2
+    -Wimplicit-fallthrough
+    -Wno-incompatible-pointer-types-discards-qualifiers
+    -Wno-sign-conversion
+    -Wno-int-conversion
+    -Wno-pointer-sign
+    -fno-signed-char
+)
+
+if (${PLATFORM} STREQUAL "mega65" OR ${PLATFORM} STREQUAL "c64")
+    target_compile_options(vim PRIVATE
+        -fdiagnostics-show-option
+        -fcolor-diagnostics
         -Wno-c23-extensions
-        -Wno-language-extension-token
+        -fno-signed-zeros
+        -fno-spell-checking
+        -fno-fixed-point
+    )
+endif()
+
+# --- Install Target ---
+install(TARGETS vim
+    DESTINATION ${CMAKE_SOURCE_DIR}/bin
 )
-
-
-add_executable(vim
-        src/vim.c
-        src/cmd.c
-        src/render.c
-        src/lib/itoa.c
-        src/lib/m65/debug.h
-        src/lib/m65/kbd.h
-        src/lib/m65/kbd.c
-        src/lib/m65/kernal.c
-        src/lib/m65/kernal.h
-        src/lib/m65/screen.c
-        src/lib/m65/screen.h
-)
-target_link_libraries(vim mega65libc)
-
-
-add_executable(test
-        src/test.c
-        src/lib/m65/kernal.c
-        src/lib/m65/kernal.h
-        src/lib/m65/screen.h
-        src/lib/m65/screen.c
-        src/lib/m65/kbd.c
-        src/lib/m65/kbd.h
-)
-target_link_libraries(test mega65libc)
-

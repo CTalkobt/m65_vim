@@ -1,0 +1,21 @@
+
+Inserting abc<return>def<return>ghi<return> replaces third line with V0.1. 
+  ?? Need additional logging 
+  ?? Look into replay style logic maybe, for use with m65 'type' command to build regression
+     tests
+
+File operations (:r, :w) are implemented but don't work. 
+
+Additional functionality needed: 
+  dd - Delete line
+
+:q currently is hardcoded to reset to Basic due to ZP corruption. 
+  Add code to cache initial ZP contents and restore prior to exiting to Basic.
+
+Identify issue w/ dyanmic memory being less than expected. 
+
+=====================================================================================
+
+cmdHelp - Doesn't trigger on Help key press. 
+  OK Kernal needs to be set to not expand kernal keys by default / return char 31?
+  IOKAdded kFnKeyMacros - Ensure that we're using the correct key sequence for invoking cmdHelp. 
