@@ -189,3 +189,46 @@ long plGetTime() {
     // @@TODO: This would require reading the RTC registers on the MEGA65
     return 0;
 }
+
+void plDirectoryListing(void) {
+    const unsigned char lfn = 2;
+    char c;
+
+    cbm_k_setlfs(lfn, 8, 0);
+    cbm_k_setnam("$0");
+    cbm_k_open();
+
+    if (PEEK(0x90) != 0) {
+        cbm_k_clrch();
+        plPuts("ERROR OPENING DRIVE\nPRESS ANY KEY...");
+        plGetKey();
+        return;
+    }
+
+    plClearScreen();
+    plSetCursor(0, 0);
+    cbm_k_chkin(lfn);
+
+    // Loop until the End-Of-File flag (bit 6) is set in the status byte.
+    while (1) {
+        // Call the KERNAL ACPTR routine at $FFCC directly.
+        // It gets a byte from the serial device and returns it in the Accumulator.
+        __asm__ volatile (
+            "jsr $ffcc" // Use short branch for local calls
+            : "=a"(c) // Output: the character is in the 'a' (accumulator) register
+        );
+        
+        // Check the status byte. If the EOF bit (64) is set, we're done.
+        if (cbm_k_readst() & 64) {
+            break;
+        }
+        
+        plPutChar(c);
+    }
+
+    cbm_k_close(lfn);
+    cbm_k_clrch();
+
+    plPuts("\nPRESS ANY KEY TO CONTINUE...");
+    plGetKey();
+}

@@ -39,7 +39,7 @@ void plSetColor(unsigned char color);
 // Debugging
 void plDebugMsg(const char *msg);
 
-#include "keycodes.h"
+#include "lib/keycodes.h"
 
 // Keyboard Input Functions
 eVimKeyCode plGetKey();
@@ -63,5 +63,6 @@ void plFree(void *ptr);
 // System Functions
 void plExit(int code);
 long plGetTime();
+void plDirectoryListing(void);
 
 #endif // PLATFORM_H

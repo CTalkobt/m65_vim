@@ -487,6 +487,7 @@ end_write:
 }
 
 teCmdResult cmdDirectoryListing(tsState *psState) {
-    // ... (implementation unchanged for now)
+    plDirectoryListing();
+    draw_screen(psState);
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }

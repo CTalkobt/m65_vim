@@ -1,4 +1,6 @@
 #include "platform_c64.h"
+
+#include "itostr.h"
 #include "platform.h"
 #include <cbm.h>
 #include <peekpoke.h>
@@ -199,3 +201,58 @@ void plFree(void *pPtr) { free(pPtr); }
 // System Functions
 void plExit(int iCode) { exit(iCode); }
 long plGetTime() { return 0; }
+void plDirectoryListing(void) {
+    unsigned char iLFN = 1;     // Logical file number
+    unsigned char iDevice = 8;  // Device number (disk drive)
+    unsigned char iSecAddr = 0; // Secondary address for load
+
+    // Open the directory channel
+    cbm_k_setlfs(iLFN, iDevice, iSecAddr);
+    cbm_k_setnam("$");
+    cbm_k_open();
+
+    if (PEEK(0x90)) { // Check for error
+        plPuts("Error reading directory\r\n");
+        return;
+    }
+
+    // Set input to directory channel
+    cbm_k_chkin(iLFN);
+
+    // Skip load address
+    cbm_k_basin();
+    cbm_k_basin();
+
+    // Read directory entries
+    while (!PEEK(0x90)) {
+        unsigned int iBlocks;
+        char c;
+
+        // Read two-byte file size (blocks)
+        iBlocks = cbm_k_basin();
+        if (PEEK(0x90))
+            break;
+        iBlocks |= (unsigned int)cbm_k_basin() << 8;
+        if (PEEK(0x90))
+            break;
+
+        // Print block count
+        char zBlocks[6];
+        itostr(iBlocks, zBlocks);
+        plPuts(zBlocks);
+        plPuts(" ");
+
+        // Read and print filename
+        while ((c = cbm_k_basin()) != 0) {
+            if (PEEK(0x90))
+                break;
+            plPutChar(c);
+        }
+        plPutChar('\r');
+        plPutChar('\n');
+    }
+
+    // Cleanup
+    cbm_k_clrch();
+    cbm_k_close(iLFN);
+}

@@ -2,6 +2,8 @@
 #include <stdio.h>  // for fprintf, stderr
 #include <stdlib.h> // for NULL, malloc, free, exit
 #include <time.h>   // for time
+#include <sys/types.h>
+#include <dirent.h>
 
 #include "platform.h"
 
@@ -136,3 +138,19 @@ void plExit(int code) {
     exit(code);
 }
 long plGetTime() { return time(NULL); }
+
+void plDirectoryListing(void) {
+    DIR *d;
+    struct dirent *dir;
+    d = opendir(".");
+    if (d) {
+        plClearScreen();
+        while ((dir = readdir(d)) != NULL) {
+            plPuts(dir->d_name);
+            plPuts("\n");
+        }
+        closedir(d);
+        plPuts("\nPress any key to continue...");
+        plGetKey();
+    }
+}
