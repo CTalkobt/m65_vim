@@ -1,3 +1,6 @@
+#ifndef _PLATFORM_MEGA65_H_
+#define _PLATFORM_MEGA65_H_
+
 #include "platform.h"
 #include <stdbool.h>
 #include <stdlib.h>
@@ -25,7 +28,11 @@
 #undef DMA_XYMOD_ADDR
 
 // Header from llvm-mos SDK
+#include "debug.h"
+#include "itostr.h"
+
 #include <mega65.h>
+
 
 // --- Video/Rendering Functions ---
 
@@ -117,8 +124,10 @@ eVimKeyCode plGetKey() {
 
     while ((k = PEEK(0xD610U)) == 0)
         ;
-
-    return (eVimKeyCode)PEEK(0xD619U);
+    
+    k = PEEK(0xD619U);
+    DEBUGF1("plGetKey returning: %d", k);
+    return (eVimKeyCode)k;
 }
 
 unsigned char plKbHit(void) {
@@ -191,44 +200,76 @@ long plGetTime() {
 }
 
 void plDirectoryListing(void) {
-    const unsigned char lfn = 2;
-    char c;
+    unsigned char iLFN = 1;     // Logical file number
+    unsigned char iDevice = 8;  // Device number (disk drive)
+    unsigned char iSecAddr = 15; // Secondary address for load
 
-    cbm_k_setlfs(lfn, 8, 0);
-    cbm_k_setnam("$0");
-    cbm_k_open();
+    DEBUG("plDirectoryListing");
+    kSetnam("$0:");
+    DEBUG("AFTER SETNAM");
+    kSetlfs(iLFN, iDevice, iSecAddr);
+    DEBUG("AFTERSETLFS");
 
-    if (PEEK(0x90) != 0) {
-        cbm_k_clrch();
-        plPuts("ERROR OPENING DRIVE\nPRESS ANY KEY...");
-        plGetKey();
-        return;
-    }
+    // Open the directory channel
+    kSetBank(0, 0);
+    DEBUG("After setBank");
+    kOpen();
+    DEBUG("AFTEROPEN");
 
-    plClearScreen();
-    plSetCursor(0, 0);
-    cbm_k_chkin(lfn);
+//    if (PEEK(0x90)) { // Check for error
+//        DEBUGF1("ERROR: %d", PEEK(0x90));
+//        plPuts("Error reading directory\r\n");
+//        return;
+//    }
 
-    // Loop until the End-Of-File flag (bit 6) is set in the status byte.
-    while (1) {
-        // Call the KERNAL ACPTR routine at $FFCC directly.
-        // It gets a byte from the serial device and returns it in the Accumulator.
-        __asm__ volatile (
-            "jsr $ffcc" // Use short branch for local calls
-            : "=a"(c) // Output: the character is in the 'a' (accumulator) register
-        );
-        
-        // Check the status byte. If the EOF bit (64) is set, we're done.
-        if (cbm_k_readst() & 64) {
-            break;
+    // Set input to directory channel
+    kChkin(iLFN);
+//DEBUG("chkin");
+    // Skip load address
+    cbm_k_basin();
+//DEBUG("basin");
+    cbm_k_basin();
+//DEBUG("basin-2");
+
+    // Read directory entries
+    while (!PEEK(0x90)) {
+//        DEBUG("WHILELOOP");
+        unsigned int iBlocks;
+        char c;
+
+        // Read two-byte file size (blocks)
+        iBlocks = cbm_k_basin();
+//        if (PEEK(0x90)) {
+//            DEBUGF1("ERROR: %d", PEEK(0x90));
+//            break;
+//        }
+        iBlocks |= (unsigned int)cbm_k_basin() << 8;
+//        if (PEEK(0x90)) {
+//           DEBUGF1("ERROR: %d", PEEK(0x90));
+//           break;
+//        }
+
+        // Print block count
+        char zBlocks[6];
+        itostr(iBlocks, zBlocks);
+        plPuts(zBlocks);
+        plPuts(" ");
+
+        // Read and print filename
+        while ((c = cbm_k_basin()) != 0) {
+ //           if (PEEK(0x90))
+//                 break;
+            plPutChar(c);
         }
-        
-        plPutChar(c);
+        plPutChar('\r');
+//        DEBUG("end while loop");
     }
-
-    cbm_k_close(lfn);
+//DEBUG("AFTERWHILELOOP");
+    // Cleanup
     cbm_k_clrch();
-
-    plPuts("\nPRESS ANY KEY TO CONTINUE...");
-    plGetKey();
+//    DEBUG("clrch");
+    cbm_k_close(iLFN);
+    DEBUG("k_close");
 }
+
+#endif // _PLATFORM_MEGA65_H_

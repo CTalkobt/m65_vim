@@ -53,8 +53,10 @@ tsCmds cmds[] = {
     {Default, {VIM_KEY_CTRL_B, VIM_KEY_NULL}, cmdPageBack},
 
     {Default, {VIM_KEY_COLON, VIM_KEY_NULL}, cmdModeCommand},
+    #if defined(__C64__) || defined(__MEGA65__)
+    {Insert, {VIM_KEY_STOP, VIM_KEY_NULL}, cmdModeDefault},
+#endif
     {Insert, {VIM_KEY_ESC, VIM_KEY_NULL}, cmdModeDefault},
-    {Insert, {VIM_KEY_CTRL_C, VIM_KEY_NULL}, cmdModeDefault},
 
     {Insert, {VIM_KEY_NULL}, NULL} // End of the list.
 };

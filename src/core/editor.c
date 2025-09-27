@@ -11,6 +11,7 @@
 #include "lib/keycodes.h"
 #include "line.h"
 #include "undo.h"
+#include "itostr.h"
 
 #define MAX_CMD 78
 #define PETSCII_COLOR_WHITE 5
@@ -18,6 +19,7 @@
 eVimKeyCode eCmd[MAX_CMD + 1] = {0};
 
 void setEditMode(tsState *psState, EditMode eNewMode) {
+    DEBUGF2("setEditMode: from %d to %d", (int)psState->eEditMode, (int)eNewMode);
     if (psState->eEditMode == eNewMode) {
         return;
     }
@@ -73,10 +75,21 @@ void editCommand(tsState *psState, eVimKeyCode eKar) {
         break;
 
     case VIM_KEY_ESC:
+    case VIM_KEY_STOP:
         setEditMode(psState, Default);
         break;
 
     case VIM_KEY_CR: {
+        char zDbgBuf[80];
+        strcpy(zDbgBuf, "eCmd: ");
+        for (uint8_t i = 0; eCmd[i] != VIM_KEY_NULL && i < MAX_CMD; i++) {
+            char zNum[5];
+            itostr(eCmd[i], zNum);
+            strcat(zDbgBuf, zNum);
+            strcat(zDbgBuf, ",");
+        }
+        DEBUG(zDbgBuf);
+
         const eVimKeyCode cmd_q[] = {VIM_KEY_Q_LOWER, VIM_KEY_NULL};
         const eVimKeyCode cmd_q_bang[] = {VIM_KEY_Q_LOWER, VIM_KEY_EXCLAMATION, VIM_KEY_NULL};
         const eVimKeyCode cmd_wq[] = {VIM_KEY_W_LOWER, VIM_KEY_Q_LOWER, VIM_KEY_NULL};
@@ -94,6 +107,7 @@ void editCommand(tsState *psState, eVimKeyCode eKar) {
             allocLine(psState, psState->iLineY, psState->pzEditBuffer);
             cmdWrite(psState, "", true);
         } else if (keycodes_cmp(eCmd, cmd_dollar) == 0) {
+            DEBUG("Calling cmdDirectoryListing");
             cmdDirectoryListing(psState);
         } else if (keycodes_cmp(eCmd, cmd_q) == 0) {
             if (!undo_is_dirty()) {
@@ -140,8 +154,10 @@ void edit(tsState *psState) {
         DEBUGF3("\nKey pressed:%c(%d) / mode:%d", (char)eKar, eKar, (int)psState->eEditMode);
 
         if (psState->eEditMode == Command) {
+            DEBUG("In Command mode branch");
             editCommand(psState, eKar);
         } else {
+            DEBUG("In Default/Insert mode branch");
             size_t iLen = keycodes_len(sEditState.kars);
             if (iLen < (sizeof(sEditState.kars) / sizeof(eVimKeyCode)) - 1) {
                 sEditState.kars[iLen] = eKar;

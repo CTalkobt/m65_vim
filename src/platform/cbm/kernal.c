@@ -66,35 +66,17 @@ void kPlotXY(unsigned char x, unsigned char y) {
 // k_cmp_far()
 // k_cursor -> see screen.h / scrCursorOn/off
 
-void kSetnam(char *pzFilename) {
-    asm volatile("jsr $ffbd\n"
-                 :
-                 : "a"((unsigned char)(strlen(pzFilename) & 0xff)),
-                   "x"((unsigned char)(((unsigned long)pzFilename) & 0xff)),
-                   "y"((unsigned char)(((unsigned long)pzFilename) >> 8))
-                 : "p");
-}
+// void kSetnam(char *pzFilename) {
+//     asm volatile("jsr $ffbd\n"
+//                  :
+//                  : "a"((unsigned char)(strlen(pzFilename) & 0xff)),
+//                    "x"((unsigned char)(((unsigned long)pzFilename) & 0xff)),
+//                    "y"((unsigned char)(((unsigned long)pzFilename) >> 8))
+//                  : "p");
+// }
 
-bool kOpen(unsigned char fileNum, unsigned char *pzFilename, unsigned char device, unsigned char secAddress) {
-
-    // setbnk
-    kSetBank(0, 0);
-
-    // setlfs
-    asm volatile("jsr $ffba\n" : : "a"(fileNum), "x"(device), "y"(secAddress) : "p");
-    // setnam
-
-    // Open it.
-    unsigned char carry_status;
-    asm volatile("jsr $ffc0\n\t"
-                 "php\n\t"
-                 "pla"
-                 : "=a"(carry_status)
-                 :
-                 : "p");
-
-    // Return true on success (carry clear), false on failure (carry set)
-    return (carry_status & 1) == 0;
+unsigned char kOpen(void) {
+    asm volatile("clc\nJSR $FFC0\n" :::  "p");
 }
 
 bool kReadLine(unsigned char fileNum, char *buffer, unsigned length) {
@@ -141,7 +123,8 @@ bool kReadLine(unsigned char fileNum, char *buffer, unsigned length) {
 
 unsigned char kChkin(unsigned char lfn) {
     unsigned char status;
-    __asm__("lda #%1\n\t"
+    __asm__("clc\n\t"
+            "ldx #%1\n\t"
             "jsr $FFC6\n\t"
             "php\n\t"
             "pla"

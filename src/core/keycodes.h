@@ -6,7 +6,7 @@ typedef enum {
     VIM_KEY_NULL = 0,
     VIM_KEY_CTRL_A = 1,
     VIM_KEY_CTRL_B = 2,
-    VIM_KEY_CTRL_C = 3,
+    VIM_KEY_RUN_STOP = 3,
     VIM_KEY_CTRL_D = 4,
     VIM_KEY_CTRL_E = 5,
     VIM_KEY_CTRL_F = 6,
@@ -146,6 +146,9 @@ typedef enum {
 
     // Help key (Mega65)
     VIM_KEY_HELP = 132,
+
+    // Run/Stop key (Mega65 and C64)
+    VIM_KEY_STOP = 3,
 
 } eVimKeyCode;
 

@@ -7,6 +7,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 
 // Add:
 //   KERNAL_LOWLEVEL for lower level kernal invocations
@@ -53,12 +54,30 @@ unsigned char kGetin(void);
 void kPlotXY(unsigned char x, unsigned char y);
 
 void inline kSetBank(unsigned char memBank, unsigned char filenameBank) {
-    asm volatile("jsr $ff6b\n" ::"a"(memBank), "x"(filenameBank) : "p");
+    asm volatile("clc\njsr $ff6b\n" ::"a"(memBank), "x"(filenameBank) : "p");
 }
 
-void kSetnam(char *pzFilename);
+void __inline__ kSetnam(char *pzFilename) {
+    unsigned long address = (unsigned int)pzFilename;
+    unsigned char len = strlen(pzFilename);
+    unsigned char low = (unsigned char)(address & 0xff);
+    unsigned char high = (unsigned char)((address >> 8) & 0xff);
+    __asm__("clc\n\t"
+            "jsr SETNAM\n\t"
+            : "=a"(status)
+            : "a"(len), "x"(low), "y"(high)
+            : "p");    
 
-bool kOpen(unsigned char fileNum, unsigned char *pzFilename, unsigned char device, unsigned char secAddress);
+    asm volatile("clc\n\t"
+                 "jsr SETNAM\n"
+                  ::"a"(len), "x"(low), "y"(high):"p");
+}
+
+void __inline__ kSetlfs(unsigned char ucLfn, unsigned char ucDevice, unsigned char ucSecAddress) {
+    asm volatile("jsr SETLFS\n"::"a"(ucLfn), "x"(ucDevice), "y"(ucSecAddress):"p");
+}
+
+unsigned char kOpen(void);
 unsigned char kOpenFile(unsigned char *pzFilename, unsigned char fileNum, unsigned char device, FileMode mode);
 
 bool kReadLine(unsigned char fileNum, char *buffer, unsigned length);
