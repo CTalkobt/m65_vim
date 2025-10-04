@@ -6,15 +6,20 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <cbm.h>
 
-// Headers from mega65-libc dependency
-#include <mega65/debug.h>
-#include <mega65/memory.h>
+#include <core/debug.h>
 
 // Local headers
 #include "cbm/kernal.h"
 #include "screen.h"
+#include "cbm/cbm_defs.h"
+
+#if defined(__CALYPSI__)
+// Stub for debug_msg when not using llvm-mos
+void debug_msg(const char* msg) {
+    (void)msg; // Unused parameter
+}
+#endif
 
 // Undefine conflicting macros from mega65-libc's memory.h
 // before including the llvm-mos SDK's mega65.h
@@ -31,7 +36,7 @@
 #include "debug.h"
 #include "itostr.h"
 
-#include <mega65.h>
+
 
 
 // --- Video/Rendering Functions ---
@@ -40,11 +45,11 @@ void plInitVideo() {
     // Set 80x25 mode by default
     _curScreenW = 80;
     _curScreenH = 25;
-    cbm_k_bsout(14); // Switch to lowercase character set
-    cbm_k_bsout(27);
-    cbm_k_bsout('8');
+    kBsout(14); // Switch to lowercase character set
+    kBsout(27);
+    kBsout('8');
     // Clear screen
-    cbm_k_bsout(147);
+    kBsout(147);
 }
 
 void plInitScreen() {
@@ -62,35 +67,28 @@ void plScreenShutdown() {
     _curScreenW = 80;
     _curScreenH = 25;
     scrScreenMode(_80x25);
-    scrColor(COLOR_WHITE, COLOR_BLUE);
+    scrColor(COLOR_WHITE, COLOR_CYAN);
     scrClear();
 }
 
-void plClearScreen() { cbm_k_bsout(147); }
+void plClearScreen() { kBsout(147); }
 
 void plDrawChar(unsigned char x, unsigned char y, char c, unsigned char color) {
     // Set color
-    POKE(0x0400 + y * _curScreenW + x, c);
-    POKE(0xD800 + y * _curScreenW + x, color);
+    *(volatile unsigned char*)(0x0400 + y * _curScreenW + x) = c;
+    *(volatile unsigned char*)(0xD800 + y * _curScreenW + x) = color;
 }
 
 void plSetCursor(unsigned char x, unsigned char y) { kPlotXY(x, y); }
 
 void plHideCursor() {
-    __asm__ volatile("sec\n"
-                     "jsr $ff35\n"
-                     :
-                     :
-                     : "a", "p");
+    // Implemented in kernal_calypsi.s
 }
 
 void plShowCursor() {
-    __asm__ volatile("clc\n"
-                     "jsr $ff35\n"
-                     :
-                     :
-                     : "a", "p");
+    // Implemented in kernal_calypsi.s
 }
+
 
 // --- Screen Information ---
 unsigned char plGetScreenWidth() { return _curScreenW; }
@@ -120,30 +118,30 @@ void plDebugMsg(const char *msg) { debug_msg(msg); }
 eVimKeyCode plGetKey() {
     unsigned char k;
 
-    POKE(0xD619U, 0);
+    *(volatile unsigned char*)(0xD619U) = 0;
 
-    while ((k = PEEK(0xD610U)) == 0)
+    while ((k = *(volatile unsigned char*)(0xD610U)) == 0)
         ;
     
-    k = PEEK(0xD619U);
+    k = *(volatile unsigned char*)(0xD619U);
     DEBUGF1("plGetKey returning: %d", k);
     return (eVimKeyCode)k;
 }
 
 unsigned char plKbHit(void) {
-    unsigned char c = PEEK(0xD610U);
+    unsigned char c = *(volatile unsigned char*)(0xD610U);
     if (c != 0)
-        c = PEEK(0xD619U);
+        c = *(volatile unsigned char*)(0xD619U);
     return c;
 }
 
 void plKbdBufferClear(void) {
-    while (PEEK(0xD610U)) {
-        POKE(0xD610U, 0);
+    while (*(volatile unsigned char*)(0xD610U)) {
+        *(volatile unsigned char*)(0xD610U) = 0;
     }
 }
 
-int plIsKeyPressed() { return PEEK(0xD610U); }
+int plIsKeyPressed() { return *(volatile unsigned char*)(0xD610U); }
 
 // --- File I/O Functions (Stubs for now) ---
 
@@ -216,8 +214,8 @@ void plDirectoryListing(void) {
     kOpen();
     DEBUG("AFTEROPEN");
 
-//    if (PEEK(0x90)) { // Check for error
-//        DEBUGF1("ERROR: %d", PEEK(0x90));
+//    if (*(volatile unsigned char*)(0x90)) { // Check for error
+//        DEBUGF1("ERROR: %d", *(volatile unsigned char*)(0x90));
 //        plPuts("Error reading directory\r\n");
 //        return;
 //    }
@@ -226,26 +224,26 @@ void plDirectoryListing(void) {
     kChkin(iLFN);
 //DEBUG("chkin");
     // Skip load address
-    cbm_k_basin();
+    kBasin();
 //DEBUG("basin");
-    cbm_k_basin();
+    kBasin();
 //DEBUG("basin-2");
 
     // Read directory entries
-    while (!PEEK(0x90)) {
+    while (!*(volatile unsigned char*)(0x90)) {
 //        DEBUG("WHILELOOP");
         unsigned int iBlocks;
         char c;
 
         // Read two-byte file size (blocks)
-        iBlocks = cbm_k_basin();
-//        if (PEEK(0x90)) {
-//            DEBUGF1("ERROR: %d", PEEK(0x90));
+        iBlocks = kBasin();
+//        if (*(volatile unsigned char*)(0x90)) {
+//            DEBUGF1("ERROR: %d", *(volatile unsigned char*)(0x90));
 //            break;
 //        }
-        iBlocks |= (unsigned int)cbm_k_basin() << 8;
-//        if (PEEK(0x90)) {
-//           DEBUGF1("ERROR: %d", PEEK(0x90));
+        iBlocks |= (unsigned int)kBasin() << 8;
+//        if (*(volatile unsigned char*)(0x90)) {
+//           DEBUGF1("ERROR: %d", *(volatile unsigned char*)(0x90));
 //           break;
 //        }
 
@@ -256,8 +254,8 @@ void plDirectoryListing(void) {
         plPuts(" ");
 
         // Read and print filename
-        while ((c = cbm_k_basin()) != 0) {
- //           if (PEEK(0x90))
+        while ((c = kBasin()) != 0) {
+ //           if (*(volatile unsigned char*)(0x90))
 //                 break;
             plPutChar(c);
         }
@@ -266,9 +264,9 @@ void plDirectoryListing(void) {
     }
 //DEBUG("AFTERWHILELOOP");
     // Cleanup
-    cbm_k_clrch();
+    kClrchn();
 //    DEBUG("clrch");
-    cbm_k_close(iLFN);
+    kClose(iLFN);
     DEBUG("k_close");
 }
 

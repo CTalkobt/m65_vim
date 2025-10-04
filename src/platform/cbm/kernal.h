@@ -45,53 +45,17 @@ bool kAddKey(unsigned char key);
  */
 void kReset(enum ResetType resetType);
 
-void inline kBsout(unsigned char kar) { asm volatile("jsr $ffd2\n" ::"a"(kar) : "p"); }
-
+void kBsout(unsigned char kar);
 unsigned char kBasin(void);
-
 unsigned char kGetin(void);
-
 void kPlotXY(unsigned char x, unsigned char y);
-
-void inline kSetBank(unsigned char memBank, unsigned char filenameBank) {
-    asm volatile("clc\njsr $ff6b\n" ::"a"(memBank), "x"(filenameBank) : "p");
-}
-
-void __inline__ kSetnam(char *pzFilename) {
-    unsigned long address = (unsigned int)pzFilename;
-    unsigned char len = strlen(pzFilename);
-    unsigned char low = (unsigned char)(address & 0xff);
-    unsigned char high = (unsigned char)((address >> 8) & 0xff);
-    __asm__("clc\n\t"
-            "jsr SETNAM\n\t"
-            : "=a"(status)
-            : "a"(len), "x"(low), "y"(high)
-            : "p");    
-
-    asm volatile("clc\n\t"
-                 "jsr SETNAM\n"
-                  ::"a"(len), "x"(low), "y"(high):"p");
-}
-
-void __inline__ kSetlfs(unsigned char ucLfn, unsigned char ucDevice, unsigned char ucSecAddress) {
-    asm volatile("jsr SETLFS\n"::"a"(ucLfn), "x"(ucDevice), "y"(ucSecAddress):"p");
-}
-
+void kSetBank(unsigned char memBank, unsigned char filenameBank);
+void kSetnam(char *pzFilename);
+void kSetlfs(unsigned char ucLfn, unsigned char ucDevice, unsigned char ucSecAddress);
 unsigned char kOpen(void);
-unsigned char kOpenFile(unsigned char *pzFilename, unsigned char fileNum, unsigned char device, FileMode mode);
-
-bool kReadLine(unsigned char fileNum, char *buffer, unsigned length);
-
-void kClrchn(void);
-
 void kClose(unsigned char fileNum);
-void kWriteLine(uint8_t channel, const char *buffer);
-
 unsigned char kChkin(unsigned char lfn);
-
-/**
- * Enable function key expansion.
- */
+void kClrchn(void);
 void kFnKeyMacros(bool enable);
 
 #endif // KERNAL_H

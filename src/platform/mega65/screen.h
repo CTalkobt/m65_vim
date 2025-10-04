@@ -1,4 +1,6 @@
-#pragma once
+#ifndef PLATFORM_MEGA65_SCREEN_H
+#define PLATFORM_MEGA65_SCREEN_H
+
 #include "kernal.h"
 
 extern unsigned char _curScreenW;
@@ -50,3 +52,5 @@ void inline scrClearEOL(void) {
     kBsout(27);
     kBsout('Q');
 }
+
+#endif // PLATFORM_MEGA65_SCREEN_H

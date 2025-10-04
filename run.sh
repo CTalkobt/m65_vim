@@ -27,7 +27,7 @@ build_m65() {
     echo ""
     echo "--- Building Mega65 ---"
     rm -rf cmake-build-m65
-    cmake -B cmake-build-m65 -S . -DPLATFORM=mega65 && \
+    cmake -B cmake-build-m65 -S . -DPLATFORM=mega65 -DCOMPILER_TOOLCHAIN=calypsi && \
     cmake --build cmake-build-m65 && \
     cmake --install cmake-build-m65
 }

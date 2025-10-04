@@ -2,36 +2,27 @@
 
 #include "itostr.h"
 #include "platform.h"
-#include <cbm.h>
-#include <peekpoke.h>
+#include "cbm/kernal.h"
+
 #include <stddef.h> // for NULL
 #include <stdlib.h>
 #include <string.h> // for strcpy, strcat
 
 // Video/Rendering Functions
 void plInitVideo() {
-    cbm_k_bsout(14); // Switch to lowercase character set
+    kBsout(14); // Switch to lowercase character set
 }
 
 void plClearScreen() { plPutChar(147); }
 
 void plDrawChar(unsigned char iX, unsigned char iY, char c, unsigned char iColor) {
     unsigned int iAddr = 0x0400 + (unsigned int)iY * 40 + iX;
-    POKE(iAddr, c);
-    POKE(0xd800 + iAddr, iColor);
+    *(volatile unsigned char*)(iAddr) = c;
+    *(volatile unsigned char*)(0xd800 + iAddr) = iColor;
 }
 
 void plSetCursor(unsigned char iX, unsigned char iY) {
-    // Use GCC-style inline assembly to call the KERNAL PLOT routine ($FFF0).
-    // NOTE: The KERNAL PLOT routine has non-standard register usage:
-    // - X-Register holds the ROW (our Y coordinate).
-    // - Y-Register holds the COLUMN (our X coordinate).
-    __asm__ volatile("clc\n\t"
-                     "jsr $fff0"
-                     :                  /* no outputs */
-                     : "x"(iY), "y"(iX) /* inputs: y in X, x in Y */
-                     : "p"              /* clobbers: processor status flags */
-    );
+    kPlotXY(iX, iY);
 }
 
 void plHideCursor() {
@@ -66,22 +57,22 @@ void plPutChar(char c) { cbm_k_bsout(c); }
 
 void plClearEOL() {
     // Get cursor position from zeropage
-    unsigned char iX = PEEK(211);
-    unsigned char iY = PEEK(214);
+    unsigned char iX = *(volatile unsigned char*)(211);
+    unsigned char iY = *(volatile unsigned char*)(214);
 
     // Calculate screen RAM address
     unsigned int iAddr = 0x0400 + (iY * 40) + iX;
 
     // Fill rest of the line with spaces
     for (unsigned char i = iX; i < 40; i++) {
-        POKE(iAddr++, ' ');
+        *(volatile unsigned char*)(iAddr++) = ' ';
     }
 }
 
 void plSetColor(unsigned char iColor) {
     // This is a simplified implementation.
     // It sets the color for subsequent characters printed via KERNAL.
-    POKE(646, iColor);
+    *(volatile unsigned char*)(646) = iColor;
 }
 
 // Debugging
@@ -91,15 +82,15 @@ void plDebugMsg(const char *pzMsg) {
 }
 
 // Keyboard Input Functions
-eVimKeyCode plGetKey() { return (eVimKeyCode)cbm_k_getin(); }
+eVimKeyCode plGetKey() { return (eVimKeyCode)kGetin(); }
 
-unsigned char plKbHit(void) { return PEEK(197); }
+unsigned char plKbHit(void) { return *(volatile unsigned char*)(197); }
 
 void plKbdBufferClear(void) {
     // @@TODO: Implement if possible
 }
 
-int plIsKeyPressed() { return PEEK(197); }
+int plIsKeyPressed() { return *(volatile unsigned char*)(197); }
 
 // File I/O Functions
 PlFileHandle plOpenFile(const char *pzFilename, const char *pzMode) {
@@ -112,13 +103,11 @@ PlFileHandle plOpenFile(const char *pzFilename, const char *pzMode) {
     } else if (pzMode[0] == 'r') {
         iSecAddr = 0; // Read mode
     }
+    kSetlfs(iLFN, iDevice, iSecAddr);
+    kSetnam((char*)pzFilename);
+    kOpen();
 
-    cbm_k_setlfs(iLFN, iDevice, iSecAddr);
-    cbm_k_setnam(pzFilename);
-    cbm_k_open();
-
-    // Check for errors
-    if (PEEK(0x90) != 0) {
+    if (*(volatile unsigned char*)(0x90) != 0) {
         return NULL;
     }
 
@@ -128,21 +117,18 @@ PlFileHandle plOpenFile(const char *pzFilename, const char *pzMode) {
 int plReadFile(PlFileHandle pHandle, void *pBuffer, unsigned int iSize) {
     unsigned char iLFN = (unsigned char)(unsigned long)pHandle;
     unsigned int iBytesRead = 0;
-    char *p = (char *)pBuffer;
-
-    cbm_k_chkin(iLFN);
+    kChkin(iLFN);
 
     while (iBytesRead < iSize) {
-        *p = cbm_k_basin();
-        if (PEEK(0x90) != 0) { // Check for end of file
+        *p = kBasin();
+        if (*(volatile unsigned char*)(0x90) != 0) { // Check for end of file
             break;
         }
         p++;
         iBytesRead++;
     }
 
-    cbm_k_clrch();
-    return iBytesRead;
+    kClrchn();
 }
 
 int plWriteFile(PlFileHandle pHandle, const void *pBuffer, unsigned int iSize) {
@@ -162,8 +148,7 @@ int plWriteFile(PlFileHandle pHandle, const void *pBuffer, unsigned int iSize) {
 }
 
 void plCloseFile(PlFileHandle pHandle) {
-    unsigned char iLFN = (unsigned char)(unsigned long)pHandle;
-    cbm_k_close(iLFN);
+    kClose(iLFN);
 }
 
 int plRemoveFile(const char *pzFilename) {
@@ -211,29 +196,29 @@ void plDirectoryListing(void) {
     cbm_k_setnam("$");
     cbm_k_open();
 
-    if (PEEK(0x90)) { // Check for error
+    if (*(volatile unsigned char*)(0x90)) { // Check for error
         plPuts("Error reading directory\r\n");
         return;
     }
 
     // Set input to directory channel
-    cbm_k_chkin(iLFN);
+    kChkin(iLFN);
 
     // Skip load address
-    cbm_k_basin();
-    cbm_k_basin();
+    kBasin();
+    kBasin();
 
     // Read directory entries
-    while (!PEEK(0x90)) {
+    while (!*(volatile unsigned char*)(0x90)) {
         unsigned int iBlocks;
         char c;
 
         // Read two-byte file size (blocks)
-        iBlocks = cbm_k_basin();
-        if (PEEK(0x90))
+        iBlocks = kBasin();
+        if (*(volatile unsigned char*)(0x90))
             break;
-        iBlocks |= (unsigned int)cbm_k_basin() << 8;
-        if (PEEK(0x90))
+        iBlocks |= (unsigned int)kBasin() << 8;
+        if (*(volatile unsigned char*)(0x90))
             break;
 
         // Print block count
@@ -243,8 +228,8 @@ void plDirectoryListing(void) {
         plPuts(" ");
 
         // Read and print filename
-        while ((c = cbm_k_basin()) != 0) {
-            if (PEEK(0x90))
+        while ((c = kBasin()) != 0) {
+            if (*(volatile unsigned char*)(0x90))
                 break;
             plPutChar(c);
         }
@@ -252,7 +237,6 @@ void plDirectoryListing(void) {
         plPutChar('\n');
     }
 
-    // Cleanup
-    cbm_k_clrch();
-    cbm_k_close(iLFN);
+    kClrchn();
+    kClose(iLFN);
 }

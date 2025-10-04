@@ -1,0 +1,42 @@
+# Makefile for the C64 platform
+
+TARGET := bin/vim_c64
+
+# Source files
+CORE_SRCS := $(wildcard src/core/*.c) $(wildcard src/core/lib/*.c)
+PLATFORM_SRCS := src/platform/c64/platform_c64.c src/platform/cbm/kernal.c
+ASSEMBLY_SRCS := src/platform/cbm/kernal_calypsi.s
+SRCS := $(CORE_SRCS) $(PLATFORM_SRCS)
+
+# Assembly files generated from C sources
+ASMS := $(SRCS:.c=.s)
+# Object files generated from assembly sources
+OBJS := $(ASMS:.s=.o) $(ASSEMBLY_SRCS:.s=.o)
+
+# --- Toolchain Configuration ---
+CC := cc6502
+AS := as6502
+LD := cc6502
+CFLAGS := -g -Isrc -Isrc/core -Isrc/platform -Isrc/platform/cbm -D__C64__ -D__CBM__ -D__CALYPSI__ -DDEBUG_ON
+CFLAGS += --core=6502 --target=C64 --char-is-unsigned
+ASFLAGS := --core=6502
+LDFLAGS :=
+
+# Default target
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	@mkdir -p bin
+	$(LD) $(OBJS) -o $(TARGET) $(LDFLAGS)
+	@echo "Build complete: $(TARGET)"
+
+%.s: %.c
+	$(CC) $(CFLAGS) -S $< -o $@
+
+%.o: %.s
+	$(AS) $(ASFLAGS) $< -o $@
+
+clean:
+	rm -f $(ASMS) $(OBJS) $(TARGET)
+
+.PHONY: all clean

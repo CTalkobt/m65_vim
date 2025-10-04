@@ -1,12 +1,12 @@
 #include "screen.h"
 
-#include <cbm.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
 #include "debug.h"
 #include "mega65/memory.h"
+#include "cbm/kernal.h"
 
 unsigned char _curScreenW = 80; // NOLINT(*-reserved-identifier)
 unsigned char _curScreenH = 25; // NOLINT(*-reserved-identifier)
@@ -16,21 +16,21 @@ void scrScreenMode(enum ScreenMode mode) {
     case _40x25:
         _curScreenW = 40;
         _curScreenH = 25;
-        cbm_k_bsout(27);
-        cbm_k_bsout('4');
+        kBsout(27);
+        kBsout('4');
         break;
     case _80x25:
         _curScreenW = 80;
         _curScreenH = 25;
-        cbm_k_bsout(27);
-        cbm_k_bsout('8');
+        kBsout(27);
+        kBsout('8');
         break;
     case _80x50:
         _curScreenW = 80;
         _curScreenH = 50;
-        cbm_k_bsout(27);
-        cbm_k_bsout('5');
-        [[fallthrough]];
+        kBsout(27);
+        kBsout('5');
+        // [[fallthrough]];
     default:
         break;
     }
@@ -60,20 +60,12 @@ void scrColor(unsigned char screenColor, unsigned char brdrColor) {
 
 void scrTextColor(char textColor) { *((unsigned char *)0xf1) = textColor; }
 
-void inline scrCursorOn(void) {
-    __asm__ volatile("clc\n"
-                     "jsr $ff35\n"
-                     : /* no output */
-                     : /*no input*/
-                     : /*clobbers */ "a", "p");
+void scrCursorOn(void) {
+    // Implemented in kernal_calypsi.s
 }
 
-void inline scrCursorOff(void) {
-    __asm__ volatile("sec\n"
-                     "jsr $ff35\n"
-                     : /*out*/
-                     : /*in*/
-                     : /*clobber */ "a", "p");
+void scrCursorOff(void) {
+    // Implemented in kernal_calypsi.s
 }
 
 static const unsigned char hexDigits[] = {'0', '1', '2',  '3',  '4',  '5',  '6',  '7',

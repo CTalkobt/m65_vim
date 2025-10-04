@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ITOSTR_H
+#define ITOSTR_H
+
 #include <stdint.h>
 
 /**
@@ -10,3 +12,5 @@
  * @param buffer A pointer to store the resulting string.
  */
 void itostr(uint16_t value, char *buffer);
+
+#endif // ITOSTR_H

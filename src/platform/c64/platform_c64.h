@@ -2,6 +2,7 @@
 #define PLATFORM_C64_H
 
 #include "../core/globals.h"
+#include "cbm/cbm_defs.h"
 
 #define PLATFORM_FILENAME_COL 10
 

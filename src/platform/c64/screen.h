@@ -1,4 +1,6 @@
-#pragma once
+#ifndef PLATFORM_C64_SCREEN_H
+#define PLATFORM_C64_SCREEN_H
+
 #include "cbm/kernal.h"
 
 enum ScreenMode { _40x25 };
@@ -45,3 +47,5 @@ void scrPutDec(unsigned long n, unsigned char leadingZeros);
 
 void scrClearEOL(void);
 void scrClearEOS(void);
+
+#endif // PLATFORM_C64_SCREEN_H

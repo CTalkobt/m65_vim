@@ -144,10 +144,11 @@ DEBUG("edit() - exit:\n");
 }
 
 #define VIC_BASE 0xD000UL
-#define SET_H640() POKE(VIC_BASE + 0x31, PEEK(VIC_BASE + 0x31) | 128)
-#define CLEAR_H640() POKE(VIC_BASE + 0x31, PEEK(VIC_BASE + 0x31) & 127)
-#define CLEAR_V400() POKE(VIC_BASE + 0x31, PEEK(VIC_BASE + 0x31) & 0xF7)
-#define SET_V400() POKE(VIC_BASE + 0x31, PEEK(VIC_BASE + 0x31) | 8)
+#define SET_H640() (*(volatile unsigned char*)(VIC_BASE + 0x31) = (*(volatile unsigned char*)(VIC_BASE + 0x31)) | 128)
+#define CLEAR_H640() (*(volatile unsigned char*)(VIC_BASE + 0x31) = (*(volatile unsigned char*)(VIC_BASE + 0x31)) & 127)
+#define CLEAR_V400() (*(volatile unsigned char*)(VIC_BASE + 0x31) = (*(volatile unsigned char*)(VIC_BASE + 0x31)) & 0xF7)
+#define SET_V400() (*(volatile unsigned char*)(VIC_BASE + 0x31) = (*(volatile unsigned char*)(VIC_BASE + 0x31)) | 8)
+
 extern unsigned char g_curScreenW;
 extern unsigned char g_curScreenH;
 void mysetscreensize(unsigned  char w, unsigned char h)
@@ -169,8 +170,8 @@ void mysetscreensize(unsigned  char w, unsigned char h)
     //     CLEAR_V400();
     // }
 
-    POKE(VIC_BASE+0x31, (uint8_t) 232);
-    POKE(VIC_BASE+0x4c, (uint8_t) 80);
+    *(volatile unsigned char*)(VIC_BASE+0x31) = (uint8_t) 232;
+    *(volatile unsigned char*)(VIC_BASE+0x4c) = (uint8_t) 80;
 
     // Cache values.
     if (w == 40 || w == 80) {

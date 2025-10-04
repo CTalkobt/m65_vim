@@ -1,7 +1,7 @@
 #include "screen.h"
 
 #include <cbm.h>
-#include <peekpoke.h>
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -23,16 +23,25 @@ void scrDupeChar(unsigned char n, unsigned char kar) {
 void scrClearLine(unsigned int y) {
     unsigned int addr = 0x0400 + (y * SCREEN_WIDTH);
     for (unsigned char i = 0; i < SCREEN_WIDTH; i++) {
-        POKE(addr + i, ' ');
+        *(volatile unsigned char*)(addr + i) = ' ';
+    }
+}
+
+void scrClearEOL(void) {
+    unsigned char x = *(volatile unsigned char*)(211);
+    unsigned char y = *(volatile unsigned char*)(214);
+    unsigned int addr = 0x0400 + (y * SCREEN_WIDTH) + x;
+    for (unsigned char i = x; i < SCREEN_WIDTH; i++) {
+        *(volatile unsigned char*)(addr++) = ' ';
     }
 }
 
 void scrColor(unsigned char screenColor, unsigned char brdrColor) {
-    POKE(53281, screenColor);
-    POKE(53280, brdrColor);
+    *(volatile unsigned char*)(53281) = screenColor;
+    *(volatile unsigned char*)(53280) = brdrColor;
 }
 
-void scrTextColor(char textColor) { POKE(646, textColor); }
+void scrTextColor(char textColor) { *(volatile unsigned char*)(646) = textColor; }
 
 void scrCursorOn(void) {
     // Not directly supported by C64 KERNAL, would require custom cursor handling.
@@ -62,9 +71,8 @@ void scrPutDec(unsigned long n, unsigned char leadingZeros) {
     scrPuts(&buffer[digit + 1]);
 }
 
-void scrClearEOL(void) {
-    unsigned char x = PEEK(211);
-    unsigned char y = PEEK(214);
+    unsigned char x = *(volatile unsigned char*)(211);
+    unsigned char y = *(volatile unsigned char*)(214);
     unsigned int addr = 0x0400 + (y * SCREEN_WIDTH) + x;
     for (unsigned char i = x; i < SCREEN_WIDTH; i++) {
         POKE(addr++, ' ');
@@ -72,17 +80,17 @@ void scrClearEOL(void) {
 }
 
 void scrClearEOS(void) {
-    unsigned char x = PEEK(211);
-    unsigned char y = PEEK(214);
+    unsigned char x = *(volatile unsigned char*)(211);
+    unsigned char y = *(volatile unsigned char*)(214);
     unsigned int addr = 0x0400 + (y * SCREEN_WIDTH) + x;
 
     // Clear the rest of the current line
     for (unsigned char i = x; i < SCREEN_WIDTH; i++) {
-        POKE(addr++, ' ');
+        *(volatile unsigned char*)(addr++) = ' ';
     }
 
     // Clear the rest of the screen
     for (unsigned int i = (y + 1) * SCREEN_WIDTH; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++) {
-        POKE(0x0400 + i, ' ');
+        *(volatile unsigned char*)(0x0400 + i) = ' ';
     }
 }
