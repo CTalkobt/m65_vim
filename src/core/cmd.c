@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "cmd.h"
@@ -368,6 +369,82 @@ teCmdResult cmdUndo(tsState *psState, tsEditState *psEditState) {
     drawStatus(psState); // Redraw status to reflect potential change in dirty flag
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }
+
+teCmdResult cmdEdit(tsState *psState, char *pzCmdRemainder) {
+    // 1. Get filename, skipping leading space
+    char *pzFilename = pzCmdRemainder;
+    while (*pzFilename == ' ') {
+        pzFilename++;
+    }
+
+    if (*pzFilename == '\0') {
+        // TODO: Show "E32: No file name" error
+        return CMD_RESULT_SINGLE_CHAR_ACK;
+    }
+
+    // 3. Open file
+    PlFileHandle pFileHandle = plOpenFile(pzFilename, "r");
+
+    if (!pFileHandle) {
+        snprintf(psState->zError, MAX_LINE_LENGTH, "Error: File not found: %s", pzFilename);
+        return CMD_RESULT_SINGLE_CHAR_ACK;
+    }
+
+    // 2. Clear the buffer
+    freeAllLines(psState);
+
+    // 4. Read the file in chunks and insert lines
+    char zReadBuf[256];
+    char zLineBuf[MAX_LINE_LENGTH] = {0};
+    int iLineLen = 0;
+    int iBytesRead;
+    unsigned int iLinesRead = 0;
+    uint16_t iInsertPos = 0;
+
+    while ((iBytesRead = plReadFile(pFileHandle, zReadBuf, sizeof(zReadBuf))) > 0) {
+        for (int i = 0; i < iBytesRead; i++) {
+            char c = zReadBuf[i];
+            if (c == '\n') {
+                zLineBuf[iLineLen] = '\0';
+                if (!insertLine(psState, iInsertPos, zLineBuf)) {
+                    // TODO: Show error, buffer full
+                    goto end_read;
+                }
+                iInsertPos++;
+                iLinesRead++;
+                iLineLen = 0;       // Reset for the next line
+            } else if (c != '\r') { // Ignore carriage returns
+                if (iLineLen < MAX_LINE_LENGTH - 1) {
+                    zLineBuf[iLineLen++] = c;
+                }
+            }
+        }
+    }
+
+end_read:
+    // If the file doesn't end with a newline, insert the last partial line.
+    if (iLineLen > 0) {
+        zLineBuf[iLineLen] = '\0';
+        if (insertLine(psState, iInsertPos + 1, zLineBuf)) {
+            iLinesRead++;
+        }
+    }
+
+    // 5. Close file
+    plCloseFile(pFileHandle);
+
+    // 6. Redraw and show status
+    if (iLinesRead > 0) {
+        psState->iLineY = 0;
+        psState->iXPos = 0;
+        loadLine(psState, 0);
+        draw_screen(psState);
+        // TODO: show status message: "%s" %dL read", filename, lines_read
+    }
+
+    return CMD_RESULT_SINGLE_CHAR_ACK;
+}
+
 
 teCmdResult cmdRead(tsState *psState, char *pzCmdRemainder) {
     // 1. Get filename, skipping leading space

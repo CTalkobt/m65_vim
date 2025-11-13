@@ -148,9 +148,7 @@ int main(void) {
 
     psState->iLines = 1;
     psState->iLineY = 0;
-    psState->iXPos = 0;
-    psState->doExit = false;
-    psState->isReadOnly = false;
+    psState->zError[0] = '\0';
     psState->screenStart.xPos = 0;
     psState->screenStart.yPos = 0;
     psState->eEditMode = Default;

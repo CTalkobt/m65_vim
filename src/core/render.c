@@ -69,6 +69,15 @@ void drawStatus(const tsState *psState) {
     unsigned char iScreenHeight = plGetScreenHeight();
     unsigned char iScreenWidth = plGetScreenWidth();
 
+    if (psState->zError[0] != '\0') {
+        plSetCursor(0, iScreenHeight - 1);
+        plPuts(psState->zError);
+        ((tsState *)psState)->zError[0] = '\0';
+        plClearEOL();
+        plSetCursor(psState->iXPos, psState->iLineY - psState->screenStart.yPos);
+        return;
+    }
+
     // Status line:
     // "filename" <count>L, <count>B          x,ypos  n%
     // "text.txt" 20L, 400B                     5,6 10%

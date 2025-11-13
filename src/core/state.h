@@ -29,6 +29,7 @@ typedef struct sState {
     EditMode eEditMode;     // Current edit mode.
     char **p2zText;
     char *pzEditBuffer;
+    char zError[MAX_LINE_LENGTH + 1];
 } tsState;
 
 #endif

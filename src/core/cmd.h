@@ -54,6 +54,7 @@ teCmdResult cmdPageForward(tsState *psState, tsEditState *psEditState);
 teCmdResult cmdPageBack(tsState *psState, tsEditState *psEditState);
 teCmdResult cmdModeDefault(tsState *psState, tsEditState *psEditState);
 teCmdResult cmdModeCommand(tsState *psState, tsEditState *psEditState);
+teCmdResult cmdEdit(tsState *psState, char *pzCmdRemainder);
 teCmdResult cmdRead(tsState *psState, char *pzCmdRemainder);
 teCmdResult cmdWrite(tsState *psState, char *pzCmdRemainder, bool force);
 teCmdResult cmdDirectoryListing(tsState *psState);

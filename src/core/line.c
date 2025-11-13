@@ -60,8 +60,7 @@ bool allocLine(tsState *psState, uint16_t iLineIndex, const char *pzNewContent) 
 
 bool insertLine(tsState *psState, uint16_t iIndex, const char *pzContent) {
     if (iIndex > psState->iLines) {
-        DEBUG("ERROR:Can't insert past lines.");
-        return false;
+        iIndex = psState->iLines;
     }
     if (psState->iLines >= psState->iMaxLines) {
         DEBUG("ERROR:Can't insert past max_lines.");

@@ -115,6 +115,10 @@ void editCommand(tsState *psState, eVimKeyCode eKar) {
             } else {
                 // TODO: Indicate can't quit while buffer dirty, or use q!
             }
+        } else if (eCmd[0] == VIM_KEY_E_LOWER) {
+            char zFilename[MAX_CMD];
+            keycodes_to_string(&eCmd[1], zFilename, MAX_CMD);
+            cmdEdit(psState, zFilename);
         } else if (eCmd[0] == VIM_KEY_R_LOWER) {
             char zFilename[MAX_CMD];
             keycodes_to_string(&eCmd[1], zFilename, MAX_CMD);
@@ -152,6 +156,12 @@ void edit(tsState *psState) {
     do {
         eVimKeyCode eKar = plGetKey();
         DEBUGF3("\nKey pressed:%c(%d) / mode:%d", (char)eKar, eKar, (int)psState->eEditMode);
+
+        if (psState->zError[0] != '\0') {
+            psState->zError[0] = '\0';
+            draw_screen(psState);
+        }
+
 
         if (psState->eEditMode == Command) {
             DEBUG("In Command mode branch");

@@ -45,5 +45,6 @@ Command Mode Commands
 - `:w`:                Write the file
 - `:w!`:               Force write the file
 - `:wq`:               Write the file and quit
-- `:r <filename>`:     Read a file into the buffer (placeholder)
+- `:r <filename>`:     Append a file into the buffer
+- `:e <filename>`:     Read a file into the buffer
 - `:!$`:               Directory listing (placeholder)
