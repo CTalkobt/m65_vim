@@ -1,136 +1,111 @@
-    .public _kSetnam
-    .public _kSetlfs
-    .public _kOpen
-    .public _kClose
-    .public _kChkin
-    .public _kClrchn
-    .public _kBasin
-    .public _kGetin
-    .public _kPlotXY
-    .public _kFnKeyMacros
-    .public _plHideCursor
-    .public _plShowCursor
-    .public _scrCursorOn
-    .public _scrCursorOff
+    .section code
+    .extern _Zp
 
-    .segment code
-
-    .public _kBsout
-_kBsout: 
-    pha
-    lda 2,sp
-    jsr $ffd2
-    pla
-    rts
+    .public kBsout
+kBsout: jmp 0xffd2
 
 
-    .public _kSetBank
-_kSetBank:
-    pha
-    lda 2,s
-    ldx 3,s
+    .public kSetBank
+kSetBank:
+    ldx zp:_Zp+0
     clc
-    jsr $ff6b
-    pla
+    jsr 0xff6b
     rts
 
-_kSetnam:
-    pha
-    lda 2,s
-    ldx 3,s
-    ldy 4,s
+    .public kSetnam
+kSetnam:
+    ldx zp:_Zp+0
+    ldy zp:_Zp+1
     clc
-    jsr $ffbd
-    pla
+    jsr 0xffbd
     rts
 
-_kSetlfs:
-    pha
-    lda 2,s
-    ldx 3,s
-    ldy 4,s
-    jsr $ffba
-    pla
+    .public kSetlfs
+kSetlfs:
+    ldx zp:_Zp+0
+    ldy zp:_Zp+1
+    jsr 0xffba
     rts
 
-_kOpen:
+    .public kOpen
+kOpen:
     clc
-    jsr $ffc0
+    jsr 0xffc0
     rts
 
-_kClose:
-    pha
-    lda 2,s
+    .public kClose
+kClose:
     sec
-    jsr $ffc3
-    pla
+    jsr 0xffc3
     rts
 
-_kChkin:
-    pha
-    lda 2,s
-    jsr $ffc6
-    pla
+    .public kChkin
+kChkin:
+    jsr 0xffc6
     rts
 
-_kClrchn:
-    jsr $ffcc
+    .public kClrchn
+kClrchn:
+    jsr 0xffcc
     rts
 
-_kBasin:
-    jsr $ffcf
+    .public kBasin
+kBasin:
+    jsr 0xffcf
     rts
 
-_kGetin:
-    jsr $ffe4
+    .public kGetin
+kGetin:
+    jsr 0xffe4
     rts
 
-_kPlotXY:
-    pha
-    ldx 2,s
-    ldy 3,s
+    .public kReset
+kReset:
+    jmp 0xffd5
+
+    .public kPlotXY
+kPlotXY:
+    ldx zp:_Zp+0
     clc
-    jsr $fff0
-    pla
+    jsr 0xfff0
     rts
 
-_kFnKeyMacros:
-    pha
-    lda 2,s
-    beq disable
-enable:
+    .public scrClear
+scrClear:
+    lda #147
+    jmp 0xffd2
+
+    .public kFnKeyMacros
+kFnKeyMacros:
+    beq disable$
+enable$:
     sec
-    jsr $ff47
-    and #$ff-32
+    jsr 0xff47
+    and #0xff-32
     clc
-    jsr $ff47
-    jmp done
-disable:
+    jsr 0xff47
+    jmp done$
+disable$:
     sec
-    jsr $ff47
+    jsr 0xff47
     ora #32
     clc
-    jsr $ff47
-done:
-    pla
+    jsr 0xff47
+done$:
     rts
 
-_plHideCursor:
-    sec
-    jsr $ff35
-    rts
-
-_plShowCursor:
+    .public scrCursorOn
+    .public plShowCursor
+plShowCursor:
+scrCursorOn:
     clc
-    jsr $ff35
+    jsr 0xff35
     rts
 
-_scrCursorOn:
-    clc
-    jsr $ff35
-    rts
-
-_scrCursorOff:
+    .public scrCursorOff
+    .public plHideCursor
+plHideCursor:
+scrCursorOff:
     sec
-    jsr $ff35
+    jsr 0xff35
     rts

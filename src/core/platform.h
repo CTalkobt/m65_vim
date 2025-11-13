@@ -1,7 +1,7 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
-#if defined(__MEGA65__) || defined(__C64__)
+#if defined(__MEGA65__) || defined(__C64__) || defined(__CALYPSI__)
 #define _INLINE_ inline
 #else
 #define _INLINE_

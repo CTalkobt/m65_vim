@@ -3,6 +3,7 @@
 
 #include "platform.h"
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -17,7 +18,27 @@
 #if defined(__CALYPSI__)
 // Stub for debug_msg when not using llvm-mos
 void debug_msg(const char* msg) {
-    (void)msg; // Unused parameter
+    while (*msg) {
+        __asm volatile (
+            " sta 0xd643\n"
+            " clv\n"
+            :
+            : "Ka"(*msg)
+            : "a"
+        );
+        msg++;
+    }
+
+    // Add carriage return
+    __asm volatile (
+        " lda #13\n"
+        " sta 0xd643\n"
+        " clv\n"
+        " lda #10\n"
+        " sta 0xd643\n"
+        " clv\n"
+        : : : "a"
+    );
 }
 #endif
 
@@ -81,13 +102,7 @@ void plDrawChar(unsigned char x, unsigned char y, char c, unsigned char color) {
 
 void plSetCursor(unsigned char x, unsigned char y) { kPlotXY(x, y); }
 
-void plHideCursor() {
-    // Implemented in kernal_calypsi.s
-}
 
-void plShowCursor() {
-    // Implemented in kernal_calypsi.s
-}
 
 
 // --- Screen Information ---

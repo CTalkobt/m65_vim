@@ -109,7 +109,7 @@ uint16_t initTextBuffer(tsState *psState) {
     return psState->iMaxLines;
 }
 
-tsState _INLINE_ *getInitialEditState() {
+tsState *getInitialEditState() {
     tsState *psState = calloc(1, sizeof(tsState));
 #ifdef MALLOC_CHECKS
     if (!psState) {
@@ -142,7 +142,7 @@ int main(void) {
     tsState *psState = getInitialEditState();
 
     // Determine the maximum number of lines allowed in the text buffer
-    const int iMaxLines = 50; // This should be set based on available memory or other criteria
+    const int iMaxLines = 30; // This should be set based on available memory or other criteria
     psState->iMaxLines = iMaxLines;
     initTextBuffer(psState);
 
