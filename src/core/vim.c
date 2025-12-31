@@ -110,6 +110,7 @@ uint16_t initTextBuffer(tsState *psState) {
 }
 
 tsState *getInitialEditState() {
+    const int iMaxLines = 30; // This should be set based on available memory or other criteria
     tsState *psState = calloc(1, sizeof(tsState));
 #ifdef MALLOC_CHECKS
     if (!psState) {
@@ -126,23 +127,6 @@ tsState *getInitialEditState() {
         return NULL;
     }
 #endif
-    return psState;
-}
-
-int main(void) {
-    DEBUG("INFO: vim started");
-
-    plInitVideo();
-    plInitScreen();
-
-
-
-
-
-    tsState *psState = getInitialEditState();
-
-    // Determine the maximum number of lines allowed in the text buffer
-    const int iMaxLines = 30; // This should be set based on available memory or other criteria
     psState->iMaxLines = iMaxLines;
     initTextBuffer(psState);
 
@@ -153,6 +137,16 @@ int main(void) {
     psState->screenStart.yPos = 0;
     psState->eEditMode = Default;
     psState->zFilename[0] = '\0';
+    return psState;
+}
+
+int main(void) {
+    DEBUG("INFO: vim started");
+
+    plInitVideo();
+    plInitScreen();
+
+    tsState *psState = getInitialEditState();
 
     undo_init();
 

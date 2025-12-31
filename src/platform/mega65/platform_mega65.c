@@ -58,24 +58,13 @@ void debug_msg(const char* msg) {
 #include "itostr.h"
 
 
-
-
 // --- Video/Rendering Functions ---
 
 void plInitVideo() {
-    // Set 80x25 mode by default
-    _curScreenW = 80;
-    _curScreenH = 25;
     kBsout(14); // Switch to lowercase character set
-    kBsout(27);
-    kBsout('8');
-    // Clear screen
-    kBsout(147);
 }
 
 void plInitScreen() {
-    _curScreenW = 80;
-    _curScreenH = 50;
     scrScreenMode(_80x50);
     kFnKeyMacros(false);
     plKbdBufferClear();
@@ -218,7 +207,7 @@ void plDirectoryListing(void) {
     unsigned char iSecAddr = 15; // Secondary address for load
 
     DEBUG("plDirectoryListing");
-    kSetnam("$0:");
+    kSetnam("$");
     DEBUG("AFTER SETNAM");
     kSetlfs(iLFN, iDevice, iSecAddr);
     DEBUG("AFTERSETLFS");
