@@ -1,12 +1,46 @@
-To-Do:
--------------------
-- Implement numeric prefix for default mode commands (e.g., 5dd).
+To-Do List: Prioritized
+
+High Priority / Core Functionality
+----------------------------------
+- Implement numeric prefix for default mode commands (e.g., 5dd, 3j).
 - Implement block memory allocation for file contents.
 - Implement memory segment allocation for file contents.
 - Use line pointer references into a memory block.
+- Numeric prefix for commands (e.g. goto line number).
+
+Medium Priority / Important Features
+------------------------------------
 - Investigate padding files to reduce reallocations.
+- Handle non-command keypresses.
+- Filter control codes unless prefixed by Ctrl-V.
+- Add check for beyond EOF.
+- Correct txtEraseEOS() for screenEnd/screenStart.
+
+Low Priority / Refinements & Platform Specific
+----------------------------------------------
 - Define behavior for F-keys.
 - Define behavior for the Mega-Key.
 - Define behavior for the Alt-Key.
 - Define behavior for the NoScroll key.
 - Define additional Ctrl-Key combinations.
+- Find a way around the ESC-5 "hack" to shift to 80x50 screen.
+- Implement proper end to basic from mos-llvm.
+- Add color pair initialization (Ubuntu).
+- Add color handling (Ubuntu).
+- Implement proper kernal routines for various functions (Mega65).
+- Implement reading the RTC registers on the MEGA65.
+- Implement various functions (C64).
+- Investigate test code `psState->doExit = true;`.
+- Fill out missing functionality.
+
+Bugs / Error Handling
+---------------------
+- Indicate "can't quit" while buffer is dirty, or implement q!.
+- Show "E32: No file name" error.
+- Show "E484: Can't open file" error.
+- Show "E509: Can't open file for writing" error.
+- Show error when buffer is full.
+- Show generic write error.
+- Show status message: "%s" %dL read", filename, lines_read.
+- Show status: "%s" %dL, %dB written", filename, psState->lines, bytes_written.
+- Check error channel on file operations (C64).
