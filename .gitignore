@@ -81,5 +81,11 @@ aider*.sh
 # Temp files
 **.swp
 
+# Tag files
+TAGS
+ETAGS
+tags
+
+
 # Binaries
 vim
