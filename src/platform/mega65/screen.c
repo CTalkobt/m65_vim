@@ -42,6 +42,15 @@ void scrDupeChar(unsigned char n, unsigned char kar) {
     }
 }
 
+
+void lfill(void* ptr, char value, size_t len) {
+    char* p = (char*)ptr;
+
+    while(len--) {
+        *p++ = value;
+    }
+}
+
 void scrClearLine(unsigned int y) {
     const unsigned long vicBase = 0xD000UL;
     const bool is16BitCharset = (*(volatile uint8_t *)(vicBase + 0x54)) & 1;
@@ -52,6 +61,7 @@ void scrClearLine(unsigned int y) {
     const unsigned int cBytes = _curScreenW * cByteWidth;
     lfill(screenRamBase + offset, ' ', cBytes);
 }
+
 
 void scrColor(unsigned char screenColor, unsigned char brdrColor) {
     *((unsigned char *)53281) = screenColor;
