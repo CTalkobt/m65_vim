@@ -65,10 +65,10 @@ kReset:
 
     .public kPlotXY
 kPlotXY:
+    tay
     ldx zp:_Zp+0
     clc
-    jsr 0xfff0
-    rts
+    jmp 0xfff0
 
     .public scrClear
 scrClear:
@@ -99,13 +99,11 @@ done$:
 plShowCursor:
 scrCursorOn:
     clc
-    jsr 0xff35
-    rts
+    jmp 0xff35
 
     .public scrCursorOff
     .public plHideCursor
 plHideCursor:
 scrCursorOff:
     sec
-    jsr 0xff35
-    rts
+    jmp 0xff35
