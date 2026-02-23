@@ -41,7 +41,14 @@ kClose:
 
     .public kChkin
 kChkin:
+    tax
     jsr 0xffc6
+    rts
+
+    .public kCkout
+kCkout:
+    tax
+    jsr 0xffc9
     rts
 
     .public kClrchn
@@ -61,7 +68,7 @@ kGetin:
 
     .public kReset
 kReset:
-    jmp 0xffd5
+    jmp 0xff32
 
     .public kPlotXY
 kPlotXY:

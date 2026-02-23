@@ -16,11 +16,11 @@ OBJS := $(ASMS:.s=.o) $(ASSEMBLY_SRCS:.s=.o)
 # --- Toolchain Configuration ---
 CC := cc6502
 AS := as6502
-LD := cc6502
+LD := ln6502
 CFLAGS := -g -Isrc -Isrc/core -Isrc/platform -Isrc/platform/cbm -D__C64__ -D__CBM__ -D__CALYPSI__ -DDEBUG_ON
 CFLAGS += --core=6502 --target=C64 --char-is-unsigned
-ASFLAGS := --core=6502
-LDFLAGS :=
+ASFLAGS := --core=6502 --target=C64
+LDFLAGS := --target=C64 c64-plain.scm --output-format prg --load-address 0x0801 --cstack-size 0x0700 --heap-size 0x0100
 
 # Default target
 all: $(TARGET)

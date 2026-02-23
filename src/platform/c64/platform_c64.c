@@ -25,13 +25,6 @@ void plSetCursor(unsigned char iX, unsigned char iY) {
     kPlotXY(iX, iY);
 }
 
-void plHideCursor() {
-    // @@TODO:
-}
-
-void plShowCursor() {
-    // @@TODO:
-}
 
 void plInitScreen() {
     plInitVideo();
@@ -49,11 +42,11 @@ unsigned char plGetScreenHeight() { return 25; }
 // High-level output
 void plPuts(const char *pzStr) {
     while (*pzStr) {
-        cbm_k_bsout(*pzStr++);
+        kBsout(*pzStr++);
     }
 }
 
-void plPutChar(char c) { cbm_k_bsout(c); }
+void plPutChar(char c) { kBsout(c); }
 
 void plClearEOL() {
     // Get cursor position from zeropage
@@ -104,7 +97,7 @@ PlFileHandle plOpenFile(const char *pzFilename, const char *pzMode) {
         iSecAddr = 0; // Read mode
     }
     kSetlfs(iLFN, iDevice, iSecAddr);
-    kSetnam((char*)pzFilename);
+    kSetnam(strlen(pzFilename), (char*)pzFilename);
     kOpen();
 
     if (*(volatile unsigned char*)(0x90) != 0) {
@@ -117,6 +110,7 @@ PlFileHandle plOpenFile(const char *pzFilename, const char *pzMode) {
 int plReadFile(PlFileHandle pHandle, void *pBuffer, unsigned int iSize) {
     unsigned char iLFN = (unsigned char)(unsigned long)pHandle;
     unsigned int iBytesRead = 0;
+    char *p = (char *)pBuffer;
     kChkin(iLFN);
 
     while (iBytesRead < iSize) {
@@ -129,6 +123,7 @@ int plReadFile(PlFileHandle pHandle, void *pBuffer, unsigned int iSize) {
     }
 
     kClrchn();
+    return iBytesRead;
 }
 
 int plWriteFile(PlFileHandle pHandle, const void *pBuffer, unsigned int iSize) {
@@ -136,18 +131,19 @@ int plWriteFile(PlFileHandle pHandle, const void *pBuffer, unsigned int iSize) {
     unsigned int iBytesWritten = 0;
     const char *p = (const char *)pBuffer;
 
-    cbm_k_ckout(iLFN);
+    kCkout(iLFN);
 
     while (iBytesWritten < iSize) {
-        cbm_k_bsout(*p++);
+        kBsout(*p++);
         iBytesWritten++;
     }
 
-    cbm_k_clrch();
+    kClrchn();
     return iBytesWritten;
 }
 
 void plCloseFile(PlFileHandle pHandle) {
+    unsigned char iLFN = (unsigned char)(unsigned long)pHandle;
     kClose(iLFN);
 }
 
@@ -156,11 +152,11 @@ int plRemoveFile(const char *pzFilename) {
     strcpy(zCmd, "S0:");
     strcat(zCmd, pzFilename);
 
-    cbm_k_setlfs(15, 8, 15);
-    cbm_k_setnam(zCmd);
-    cbm_k_open();
+    kSetlfs(15, 8, 15);
+    kSetnam(strlen(zCmd), zCmd);
+    kOpen();
     // TODO: check error channel
-    cbm_k_close(15);
+    kClose(15);
     return 0;
 }
 
@@ -171,11 +167,11 @@ int plRenameFile(const char *pzOldFilename, const char *pzNewFilename) {
     strcat(zCmd, "=");
     strcat(zCmd, pzOldFilename);
 
-    cbm_k_setlfs(15, 8, 15);
-    cbm_k_setnam(zCmd);
-    cbm_k_open();
+    kSetlfs(15, 8, 15);
+    kSetnam(strlen(zCmd), zCmd);
+    kOpen();
     // TODO: check error channel
-    cbm_k_close(15);
+    kClose(15);
     return 0;
 }
 
@@ -192,9 +188,9 @@ void plDirectoryListing(void) {
     unsigned char iSecAddr = 0; // Secondary address for load
 
     // Open the directory channel
-    cbm_k_setlfs(iLFN, iDevice, iSecAddr);
-    cbm_k_setnam("$");
-    cbm_k_open();
+    kSetlfs(iLFN, iDevice, iSecAddr);
+    kSetnam(1, "$");
+    kOpen();
 
     if (*(volatile unsigned char*)(0x90)) { // Check for error
         plPuts("Error reading directory\r\n");

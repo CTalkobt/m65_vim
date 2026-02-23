@@ -204,52 +204,46 @@ long plGetTime() {
 void plDirectoryListing(void) {
     unsigned char iLFN = 1;     // Logical file number
     unsigned char iDevice = 8;  // Device number (disk drive)
-    unsigned char iSecAddr = 15; // Secondary address for load
+    unsigned char iSecAddr = 0; // Secondary address for sequential read
 
-    DEBUG("plDirectoryListing");
-    kSetnam("$");
-    DEBUG("AFTER SETNAM");
-    kSetlfs(iLFN, iDevice, iSecAddr);
-    DEBUG("AFTERSETLFS");
-
-    // Open the directory channel
     kSetBank(0, 0);
-    DEBUG("After setBank");
+    kSetlfs(iLFN, iDevice, iSecAddr);
+    kSetnam(1, "$");
     kOpen();
-    DEBUG("AFTEROPEN");
 
-//    if (*(volatile unsigned char*)(0x90)) { // Check for error
-//        DEBUGF1("ERROR: %d", *(volatile unsigned char*)(0x90));
-//        plPuts("Error reading directory\r\n");
-//        return;
-//    }
+    if (*(volatile unsigned char*)(0x90)) {
+        plPuts("Error reading directory\r\n");
+        return;
+    }
 
-    // Set input to directory channel
     kChkin(iLFN);
-//DEBUG("chkin");
-    // Skip load address
-    kBasin();
-//DEBUG("basin");
-    kBasin();
-//DEBUG("basin-2");
 
-    // Read directory entries
+    // Skip 2-byte PRG load address
+    kBasin();
+    kBasin();
+
+    // Read BASIC-format directory entries.
+    // Each entry: 2-byte link ptr, 2-byte line number (= block count),
+    //             text bytes, 0x00 terminator.
     while (!*(volatile unsigned char*)(0x90)) {
-//        DEBUG("WHILELOOP");
         unsigned int iBlocks;
         char c;
 
-        // Read two-byte file size (blocks)
+        // Skip 2-byte link pointer
+        kBasin();
+        if (*(volatile unsigned char*)(0x90))
+            break;
+        kBasin();
+        if (*(volatile unsigned char*)(0x90))
+            break;
+
+        // Read 2-byte block count (BASIC line number)
         iBlocks = kBasin();
-//        if (*(volatile unsigned char*)(0x90)) {
-//            DEBUGF1("ERROR: %d", *(volatile unsigned char*)(0x90));
-//            break;
-//        }
+        if (*(volatile unsigned char*)(0x90))
+            break;
         iBlocks |= (unsigned int)kBasin() << 8;
-//        if (*(volatile unsigned char*)(0x90)) {
-//           DEBUGF1("ERROR: %d", *(volatile unsigned char*)(0x90));
-//           break;
-//        }
+        if (*(volatile unsigned char*)(0x90))
+            break;
 
         // Print block count
         char zBlocks[6];
@@ -257,21 +251,17 @@ void plDirectoryListing(void) {
         plPuts(zBlocks);
         plPuts(" ");
 
-        // Read and print filename
+        // Read and print entry text until null terminator
         while ((c = kBasin()) != 0) {
- //           if (*(volatile unsigned char*)(0x90))
-//                 break;
+            if (*(volatile unsigned char*)(0x90))
+                break;
             plPutChar(c);
         }
         plPutChar('\r');
-//        DEBUG("end while loop");
     }
-//DEBUG("AFTERWHILELOOP");
-    // Cleanup
+
     kClrchn();
-//    DEBUG("clrch");
     kClose(iLFN);
-    DEBUG("k_close");
 }
 
 #endif // _PLATFORM_MEGA65_H_

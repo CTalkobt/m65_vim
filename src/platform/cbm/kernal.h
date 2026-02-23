@@ -22,10 +22,7 @@ enum ResetType {
     HypervisorReset,
 
     /**KERNALwarm boot, then RUN the basic program in memory. */
-    WarmBootBasicRun,
-
-    /** Drop to C64 Mode */
-    C64Mode
+    WarmBootBasicRun
 };
 
 typedef enum { READ = 0, WRITE = 1 } FileMode;
@@ -50,11 +47,12 @@ unsigned char kBasin(void);
 unsigned char kGetin(void);
 void kPlotXY(unsigned char x, unsigned char y);
 void kSetBank(unsigned char memBank, unsigned char filenameBank);
-void kSetnam(char *pzFilename);
+void kSetnam(unsigned char len, char *pzFilename);
 void kSetlfs(unsigned char ucLfn, unsigned char ucDevice, unsigned char ucSecAddress);
 unsigned char kOpen(void);
 void kClose(unsigned char fileNum);
 unsigned char kChkin(unsigned char lfn);
+void kCkout(unsigned char lfn);
 void kClrchn(void);
 void kFnKeyMacros(bool enable);
 
