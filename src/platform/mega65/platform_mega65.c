@@ -147,35 +147,98 @@ void plKbdBufferClear(void) {
 
 int plIsKeyPressed() { return *(volatile unsigned char*)(0xD610U); }
 
-// --- File I/O Functions (Stubs for now) ---
+// --- File I/O Functions ---
 
-PlFileHandle plOpenFile(const char *filename, const char *mode) {
-    // @@TODO: This needs a proper implementation using kernal routines
-    return NULL;
+PlFileHandle plOpenFile(const char *pzFilename, const char *pzMode) {
+    unsigned char iLFN = 2;     // Logical file number (1 reserved for directory)
+    unsigned char iDevice = 8;  // Device number (disk drive)
+    unsigned char iSecAddr = 0; // Read mode
+
+    if (pzMode[0] == 'w') {
+        iSecAddr = 1; // Write mode
+    }
+
+    kSetBank(0, 0);
+    kSetlfs(iLFN, iDevice, iSecAddr);
+    kSetnam(strlen(pzFilename), (char*)pzFilename);
+    *(volatile unsigned char*)(0x90) = 0; // Clear stale STATUS before open
+    kOpen();
+
+    if (*(volatile unsigned char*)(0x90) != 0) {
+        return NULL;
+    }
+
+    return (PlFileHandle)(unsigned long)iLFN;
 }
 
-int plReadFile(PlFileHandle handle, void *buffer, unsigned int size) {
-    // @@TODO: This needs a proper implementation
-    return -1;
+int plReadFile(PlFileHandle pHandle, void *pBuffer, unsigned int iSize) {
+    unsigned char iLFN = (unsigned char)(unsigned long)pHandle;
+    unsigned int iBytesRead = 0;
+    char *p = (char *)pBuffer;
+
+    *(volatile unsigned char*)(0x90) = 0; // Clear stale STATUS before read
+    kChkin(iLFN);
+
+    while (iBytesRead < iSize) {
+        *p = kBasin();
+        if (*(volatile unsigned char*)(0x90) != 0) {
+            break;
+        }
+        p++;
+        iBytesRead++;
+    }
+
+    kClrchn();
+    return iBytesRead;
 }
 
-int plWriteFile(PlFileHandle handle, const void *buffer, unsigned int size) {
-    // @@TODO: This needs a proper implementation
-    return -1;
+int plWriteFile(PlFileHandle pHandle, const void *pBuffer, unsigned int iSize) {
+    unsigned char iLFN = (unsigned char)(unsigned long)pHandle;
+    unsigned int iBytesWritten = 0;
+    const char *p = (const char *)pBuffer;
+
+    kCkout(iLFN);
+
+    while (iBytesWritten < iSize) {
+        kBsout(*p++);
+        iBytesWritten++;
+    }
+
+    kClrchn();
+    return iBytesWritten;
 }
 
-void plCloseFile(PlFileHandle handle) {
-    // @@TODO: This needs a proper implementation
+void plCloseFile(PlFileHandle pHandle) {
+    unsigned char iLFN = (unsigned char)(unsigned long)pHandle;
+    kClose(iLFN);
 }
 
-int plRemoveFile(const char *filename) {
-    // @@TODO: This needs a proper implementation
-    return -1;
+int plRemoveFile(const char *pzFilename) {
+    char zCmd[40];
+    strcpy(zCmd, "S0:");
+    strcat(zCmd, pzFilename);
+
+    kSetBank(0, 0);
+    kSetlfs(15, 8, 15);
+    kSetnam(strlen(zCmd), zCmd);
+    kOpen();
+    kClose(15);
+    return 0;
 }
 
-int plRenameFile(const char *old_filename, const char *new_filename) {
-    // @@TODO: This needs a proper implementation
-    return -1;
+int plRenameFile(const char *pzOldFilename, const char *pzNewFilename) {
+    char zCmd[80];
+    strcpy(zCmd, "R0:");
+    strcat(zCmd, pzNewFilename);
+    strcat(zCmd, "=");
+    strcat(zCmd, pzOldFilename);
+
+    kSetBank(0, 0);
+    kSetlfs(15, 8, 15);
+    kSetnam(strlen(zCmd), zCmd);
+    kOpen();
+    kClose(15);
+    return 0;
 }
 
 // --- Memory Management Functions (Stubs for now) ---
@@ -209,6 +272,7 @@ void plDirectoryListing(void) {
     kSetBank(0, 0);
     kSetlfs(iLFN, iDevice, iSecAddr);
     kSetnam(1, "$");
+    *(volatile unsigned char*)(0x90) = 0; // Clear stale STATUS before open
     kOpen();
 
     if (*(volatile unsigned char*)(0x90)) {
@@ -216,6 +280,7 @@ void plDirectoryListing(void) {
         return;
     }
 
+    *(volatile unsigned char*)(0x90) = 0; // Clear STATUS before reading
     kChkin(iLFN);
 
     // Skip 2-byte PRG load address
