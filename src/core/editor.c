@@ -68,9 +68,13 @@ void editCommand(tsState *psState, eVimKeyCode eKar) {
             eCmd[iLen - 1] = VIM_KEY_NULL;
             // This is tricky - we need to redraw the command line.
             // For now, just backspace visually.
+#ifdef __CBM__
+            plPutChar((char)VIM_KEY_BACKSPACE);
+#else
             plPutChar('\b');
             plPutChar(' ');
             plPutChar('\b');
+#endif
         }
         break;
 
