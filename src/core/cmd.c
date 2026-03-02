@@ -567,6 +567,8 @@ end_write:
 
 teCmdResult cmdDirectoryListing(tsState *psState) {
     plDirectoryListing();
+    plPuts("\r\nPress any key to continue...");
+    plGetKey();
     draw_screen(psState);
     return CMD_RESULT_SINGLE_CHAR_ACK;
 }

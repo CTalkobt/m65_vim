@@ -16,7 +16,6 @@ kSetBank:
 kSetnam:
     ldx zp:_Zp+0
     ldy zp:_Zp+1
-    clc
     jsr 0xffbd
     rts
 
@@ -29,8 +28,9 @@ kSetlfs:
 
     .public kOpen
 kOpen:
-    clc
     jsr 0xffc0
+    bcs kernal_error
+    lda #0
     rts
 
     .public kClose
@@ -39,16 +39,29 @@ kClose:
     jsr 0xffc3
     rts
 
+    .public kReadst
+kReadst:
+    jsr 0xffb7
+    rts
+
     .public kChkin
 kChkin:
     tax
     jsr 0xffc6
+    bcs kernal_error
+    lda #0
     rts
 
     .public kCkout
 kCkout:
     tax
     jsr 0xffc9
+    bcs kernal_error
+    lda #0
+    rts
+
+kernal_error:
+    ; A already contains error code
     rts
 
     .public kClrchn

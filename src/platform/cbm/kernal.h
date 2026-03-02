@@ -51,8 +51,9 @@ void kSetnam(unsigned char len, char *pzFilename);
 void kSetlfs(unsigned char ucLfn, unsigned char ucDevice, unsigned char ucSecAddress);
 unsigned char kOpen(void);
 void kClose(unsigned char fileNum);
+unsigned char kReadst(void);
 unsigned char kChkin(unsigned char lfn);
-void kCkout(unsigned char lfn);
+unsigned char kCkout(unsigned char lfn);
 void kClrchn(void);
 void kFnKeyMacros(bool enable);
 

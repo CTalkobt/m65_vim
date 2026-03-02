@@ -7,6 +7,7 @@
 #include <stddef.h> // for NULL
 #include <stdlib.h>
 #include <string.h> // for strcpy, strcat
+#include <core/lib/snprintf.h>
 
 // Video/Rendering Functions
 void plInitVideo() {
@@ -87,20 +88,20 @@ int plIsKeyPressed() { return *(volatile unsigned char*)(197); }
 
 // File I/O Functions
 PlFileHandle plOpenFile(const char *pzFilename, const char *pzMode) {
-    unsigned char iLFN = 8;     // Logical file number
+    unsigned char iLFN = 2;     // Logical file number (1 reserved for directory)
     unsigned char iDevice = 8;  // Device number (8 for disk drive)
-    unsigned char iSecAddr = 0; // Secondary address
+    unsigned char iSecAddr = 2; // Default to secondary address 2
+    char zFullFilename[128];
 
     if (pzMode[0] == 'w') {
-        iSecAddr = 1; // Write mode
-    } else if (pzMode[0] == 'r') {
-        iSecAddr = 0; // Read mode
+        snprintf(zFullFilename, sizeof(zFullFilename), "%s,s,w", pzFilename);
+    } else {
+        snprintf(zFullFilename, sizeof(zFullFilename), "%s,s,r", pzFilename);
     }
-    kSetlfs(iLFN, iDevice, iSecAddr);
-    kSetnam(strlen(pzFilename), (char*)pzFilename);
-    kOpen();
 
-    if (*(volatile unsigned char*)(0x90) != 0) {
+    kSetlfs(iLFN, iDevice, iSecAddr);
+    kSetnam(strlen(zFullFilename), zFullFilename);
+    if (kOpen() != 0 || kReadst() != 0) {
         return NULL;
     }
 
@@ -111,15 +112,20 @@ int plReadFile(PlFileHandle pHandle, void *pBuffer, unsigned int iSize) {
     unsigned char iLFN = (unsigned char)(unsigned long)pHandle;
     unsigned int iBytesRead = 0;
     char *p = (char *)pBuffer;
-    kChkin(iLFN);
+    if (kChkin(iLFN) != 0) {
+        return 0;
+    }
 
     while (iBytesRead < iSize) {
-        *p = kBasin();
-        if (*(volatile unsigned char*)(0x90) != 0) { // Check for end of file
+        char c = kBasin();
+        unsigned char status = kReadst();
+        
+        *p++ = c;
+        iBytesRead++;
+        
+        if (status != 0) { // Check for end of file or error
             break;
         }
-        p++;
-        iBytesRead++;
     }
 
     kClrchn();
@@ -131,10 +137,15 @@ int plWriteFile(PlFileHandle pHandle, const void *pBuffer, unsigned int iSize) {
     unsigned int iBytesWritten = 0;
     const char *p = (const char *)pBuffer;
 
-    kCkout(iLFN);
+    if (kCkout(iLFN) != 0) {
+        return 0;
+    }
 
     while (iBytesWritten < iSize) {
         kBsout(*p++);
+        if (kReadst() != 0) {
+            break;
+        }
         iBytesWritten++;
     }
 
@@ -190,31 +201,34 @@ void plDirectoryListing(void) {
     // Open the directory channel
     kSetlfs(iLFN, iDevice, iSecAddr);
     kSetnam(1, "$");
-    kOpen();
-
-    if (*(volatile unsigned char*)(0x90)) { // Check for error
+    if (kOpen() != 0 || kReadst() != 0) { // Check for error
         plPuts("Error reading directory\r\n");
+        kClose(iLFN);
         return;
     }
 
     // Set input to directory channel
-    kChkin(iLFN);
+    if (kChkin(iLFN) != 0) {
+        plPuts("Error checking directory\r\n");
+        kClose(iLFN);
+        return;
+    }
 
     // Skip load address
     kBasin();
     kBasin();
 
     // Read directory entries
-    while (!*(volatile unsigned char*)(0x90)) {
+    while (kReadst() == 0) {
         unsigned int iBlocks;
         char c;
 
         // Read two-byte file size (blocks)
         iBlocks = kBasin();
-        if (*(volatile unsigned char*)(0x90))
+        if (kReadst() != 0)
             break;
         iBlocks |= (unsigned int)kBasin() << 8;
-        if (*(volatile unsigned char*)(0x90))
+        if (kReadst() != 0)
             break;
 
         // Print block count
@@ -225,7 +239,7 @@ void plDirectoryListing(void) {
 
         // Read and print filename
         while ((c = kBasin()) != 0) {
-            if (*(volatile unsigned char*)(0x90))
+            if (kReadst() != 0)
                 break;
             plPutChar(c);
         }

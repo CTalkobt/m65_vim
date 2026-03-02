@@ -9,6 +9,7 @@
 
 
 #include <core/debug.h>
+#include <core/lib/snprintf.h>
 
 // Local headers
 #include "cbm/kernal.h"
@@ -152,19 +153,24 @@ int plIsKeyPressed() { return *(volatile unsigned char*)(0xD610U); }
 PlFileHandle plOpenFile(const char *pzFilename, const char *pzMode) {
     unsigned char iLFN = 2;     // Logical file number (1 reserved for directory)
     unsigned char iDevice = 8;  // Device number (disk drive)
-    unsigned char iSecAddr = 0; // Read mode
+    unsigned char iSecAddr = 2; // Default to secondary address 2
+    char zFullFilename[128];
 
     if (pzMode[0] == 'w') {
-        iSecAddr = 1; // Write mode
+        snprintf(zFullFilename, sizeof(zFullFilename), "%s,s,w", pzFilename);
+    } else {
+        snprintf(zFullFilename, sizeof(zFullFilename), "%s,s,r", pzFilename);
     }
 
     kSetBank(0, 0);
     kSetlfs(iLFN, iDevice, iSecAddr);
-    kSetnam(strlen(pzFilename), (char*)pzFilename);
-    *(volatile unsigned char*)(0x90) = 0; // Clear stale STATUS before open
-    kOpen();
+    kSetnam(strlen(zFullFilename), zFullFilename);
+    if (kOpen() != 0) {
+        return NULL;
+    }
 
-    if (*(volatile unsigned char*)(0x90) != 0) {
+    if (kReadst() != 0) {
+        kClose(iLFN);
         return NULL;
     }
 
@@ -176,16 +182,20 @@ int plReadFile(PlFileHandle pHandle, void *pBuffer, unsigned int iSize) {
     unsigned int iBytesRead = 0;
     char *p = (char *)pBuffer;
 
-    *(volatile unsigned char*)(0x90) = 0; // Clear stale STATUS before read
-    kChkin(iLFN);
+    if (kChkin(iLFN) != 0) {
+        return 0;
+    }
 
     while (iBytesRead < iSize) {
-        *p = kBasin();
-        if (*(volatile unsigned char*)(0x90) != 0) {
+        char c = kBasin();
+        unsigned char status = kReadst();
+        
+        *p++ = c;
+        iBytesRead++;
+        
+        if (status != 0) {
             break;
         }
-        p++;
-        iBytesRead++;
     }
 
     kClrchn();
@@ -197,10 +207,15 @@ int plWriteFile(PlFileHandle pHandle, const void *pBuffer, unsigned int iSize) {
     unsigned int iBytesWritten = 0;
     const char *p = (const char *)pBuffer;
 
-    kCkout(iLFN);
+    if (kCkout(iLFN) != 0) {
+        return 0;
+    }
 
     while (iBytesWritten < iSize) {
         kBsout(*p++);
+        if (kReadst() != 0) {
+            break;
+        }
         iBytesWritten++;
     }
 
@@ -221,8 +236,9 @@ int plRemoveFile(const char *pzFilename) {
     kSetBank(0, 0);
     kSetlfs(15, 8, 15);
     kSetnam(strlen(zCmd), zCmd);
-    kOpen();
-    kClose(15);
+    if (kOpen() == 0) {
+        kClose(15);
+    }
     return 0;
 }
 
@@ -236,8 +252,9 @@ int plRenameFile(const char *pzOldFilename, const char *pzNewFilename) {
     kSetBank(0, 0);
     kSetlfs(15, 8, 15);
     kSetnam(strlen(zCmd), zCmd);
-    kOpen();
-    kClose(15);
+    if (kOpen() == 0) {
+        kClose(15);
+    }
     return 0;
 }
 
@@ -272,16 +289,23 @@ void plDirectoryListing(void) {
     kSetBank(0, 0);
     kSetlfs(iLFN, iDevice, iSecAddr);
     kSetnam(1, "$");
-    *(volatile unsigned char*)(0x90) = 0; // Clear stale STATUS before open
-    kOpen();
-
-    if (*(volatile unsigned char*)(0x90)) {
+    if (kOpen() != 0 || kReadst() != 0) {
         plPuts("Error reading directory\r\n");
+        kClose(iLFN);
         return;
     }
 
-    *(volatile unsigned char*)(0x90) = 0; // Clear STATUS before reading
-    kChkin(iLFN);
+    if (kReadst() != 0) {
+        plPuts("Error reading directory status\r\n");
+        kClose(iLFN);
+        return;
+    }
+
+    if (kChkin(iLFN) != 0) {
+        plPuts("Error checking directory\r\n");
+        kClose(iLFN);
+        return;
+    }
 
     // Skip 2-byte PRG load address
     kBasin();
@@ -290,24 +314,24 @@ void plDirectoryListing(void) {
     // Read BASIC-format directory entries.
     // Each entry: 2-byte link ptr, 2-byte line number (= block count),
     //             text bytes, 0x00 terminator.
-    while (!*(volatile unsigned char*)(0x90)) {
+    while (kReadst() == 0) {
         unsigned int iBlocks;
         char c;
 
         // Skip 2-byte link pointer
         kBasin();
-        if (*(volatile unsigned char*)(0x90))
+        if (kReadst() != 0)
             break;
         kBasin();
-        if (*(volatile unsigned char*)(0x90))
+        if (kReadst() != 0)
             break;
 
         // Read 2-byte block count (BASIC line number)
         iBlocks = kBasin();
-        if (*(volatile unsigned char*)(0x90))
+        if (kReadst() != 0)
             break;
         iBlocks |= (unsigned int)kBasin() << 8;
-        if (*(volatile unsigned char*)(0x90))
+        if (kReadst() != 0)
             break;
 
         // Print block count
@@ -318,7 +342,7 @@ void plDirectoryListing(void) {
 
         // Read and print entry text until null terminator
         while ((c = kBasin()) != 0) {
-            if (*(volatile unsigned char*)(0x90))
+            if (kReadst() != 0)
                 break;
             plPutChar(c);
         }
