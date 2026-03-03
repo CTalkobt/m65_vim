@@ -85,12 +85,18 @@ void editCommand(tsState *psState, eVimKeyCode eKar) {
 
     case VIM_KEY_CR: {
         char zDbgBuf[80];
+        size_t iDbgPos = 0;
         strcpy(zDbgBuf, "eCmd: ");
+        iDbgPos = strlen(zDbgBuf);
         for (uint8_t i = 0; eCmd[i] != VIM_KEY_NULL && i < MAX_CMD; i++) {
             char zNum[5];
             itostr(eCmd[i], zNum);
-            strcat(zDbgBuf, zNum);
-            strcat(zDbgBuf, ",");
+            size_t iNumLen = strlen(zNum);
+            if (iDbgPos + iNumLen + 2 >= sizeof(zDbgBuf)) break;
+            strcpy(&zDbgBuf[iDbgPos], zNum);
+            iDbgPos += iNumLen;
+            zDbgBuf[iDbgPos++] = ',';
+            zDbgBuf[iDbgPos] = '\0';
         }
         DEBUG(zDbgBuf);
 
@@ -137,9 +143,16 @@ void editCommand(tsState *psState, eVimKeyCode eKar) {
         break;
     }
     default:
-        // Allow only printable ASCII characters in command line
+        // Allow only printable ASCII characters in command line.
+        // On CBM targets $D619 returns uppercase PETSCII (65-90) for letter
+        // keys; normalise to lowercase so VIM_KEY_x_LOWER dispatch works.
         if (iLen < MAX_CMD && eKar >= 32 && eKar <= 126) {
-            eCmd[iLen] = eKar;
+            eVimKeyCode eStore = eKar;
+#ifdef __CBM__
+            if (eStore >= VIM_KEY_A_UPPER && eStore <= VIM_KEY_Z_UPPER)
+                eStore = (eVimKeyCode)(eStore + 32);
+#endif
+            eCmd[iLen] = eStore;
             eCmd[iLen + 1] = VIM_KEY_NULL;
             plPutChar((char)eKar);
         }

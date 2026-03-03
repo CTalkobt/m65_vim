@@ -149,11 +149,21 @@ void plKbdBufferClear(void) {
 int plIsKeyPressed() { return *(volatile unsigned char*)(0xD610U); }
 
 // --- File I/O Functions ---
+// Temp fun to log to 1700 the current status. 
+void writeDbg1700(unsigned char op, unsigned char st) {
+    volatile unsigned char *pDbg = (volatile unsigned char*)0x1700U;
+    *pDbg++ = op;
+    *pDbg = st; 
+}
+
+
+static unsigned char _iNextLFN = 2; // Next logical file number (1 reserved for directory)
 
 PlFileHandle plOpenFile(const char *pzFilename, const char *pzMode) {
-    unsigned char iLFN = 2;     // Logical file number (1 reserved for directory)
+    unsigned char iLFN = _iNextLFN++;
+    if (_iNextLFN > 14) _iNextLFN = 2; // Wrap around, avoid 15 (command channel)
     unsigned char iDevice = 8;  // Device number (disk drive)
-    unsigned char iSecAddr = 2; // Default to secondary address 2
+    unsigned char iSecAddr = iLFN; // Secondary address matches LFN
     char zFullFilename[128];
 
     if (pzMode[0] == 'w') {
@@ -162,14 +172,28 @@ PlFileHandle plOpenFile(const char *pzFilename, const char *pzMode) {
         snprintf(zFullFilename, sizeof(zFullFilename), "%s,s,r", pzFilename);
     }
 
+    // Write to $1600 for monitor inspection if needed.
+    {
+        volatile unsigned char *pDbg = (volatile unsigned char*)0x1600U;
+        const char *p = zFullFilename;
+        while (*p) *pDbg++ = (unsigned char)*p++;
+        *pDbg = 0;
+    }
+
     kSetBank(0, 0);
     kSetlfs(iLFN, iDevice, iSecAddr);
     kSetnam(strlen(zFullFilename), zFullFilename);
-    if (kOpen() != 0) {
+
+    unsigned char st = kOpen(); 
+    writeDbg1700('o', st); 
+
+    if (st != 0) {
         return NULL;
     }
 
-    if (kReadst() != 0) {
+    st = kReadst(); 
+    writeDbg1700('O', st);  
+    if (st != 0) {
         kClose(iLFN);
         return NULL;
     }
@@ -182,17 +206,20 @@ int plReadFile(PlFileHandle pHandle, void *pBuffer, unsigned int iSize) {
     unsigned int iBytesRead = 0;
     char *p = (char *)pBuffer;
 
-    if (kChkin(iLFN) != 0) {
+    unsigned char st = kChkin(iLFN); 
+    if (st != 0) {
+        writeDbg1700('r', st); 
         return 0;
     }
 
     while (iBytesRead < iSize) {
         char c = kBasin();
         unsigned char status = kReadst();
-        
+        writeDbg1700('R', status);
+
         *p++ = c;
         iBytesRead++;
-        
+
         if (status != 0) {
             break;
         }
@@ -229,21 +256,25 @@ void plCloseFile(PlFileHandle pHandle) {
 }
 
 int plRemoveFile(const char *pzFilename) {
-    char zCmd[40];
+    char zCmd[84]; // "S0:" (3) + filename (MAX_CMD 78) + NUL
+    if (strlen(pzFilename) > 78) return -1;
     strcpy(zCmd, "S0:");
     strcat(zCmd, pzFilename);
 
     kSetBank(0, 0);
     kSetlfs(15, 8, 15);
     kSetnam(strlen(zCmd), zCmd);
-    if (kOpen() == 0) {
-        kClose(15);
+    int iResult = 0;
+    if (kOpen() != 0) {
+        iResult = -1;
     }
-    return 0;
+    kClose(15);
+    return iResult;
 }
 
 int plRenameFile(const char *pzOldFilename, const char *pzNewFilename) {
-    char zCmd[80];
+    char zCmd[164]; // "R0:" (3) + new (78) + "=" (1) + old (78) + NUL
+    if (strlen(pzOldFilename) + strlen(pzNewFilename) > 156) return -1;
     strcpy(zCmd, "R0:");
     strcat(zCmd, pzNewFilename);
     strcat(zCmd, "=");
@@ -252,10 +283,12 @@ int plRenameFile(const char *pzOldFilename, const char *pzNewFilename) {
     kSetBank(0, 0);
     kSetlfs(15, 8, 15);
     kSetnam(strlen(zCmd), zCmd);
-    if (kOpen() == 0) {
-        kClose(15);
+    int iResult = 0;
+    if (kOpen() != 0) {
+        iResult = -1;
     }
-    return 0;
+    kClose(15);
+    return iResult;
 }
 
 // --- Memory Management Functions (Stubs for now) ---
