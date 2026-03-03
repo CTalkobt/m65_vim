@@ -400,11 +400,17 @@ teCmdResult cmdEdit(tsState *psState, char *pzCmdRemainder) {
     int iBytesRead;
     unsigned int iLinesRead = 0;
     uint16_t iInsertPos = 0;
+    bool bSkipLF = false; // swallow \n following a \r (handles \r\n pairs)
 
     while ((iBytesRead = plReadFile(pFileHandle, zReadBuf, sizeof(zReadBuf))) > 0) {
         for (int i = 0; i < iBytesRead; i++) {
             char c = zReadBuf[i];
-            if (c == '\n') {
+            if (c == '\n' && bSkipLF) {
+                bSkipLF = false; // second byte of \r\n — already committed
+                continue;
+            }
+            bSkipLF = false;
+            if (c == '\r' || c == '\n') {
                 zLineBuf[iLineLen] = '\0';
                 if (!insertLine(psState, iInsertPos, zLineBuf)) {
                     // TODO: Show error, buffer full
@@ -412,8 +418,9 @@ teCmdResult cmdEdit(tsState *psState, char *pzCmdRemainder) {
                 }
                 iInsertPos++;
                 iLinesRead++;
-                iLineLen = 0;       // Reset for the next line
-            } else if (c != '\r') { // Ignore carriage returns
+                iLineLen = 0;
+                if (c == '\r') bSkipLF = true;
+            } else {
                 if (iLineLen < MAX_LINE_LENGTH - 1) {
                     zLineBuf[iLineLen++] = c;
                 }
@@ -475,11 +482,17 @@ teCmdResult cmdRead(tsState *psState, char *pzCmdRemainder) {
     int iBytesRead;
     unsigned int iLinesRead = 0;
     uint16_t iInsertPos = psState->iLineY;
+    bool bSkipLF = false; // swallow \n following a \r (handles \r\n pairs)
 
     while ((iBytesRead = plReadFile(pFileHandle, zReadBuf, sizeof(zReadBuf))) > 0) {
         for (int i = 0; i < iBytesRead; i++) {
             char c = zReadBuf[i];
-            if (c == '\n') {
+            if (c == '\n' && bSkipLF) {
+                bSkipLF = false; // second byte of \r\n — already committed
+                continue;
+            }
+            bSkipLF = false;
+            if (c == '\r' || c == '\n') {
                 zLineBuf[iLineLen] = '\0';
                 if (!insertLine(psState, iInsertPos + 1, zLineBuf)) {
                     // TODO: Show error, buffer full
@@ -487,8 +500,9 @@ teCmdResult cmdRead(tsState *psState, char *pzCmdRemainder) {
                 }
                 iInsertPos++;
                 iLinesRead++;
-                iLineLen = 0;       // Reset for the next line
-            } else if (c != '\r') { // Ignore carriage returns
+                iLineLen = 0;
+                if (c == '\r') bSkipLF = true;
+            } else {
                 if (iLineLen < MAX_LINE_LENGTH - 1) {
                     zLineBuf[iLineLen++] = c;
                 }

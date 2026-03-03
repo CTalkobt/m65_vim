@@ -295,12 +295,6 @@ void plDirectoryListing(void) {
         return;
     }
 
-    if (kReadst() != 0) {
-        plPuts("Error reading directory status\r\n");
-        kClose(iLFN);
-        return;
-    }
-
     if (kChkin(iLFN) != 0) {
         plPuts("Error checking directory\r\n");
         kClose(iLFN);

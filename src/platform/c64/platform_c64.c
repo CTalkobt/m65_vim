@@ -218,12 +218,22 @@ void plDirectoryListing(void) {
     kBasin();
     kBasin();
 
-    // Read directory entries
+    // Read directory entries.
+    // Each entry: 2-byte link ptr, 2-byte line number (= block count),
+    //             text bytes, 0x00 terminator.
     while (kReadst() == 0) {
         unsigned int iBlocks;
         char c;
 
-        // Read two-byte file size (blocks)
+        // Skip 2-byte link pointer
+        kBasin();
+        if (kReadst() != 0)
+            break;
+        kBasin();
+        if (kReadst() != 0)
+            break;
+
+        // Read 2-byte block count (BASIC line number)
         iBlocks = kBasin();
         if (kReadst() != 0)
             break;
