@@ -390,8 +390,10 @@ teCmdResult cmdEdit(tsState *psState, char *pzCmdRemainder) {
         return CMD_RESULT_SINGLE_CHAR_ACK;
     }
 
-    // 2. Clear the buffer
+    // 2. Clear the buffer and record the new filename
     freeAllLines(psState);
+    strncpy(psState->zFilename, pzFilename, sizeof(psState->zFilename) - 1);
+    psState->zFilename[sizeof(psState->zFilename) - 1] = '\0';
 
     // 4. Read the file in chunks and insert lines
     char zReadBuf[256];
@@ -572,6 +574,8 @@ teCmdResult cmdWrite(tsState *psState, char *pzCmdRemainder, bool force) {
 
     // If we get here, the write was successful.
     undo_set_save_point();
+    strncpy(psState->zFilename, pzFilename, sizeof(psState->zFilename) - 1);
+    psState->zFilename[sizeof(psState->zFilename) - 1] = '\0';
     // TODO: Show status: "%s" %dL, %dB written", filename, psState->lines, bytes_written
 
 end_write:
