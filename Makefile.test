@@ -1,0 +1,31 @@
+# Makefile for unit tests
+
+TARGET := bin/vim_test
+CC := gcc
+
+# Source files
+TEST_SRCS := test/test_main.c test/test_itostr.c test/test_line.c test/platform_stub.c
+CORE_SRCS := src/core/itostr.c src/core/line.c
+SRCS := $(TEST_SRCS) $(CORE_SRCS)
+
+OBJS := $(SRCS:.c=.o)
+
+CFLAGS := -g -Wall -Wextra -Isrc -Isrc/core -Isrc/platform -Itest -D__TEST__ -DDEBUG_ON
+LDFLAGS :=
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	@mkdir -p bin
+	$(CC) -o $(TARGET) $(OBJS) $(LDFLAGS)
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+run: $(TARGET)
+	./$(TARGET)
+
+clean:
+	rm -f $(OBJS) $(TARGET)
+
+.PHONY: all run clean

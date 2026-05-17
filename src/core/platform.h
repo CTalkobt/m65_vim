@@ -14,6 +14,8 @@
 #include "mega65/platform_mega65.h"
 #elif defined(__UBUNTU__)
 #include "ubuntu/platform_ubuntu.h"
+#elif defined(__TEST__)
+// No platform header needed for unit tests; stubs are linked separately.
 #endif
 
 // Video/Rendering Functions
