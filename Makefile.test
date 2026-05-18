@@ -4,13 +4,13 @@ TARGET := bin/vim_test
 CC := gcc
 
 # Source files
-TEST_SRCS := test/test_main.c test/test_itostr.c test/test_line.c test/platform_stub.c
-CORE_SRCS := src/core/itostr.c src/core/line.c
+TEST_SRCS := test/test_main.c test/test_itostr.c test/test_line.c test/test_keycodes.c test/test_undo.c test/test_cmd.c test/platform_stub.c
+CORE_SRCS := src/core/itostr.c src/core/line.c src/core/lib/keycodes.c src/core/undo.c src/core/cmd.c
 SRCS := $(TEST_SRCS) $(CORE_SRCS)
 
 OBJS := $(SRCS:.c=.o)
 
-CFLAGS := -g -Wall -Wextra -Isrc -Isrc/core -Isrc/platform -Itest -D__TEST__ -DDEBUG_ON
+CFLAGS := -g -Wall -Wextra -Isrc/core -Isrc/core/lib -Isrc/platform -Isrc -Itest -D__TEST__ -DDEBUG_ON
 LDFLAGS :=
 
 all: $(TARGET)
