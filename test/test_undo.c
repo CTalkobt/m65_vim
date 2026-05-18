@@ -143,4 +143,88 @@ void test_undo(void) {
         ASSERT_STR_EQ(ps->p2zText[0], "unchanged");
         freeTestState(ps);
     } TEST_END;
+
+    // --- Overflow tests (MAX_UNDO_LEVELS == 2 in test builds) ---
+
+    TEST(overflow_count_capped) {
+        undo_init();
+        undo_store_action(UNDO_INSERT_TEXT, 0, 0, "a");
+        undo_store_action(UNDO_INSERT_TEXT, 0, 1, "b");
+        undo_store_action(UNDO_INSERT_TEXT, 0, 2, "c");
+        // Count should be capped at MAX_UNDO_LEVELS
+        ASSERT_INT_EQ(undo_get_count(), MAX_UNDO_LEVELS);
+    } TEST_END;
+
+    TEST(overflow_oldest_evicted) {
+        undo_init();
+        tsState *ps = createTestState();
+        insertLine(ps, 0, "abc");
+
+        // Store 3 actions; oldest ('a' at pos 0) should be evicted
+        undo_store_action(UNDO_INSERT_TEXT, 0, 0, "a");
+        undo_store_action(UNDO_INSERT_TEXT, 0, 1, "b");
+        undo_store_action(UNDO_INSERT_TEXT, 0, 2, "c");
+
+        // Undo 'c' at pos 2 -> "ab"
+        undo_perform(ps);
+        ASSERT_STR_EQ(ps->p2zText[0], "ab");
+
+        // Undo 'b' at pos 1 -> "a"
+        undo_perform(ps);
+        ASSERT_STR_EQ(ps->p2zText[0], "a");
+
+        // No more undos available
+        ASSERT_INT_EQ(undo_get_count(), 0);
+        freeTestState(ps);
+    } TEST_END;
+
+    TEST(overflow_heap_data_freed) {
+        undo_init();
+        // Fill with heap-based actions (UNDO_REPLACE_LINE uses malloc)
+        undo_store_action(UNDO_REPLACE_LINE, 0, 0, "line one");
+        undo_store_action(UNDO_REPLACE_LINE, 1, 0, "line two");
+        // This should free "line one" before overwriting its slot
+        undo_store_action(UNDO_REPLACE_LINE, 2, 0, "line three");
+        ASSERT_INT_EQ(undo_get_count(), MAX_UNDO_LEVELS);
+        // Clean up heap allocations
+        undo_clear();
+    } TEST_END;
+
+    TEST(overflow_wraps_correctly) {
+        undo_init();
+        tsState *ps = createTestState();
+        insertLine(ps, 0, "abcd");
+
+        // Push 4 actions through a 2-slot buffer to exercise wraparound
+        undo_store_action(UNDO_INSERT_TEXT, 0, 0, "a");
+        undo_store_action(UNDO_INSERT_TEXT, 0, 1, "b");
+        undo_store_action(UNDO_INSERT_TEXT, 0, 2, "c");
+        undo_store_action(UNDO_INSERT_TEXT, 0, 3, "d");
+
+        // Only last 2 should remain: 'c' at pos 2, 'd' at pos 3
+        ASSERT_INT_EQ(undo_get_count(), MAX_UNDO_LEVELS);
+
+        // Undo 'd' at pos 3 -> "abc"
+        undo_perform(ps);
+        ASSERT_STR_EQ(ps->p2zText[0], "abc");
+
+        // Undo 'c' at pos 2 -> "ab"
+        undo_perform(ps);
+        ASSERT_STR_EQ(ps->p2zText[0], "ab");
+
+        ASSERT_INT_EQ(undo_get_count(), 0);
+        freeTestState(ps);
+    } TEST_END;
+
+    TEST(overflow_dirty_after_eviction) {
+        undo_init();
+        undo_store_action(UNDO_INSERT_TEXT, 0, 0, "a");
+        undo_set_save_point();
+        ASSERT(!undo_is_dirty());
+
+        // Push more actions to overflow past the save point
+        undo_store_action(UNDO_INSERT_TEXT, 0, 1, "b");
+        undo_store_action(UNDO_INSERT_TEXT, 0, 2, "c");
+        ASSERT(undo_is_dirty());
+    } TEST_END;
 }
