@@ -18,6 +18,10 @@ extern void test_cmd_exec(void);
 extern void test_cmd_mode(void);
 extern void test_cmd_colon(void);
 extern void test_line_edge(void);
+extern void test_cmd_nav(void);
+extern void test_editor(void);
+extern void test_editCommand(void);
+extern void test_render(void);
 
 int g_iTestsRun = 0;
 int g_iTestsPassed = 0;
@@ -35,6 +39,10 @@ int main(void) {
     test_cmd_mode();
     test_cmd_colon();
     test_line_edge();
+    test_cmd_nav();
+    test_editor();
+    test_editCommand();
+    test_render();
 
     printf("\n=== Results: %d passed, %d failed, %d total ===\n",
            g_iTestsPassed, g_iTestsFailed, g_iTestsRun);

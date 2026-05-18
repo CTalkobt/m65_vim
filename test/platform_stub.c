@@ -6,8 +6,6 @@
 
 #include "state.h"
 
-char debug_buffer[128];
-
 void plSetCursor(unsigned char x, unsigned char y) { (void)x; (void)y; }
 unsigned char plGetScreenHeight(void) { return 25; }
 unsigned char plGetScreenWidth(void) { return 80; }
@@ -25,16 +23,6 @@ void plSetColor(unsigned char color) { (void)color; }
 void plDrawChar(unsigned char x, unsigned char y, char c, unsigned char color) {
     (void)x; (void)y; (void)c; (void)color;
 }
-
-void dbg_psState(tsState *psState, const char *message) { (void)psState; (void)message; }
-void dbg_first5lines(tsState *psState, char *message) { (void)psState; (void)message; }
-
-// Render stubs
-void draw_screen(const tsState *psState) { (void)psState; }
-void drawStatus(const tsState *psState) { (void)psState; }
-
-// Editor stubs
-void setEditMode(tsState *psState, int newMode) { (void)psState; psState->eEditMode = newMode; }
 
 // Keyboard stubs
 unsigned char plKbHit(void) { return 0; }
