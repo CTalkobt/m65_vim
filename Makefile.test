@@ -1,6 +1,7 @@
 # Makefile for unit tests
 
 TARGET := bin/vim_test
+BUILD_DIR := build/test
 CC := gcc
 
 # Source files
@@ -8,7 +9,7 @@ TEST_SRCS := test/test_main.c test/test_itostr.c test/test_line.c test/test_line
 CORE_SRCS := src/core/itostr.c src/core/line.c src/core/lib/keycodes.c src/core/undo.c src/core/cmd.c src/core/editor.c src/core/render.c src/core/debug.c
 SRCS := $(TEST_SRCS) $(CORE_SRCS)
 
-OBJS := $(SRCS:.c=.o)
+OBJS := $(patsubst %.c,$(BUILD_DIR)/%.o,$(SRCS))
 
 CFLAGS := -g -Wall -Wextra -Isrc/core -Isrc/core/lib -Isrc/platform -Isrc -Itest -D__TEST__ -DDEBUG_ON \
 	-DPLATFORM_FILENAME_COL=20 '-DPLATFORM_MODE_NORMAL_STR="-- Normal --"' '-DPLATFORM_MODE_INSERT_STR="-- Insert --"'
@@ -20,13 +21,14 @@ $(TARGET): $(OBJS)
 	@mkdir -p bin
 	$(CC) -o $(TARGET) $(OBJS) $(LDFLAGS)
 
-%.o: %.c
+$(BUILD_DIR)/%.o: %.c
+	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 run: $(TARGET)
 	./$(TARGET)
 
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -rf $(BUILD_DIR) $(TARGET)
 
 .PHONY: all run clean

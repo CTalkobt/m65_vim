@@ -1,6 +1,7 @@
 # Makefile for the Ubuntu platform
 
 TARGET := bin/vim_ubuntu
+BUILD_DIR := build/ubuntu
 CC := gcc
 LD := gcc
 
@@ -9,7 +10,7 @@ CORE_SRCS := $(wildcard src/core/*.c) $(wildcard src/core/lib/*.c)
 PLATFORM_SRCS := src/platform/ubuntu/platform_ubuntu.c src/platform/cbm/kernal.c
 SRCS := $(CORE_SRCS) $(PLATFORM_SRCS)
 
-OBJS := $(SRCS:.c=.o)
+OBJS := $(patsubst %.c,$(BUILD_DIR)/%.o,$(SRCS))
 
 # Compiler and Linker flags
 CFLAGS := -g -Isrc -Isrc/core -Isrc/platform -Isrc/platform/cbm -D__UBUNTU__ -DDEBUG_ON
@@ -25,10 +26,11 @@ $(TARGET): $(OBJS)
 	$(LD) -o $(TARGET) $(OBJS) $(LDFLAGS)
 	@echo "Build complete: $(TARGET)"
 
-%.o: %.c
+$(BUILD_DIR)/%.o: %.c
+	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -rf $(BUILD_DIR) $(TARGET)
 
 .PHONY: all clean
